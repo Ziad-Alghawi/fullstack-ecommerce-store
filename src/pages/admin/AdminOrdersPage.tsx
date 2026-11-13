@@ -4,15 +4,13 @@ import { useSearchParams } from 'react-router';
 import { Header } from '../../components/Header';
 import { PageTitle } from '../../components/PageTitle';
 import { AuthContext } from '../../hooks/useAuth';
-import { ORDER_STATUS_LABELS } from '../../utils/orderStatus';
+import { ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from '../../utils/orderStatus';
 import { AdminNav } from './AdminNav';
 import { AdminOrderRow } from './AdminOrderRow';
 import { AdminPageStatus } from './AdminPageStatus';
 import { getLoadFailure, type AdminLoadStatus } from './adminLoadStatus';
 import type { AdminOrder, AdminOrderList, CartItem } from '../../types/store';
 import './AdminPage.css';
-
-const PAYMENT_LABELS = { card: 'Card', delivery: 'On delivery' };
 
 function describeCount(shown: number, total: number) {
   const orders = `${total} ${total === 1 ? 'order' : 'orders'}`;
@@ -108,7 +106,7 @@ export function AdminOrdersPage({ cart, onRetry }: AdminOrdersPageProps) {
             <select value={paymentMethod} onChange={(event) => setFilter('paymentMethod', event.target.value)}
               data-testid="admin-order-payment-filter">
               <option value="">All payments</option>
-              {Object.entries(PAYMENT_LABELS).map(([value, label]) => (
+              {Object.entries(PAYMENT_METHOD_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>{label}</option>
               ))}
             </select>

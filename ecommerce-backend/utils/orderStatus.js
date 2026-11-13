@@ -10,7 +10,7 @@ const NEXT_STATUSES = {
 };
 
 // Why the order can't move to the status, or null when it can
-export function getStatusChangeRefusal(order, status) {
+function getStatusChangeRefusal(order, status) {
   if (status === 'cancelled' && order.paymentMethod === 'card') {
     return "Orders paid by card can't be cancelled, as the payment would need a refund.";
   }
@@ -27,18 +27,22 @@ export function getNextStatuses(order) {
   return NEXT_STATUSES[order.status].filter((status) => !getStatusChangeRefusal(order, status));
 }
 
-// One statement checks and changes the status, so two requests at once can't both cancel the
-// order and give its stock back twice. Returns whether this request changed it
+// Moves the order to the status, or returns why it can't. One statement checks and changes it, so
+// two requests at once can't both cancel the order and give its stock back twice
 export async function changeStatus(order, status) {
+  const refusal = getStatusChangeRefusal(order, status);
+  if (refusal) {
+    return refusal;
+  }
   const [updatedRows] = await Order.update({ status }, { where: { id: order.id, status: order.status } });
   if (updatedRows === 0) {
-    return false;
+    return 'This order was changed meanwhile. Reload the page to see it.';
   }
   if (status === 'cancelled') {
     await giveBackStock(order.products);
   }
   await order.reload();
-  return true;
+  return null;
 }
 
 // Orders from before statuses were added are marked delivered once all their packages have arrived

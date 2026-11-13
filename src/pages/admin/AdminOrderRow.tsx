@@ -6,7 +6,7 @@ import { ButtonSpinner } from '../../components/PageStatus';
 import { useAction } from '../../hooks/useAction';
 import { useToast } from '../../hooks/useToast';
 import { formatMoney } from '../../utils/money';
-import { ORDER_STATUS_LABELS } from '../../utils/orderStatus';
+import { ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from '../../utils/orderStatus';
 import type { AdminOrder, OrderStatus } from '../../types/store';
 
 // Enough of the ID to tell orders apart on the page and in a toast
@@ -46,7 +46,7 @@ interface AdminOrderRowProps {
   onChanged: (order: AdminOrder) => void;
 }
 
-// Shipped orders can only be delivered, and only orders that haven't shipped can be cancelled
+// The button for moving an order forward. Cancelling has a button of its own, as it asks first
 const ADVANCE_LABELS: Partial<Record<OrderStatus, string>> = { shipped: 'Mark shipped', delivered: 'Mark delivered' };
 
 export function AdminOrderRow({ order, onChanged }: AdminOrderRowProps) {
@@ -77,7 +77,7 @@ export function AdminOrderRow({ order, onChanged }: AdminOrderRowProps) {
         </ul>
       </td>
       <td className="admin-cell-price" data-label="Total">{formatMoney(order.totalCostCents)}</td>
-      <td className="admin-order-cell-payment" data-label="Payment">{order.paymentMethod === 'card' ? 'Card' : 'On delivery'}</td>
+      <td className="admin-order-cell-payment" data-label="Payment">{PAYMENT_METHOD_LABELS[order.paymentMethod]}</td>
       <td className="admin-order-cell-status" ref={statusCell} tabIndex={-1}>
         <OrderStatusBadge status={order.status} />
       </td>

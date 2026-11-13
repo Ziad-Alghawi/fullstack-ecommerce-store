@@ -4,11 +4,12 @@ import { Account } from '../models/Account.js';
 import { ORDER_STATUSES, Order } from '../models/Order.js';
 import { Product } from '../models/Product.js';
 import { rejectInvalidId } from '../utils/isUuid.js';
-import { changeStatus, getNextStatuses, getStatusChangeRefusal } from '../utils/orderStatus.js';
+import { changeStatus, getNextStatuses } from '../utils/orderStatus.js';
 
 const router = express.Router();
 
 const PAYMENT_METHODS = ['card', 'delivery'];
+const STATUS_ERROR = `Status must be one of: ${ORDER_STATUSES.join(', ')}`;
 // The page shows the newest orders, and the filters narrow them down
 const MAX_ORDERS_SHOWN = 100;
 
@@ -17,7 +18,7 @@ router.param('orderId', rejectInvalidId('Order not found'));
 // The filters as a database query, or the reason they're refused
 function readFilters({ status = '', paymentMethod = '' }) {
   if (status && !ORDER_STATUSES.includes(status)) {
-    return { error: `Status must be one of: ${ORDER_STATUSES.join(', ')}` };
+    return { error: STATUS_ERROR };
   }
   if (paymentMethod && !PAYMENT_METHODS.includes(paymentMethod)) {
     return { error: `Payment method must be one of: ${PAYMENT_METHODS.join(', ')}` };
@@ -68,12 +69,12 @@ router.patch('/:orderId', asyncHandler(async (req, res) => {
 
   const { status } = req.body;
   if (!ORDER_STATUSES.includes(status)) {
-    return res.status(400).json({ error: `Status must be one of: ${ORDER_STATUSES.join(', ')}` });
+    return res.status(400).json({ error: STATUS_ERROR });
   }
 
-  const refusal = getStatusChangeRefusal(order, status);
-  if (refusal || !await changeStatus(order, status)) {
-    return res.status(409).json({ error: refusal ?? 'This order changed meanwhile. Reload the orders to see it.' });
+  const refusal = await changeStatus(order, status);
+  if (refusal) {
+    return res.status(409).json({ error: refusal });
   }
 
   const [adminOrder] = await toAdminOrders([order]);

@@ -8,7 +8,7 @@ import { calculatePaymentSummary } from './paymentSummary.js';
 import { readCoupon } from '../middleware/coupon.js';
 import { rejectInvalidId } from '../utils/isUuid.js';
 import { getStockShortage, giveBackStock, takeStock } from '../utils/stock.js';
-import { changeStatus, getStatusChangeRefusal } from '../utils/orderStatus.js';
+import { changeStatus } from '../utils/orderStatus.js';
 import { maskEmail } from '../utils/maskEmail.js';
 import { checkoutLimit } from '../middleware/rateLimits.js';
 
@@ -133,10 +133,9 @@ router.post('/:orderId/cancel', checkoutLimit, asyncHandler(async (req, res) => 
     return res.status(404).json({ error: 'Order not found' });
   }
 
-  const refusal = getStatusChangeRefusal(order, 'cancelled');
-  // Changing nothing means another request changed the status first
-  if (refusal || !await changeStatus(order, 'cancelled')) {
-    return res.status(409).json({ error: refusal ?? 'This order changed meanwhile. Reload your orders to see it.' });
+  const refusal = await changeStatus(order, 'cancelled');
+  if (refusal) {
+    return res.status(409).json({ error: refusal });
   }
 
   res.json(order);

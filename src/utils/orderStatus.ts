@@ -8,6 +8,12 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   cancelled: 'Cancelled'
 };
 
+// How the admin pages name each payment method
+export const PAYMENT_METHOD_LABELS: Record<Order['paymentMethod'], string> = {
+  card: 'Card',
+  delivery: 'On delivery'
+};
+
 // Until a package arrives, its estimated delivery date
 export function describeDelivery(status: OrderStatus, estimatedDeliveryTimeMs: number) {
   if (status === 'delivered' || status === 'cancelled') {

@@ -75,9 +75,6 @@ function startAuth() {
         ? send(200, await createSession(email))
         : send(400, { error: 'invalid_grant', error_description: 'Invalid login credentials' });
     }
-    if (req.method === 'POST' && pathname === '/auth/v1/logout') {
-      return send(204);
-    }
     send(404, { error: 'not_found' });
   });
   return new Promise<void>((resolve) => server.listen(Number(new URL(AUTH_URL).port), resolve));
