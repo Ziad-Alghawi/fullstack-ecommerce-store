@@ -1,6 +1,6 @@
 import axios from 'axios';
 import dayjs from 'dayjs';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { OrderStatusBadge } from '../../components/OrderStatusBadge';
 import { ButtonSpinner } from '../../components/PageStatus';
 import { useAction } from '../../hooks/useAction';
@@ -31,8 +31,9 @@ function StatusButton({ order, status, label, className = 'button-secondary', on
     showToast(`Order ${shortId(order)} is now ${ORDER_STATUS_LABELS[status].toLowerCase()}`);
   });
 
+  // aria-disabled rather than disabled, which would take keyboard focus off the button. useAction ignores clicks meanwhile
   return (
-    <button className={className} type="button" disabled={isChanging} onClick={changeStatus} aria-label={label}
+    <button className={className} type="button" aria-disabled={isChanging} onClick={changeStatus} aria-label={label}
       data-testid={`admin-order-${status}-button`}>
       {isChanging && <ButtonSpinner />}
       {children}
@@ -45,10 +46,23 @@ interface AdminOrderRowProps {
   onChanged: (order: AdminOrder) => void;
 }
 
+// Shipped orders can only be delivered, and only orders that haven't shipped can be cancelled
+const ADVANCE_LABELS: Partial<Record<OrderStatus, string>> = { shipped: 'Mark shipped', delivered: 'Mark delivered' };
+
 export function AdminOrderRow({ order, onChanged }: AdminOrderRowProps) {
   const [isConfirmingCancel, setIsConfirmingCancel] = useState(false);
+  const statusCell = useRef<HTMLTableCellElement>(null);
   const id = shortId(order);
   const canCancel = order.nextStatuses.includes('cancelled');
+  const nextStatus = order.nextStatuses.find((status) => ADVANCE_LABELS[status]);
+
+  // The button that was clicked goes away when nothing more can be done, so keyboard focus goes to the new status
+  const showChange = (changedOrder: AdminOrder) => {
+    onChanged(changedOrder);
+    if (changedOrder.nextStatuses.length === 0) {
+      statusCell.current?.focus();
+    }
+  };
 
   return (
     <tr data-testid="admin-order-row">
@@ -64,14 +78,16 @@ export function AdminOrderRow({ order, onChanged }: AdminOrderRowProps) {
       </td>
       <td className="admin-cell-price" data-label="Total">{formatMoney(order.totalCostCents)}</td>
       <td className="admin-order-cell-payment" data-label="Payment">{order.paymentMethod === 'card' ? 'Card' : 'On delivery'}</td>
-      <td className="admin-order-cell-status"><OrderStatusBadge status={order.status} /></td>
+      <td className="admin-order-cell-status" ref={statusCell} tabIndex={-1}>
+        <OrderStatusBadge status={order.status} />
+      </td>
       <td className="admin-cell-actions">
         {/* The keys swap in new buttons, so a double click on Cancel can't also confirm it */}
         {isConfirmingCancel && canCancel ? (
           <div key="confirm" className="admin-actions" role="group" aria-label={`Cancel order ${id}?`}>
             <span className="admin-confirm-text">Cancel and restock?</span>
             <StatusButton order={order} status="cancelled" label={`Cancel order ${id}`} className="button-danger"
-              onChanged={onChanged}>
+              onChanged={showChange}>
               Cancel order
             </StatusButton>
             <button className="button-secondary" type="button" autoFocus onClick={() => setIsConfirmingCancel(false)}>
@@ -80,14 +96,11 @@ export function AdminOrderRow({ order, onChanged }: AdminOrderRowProps) {
           </div>
         ) : (
           <div key="actions" className="admin-actions">
-            {order.nextStatuses.includes('shipped') && (
-              <StatusButton order={order} status="shipped" label={`Mark order ${id} shipped`} onChanged={onChanged}>
-                Mark shipped
-              </StatusButton>
-            )}
-            {order.nextStatuses.includes('delivered') && (
-              <StatusButton order={order} status="delivered" label={`Mark order ${id} delivered`} onChanged={onChanged}>
-                Mark delivered
+            {/* One button for shipping and then delivering, so it keeps keyboard focus */}
+            {nextStatus && (
+              <StatusButton order={order} status={nextStatus} label={`Mark order ${id} ${nextStatus}`}
+                onChanged={showChange}>
+                {ADVANCE_LABELS[nextStatus]}
               </StatusButton>
             )}
             {canCancel && (

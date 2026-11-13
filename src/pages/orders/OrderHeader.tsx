@@ -1,13 +1,16 @@
 import dayjs from 'dayjs';
+import type { Ref } from 'react';
 import { OrderStatusBadge } from '../../components/OrderStatusBadge';
 import { formatMoney } from '../../utils/money';
 import type { Order } from '../../types/store';
 
 interface OrderHeaderProps {
   order: Order;
+  // Where keyboard focus goes after the order is cancelled
+  statusRef: Ref<HTMLDivElement>;
 }
 
-export function OrderHeader({ order }: OrderHeaderProps) {
+export function OrderHeader({ order, statusRef }: OrderHeaderProps) {
   return (
     <div className="order-header">
       <div>
@@ -31,7 +34,7 @@ export function OrderHeader({ order }: OrderHeaderProps) {
         </div>
       </div>
 
-      <div>
+      <div ref={statusRef} tabIndex={-1}>
         <div className="order-header-label">Status</div>
         <OrderStatusBadge status={order.status} />
       </div>

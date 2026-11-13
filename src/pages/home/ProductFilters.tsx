@@ -52,21 +52,20 @@ export function ProductFilters({ categories, filters, productCount }: ProductFil
 
   return (
     <div className="product-filters">
-      {categories.length > 0 && (
-        <nav aria-label="Categories">
-          <ul className="category-chips">
-            {['', ...categories].map((category) => (
-              <li key={category}>
-                <Link className="category-chip" to={linkWith({ category })}
-                  aria-current={filters.category === category ? 'true' : undefined}
-                  data-testid="category-chip">
-                  {category || 'All'}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      )}
+      {/* Always there, so the toolbar below doesn't move down once the categories load */}
+      <nav aria-label="Categories">
+        <ul className="category-chips">
+          {['', ...categories].map((category) => (
+            <li key={category}>
+              <Link className="category-chip" to={linkWith({ category })}
+                aria-current={filters.category === category ? 'true' : undefined}
+                data-testid="category-chip">
+                {category || 'All'}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
       <div className="product-toolbar">
         <div className="product-toolbar-summary">

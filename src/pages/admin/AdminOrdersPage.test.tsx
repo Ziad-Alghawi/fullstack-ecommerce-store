@@ -125,7 +125,8 @@ describe('AdminOrdersPage component', () => {
     await user.click(await screen.findByRole('button', { name: 'Mark order 27cba69d shipped' }));
 
     const row = screen.getAllByTestId('admin-order-row')[0];
-    expect(await within(row).findByText('Mark delivered')).toBeInTheDocument();
+    // The same button now delivers it, and keeps keyboard focus
+    expect(await within(row).findByText('Mark delivered')).toHaveFocus();
     expect(within(row).getByTestId('order-status')).toHaveTextContent('Shipped');
     expect(requests.at(-1)).toEqual({ request: `patch /api/admin/orders/${newOrder.id}`, body: { status: 'shipped' } });
   });
@@ -144,6 +145,7 @@ describe('AdminOrdersPage component', () => {
     const row = screen.getAllByTestId('admin-order-row')[0];
     expect(await within(row).findByText('Cancelled')).toBeInTheDocument();
     expect(within(row).queryAllByRole('button')).toEqual([]);
+    expect(within(row).getByTestId('order-status').parentElement).toHaveFocus();
   });
 
   it('filters by status and payment, keeping the filters in the URL', async () => {

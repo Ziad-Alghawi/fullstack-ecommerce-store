@@ -25,6 +25,11 @@
   white-space: nowrap;
 }
 
+/* Underlined, as the link's color alone is too close to the title around it */
+.checkout-header-title a {
+  text-decoration: underline;
+}
+
 .checkout-header-secure {
   justify-self: end;
   display: flex;

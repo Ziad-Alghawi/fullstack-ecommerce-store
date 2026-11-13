@@ -133,7 +133,9 @@ button, select {
 
 .button-primary:disabled,
 .button-secondary:disabled,
-.button-danger:disabled {
+.button-danger:disabled,
+.button-secondary[aria-disabled="true"],
+.button-danger[aria-disabled="true"] {
   opacity: 0.55;
   cursor: not-allowed;
 }
@@ -142,7 +144,8 @@ button, select {
   background-color: var(--color-brand);
 }
 
-.button-danger:disabled {
+.button-danger:disabled,
+.button-danger[aria-disabled="true"] {
   background-color: var(--color-error);
 }
 
@@ -199,15 +202,16 @@ button, select {
   overflow: hidden;
 }
 
+/* A step darker than the brand green, so links pass contrast on the grey page background too */
 .link-primary {
-  color: var(--color-brand);
+  color: var(--color-brand-hover);
   font-weight: var(--font-weight-medium);
   text-decoration: none;
   cursor: pointer;
 }
 
 .link-primary:hover {
-  color: var(--color-brand-hover);
+  color: var(--color-brand-active);
   text-decoration: underline;
 }
 

@@ -192,6 +192,8 @@ describe('OrdersPage component', () => {
 
     expect(axios.post).toHaveBeenCalledWith('/api/orders/27cba69d-4c3d-4098-b42d-ac7fa62b7664/cancel');
     expect(await within(newOrder).findByTestId('order-status')).toHaveTextContent('Cancelled');
+    // The buttons are gone, so keyboard focus moves to the new status
+    expect(within(newOrder).getByTestId('order-status').parentElement).toHaveFocus();
     expect(within(newOrder).queryByTestId('cancel-order-button')).not.toBeInTheDocument();
     // The products stay as they were, as the API answers without them
     expect(within(newOrder).getAllByTestId('order-product-delivery-date')[0]).toHaveTextContent('Cancelled');
