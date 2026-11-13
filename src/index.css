@@ -269,6 +269,42 @@ input:focus-visible {
   resize: vertical;
 }
 
+/* A small label for the state of a coupon or an order */
+.status-badge {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-hover);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+/* Stands out on grey backgrounds too, like the order header */
+.status-badge-processing {
+  background-color: var(--color-surface);
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
+}
+
+.status-badge-active,
+.status-badge-delivered {
+  background-color: var(--color-brand-subtle);
+  color: var(--color-brand-active);
+}
+
+.status-badge-featured,
+.status-badge-shipped {
+  background-color: var(--color-brand-accent);
+  color: var(--color-brand-dark);
+}
+
+.status-badge-expired,
+.status-badge-cancelled {
+  background-color: var(--color-error-subtle);
+  color: var(--color-error);
+}
+
 .stock-note {
   margin-top: var(--space-2);
   color: var(--color-error);

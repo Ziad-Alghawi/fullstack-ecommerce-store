@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { OrderStatusBadge } from '../../components/OrderStatusBadge';
 import { formatMoney } from '../../utils/money';
 import type { Order } from '../../types/store';
 
@@ -28,6 +29,11 @@ export function OrderHeader({ order }: OrderHeaderProps) {
         <div data-testid="order-payment">
           {order.paymentMethod === 'card' ? 'Paid by card' : 'Pay on delivery'}
         </div>
+      </div>
+
+      <div>
+        <div className="order-header-label">Status</div>
+        <OrderStatusBadge status={order.status} />
       </div>
 
       <div className="order-id">

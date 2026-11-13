@@ -27,6 +27,7 @@ import { Product } from './models/Product.js';
 import { Coupon } from './models/Coupon.js';
 import { addDefaultData } from './defaultData/addDefaultData.js';
 import { restockIfDue } from './utils/demoRestock.js';
+import { markArrivedOrdersDelivered } from './utils/orderStatus.js';
 import fs from 'fs';
 
 const app = express();
@@ -96,7 +97,7 @@ for (const model of [CartItem, Order]) {
 // add the columns that came later first, as their indexes need them
 const laterColumns = [
   [Product, ['deletedAt', 'demoRating', 'category', 'stock']],
-  [Order, ['paymentMethod', 'stripeSessionId']],
+  [Order, ['paymentMethod', 'stripeSessionId', 'status']],
   [Coupon, ['featured']]
 ];
 for (const [model, columns] of laterColumns) {
@@ -106,6 +107,9 @@ for (const [model, columns] of laterColumns) {
   for (const column of columns.filter((column) => existingColumns && !existingColumns[column])) {
     await sequelize.getQueryInterface().addColumn(model.getTableName(), column, model.getAttributes()[column]);
     console.log(`Added ${column} to the ${model.getTableName()} table.`);
+    if (model === Order && column === 'status') {
+      await markArrivedOrdersDelivered();
+    }
   }
 }
 

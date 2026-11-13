@@ -1,6 +1,9 @@
 import { DataTypes } from 'sequelize';
 import { sequelize } from './index.js';
 
+// Processing, then shipped, then delivered. Only an order that hasn't shipped can be cancelled
+export const ORDER_STATUSES = ['processing', 'shipped', 'delivered', 'cancelled'];
+
 export const Order = sequelize.define('Order', {
   id: {
     type: DataTypes.UUID,
@@ -32,6 +35,12 @@ export const Order = sequelize.define('Order', {
     type: DataTypes.STRING,
     allowNull: false,
     defaultValue: 'delivery'
+  },
+  // One of ORDER_STATUSES. Admins move it forward, and customers can cancel an order paid on delivery
+  status: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'processing'
   },
   // The Stripe Checkout Session that paid for a card order. Unique, so one payment makes one order
   stripeSessionId: {

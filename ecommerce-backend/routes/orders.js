@@ -8,6 +8,7 @@ import { calculatePaymentSummary } from './paymentSummary.js';
 import { readCoupon } from '../middleware/coupon.js';
 import { rejectInvalidId } from '../utils/isUuid.js';
 import { getStockShortage, giveBackStock, takeStock } from '../utils/stock.js';
+import { changeStatus, getStatusChangeRefusal } from '../utils/orderStatus.js';
 
 const router = express.Router();
 
@@ -110,6 +111,22 @@ router.get('/:orderId', asyncHandler(async (req, res) => {
 
   if (expand === 'products') {
     order = await withProductDetails(order);
+  }
+
+  res.json(order);
+}));
+
+// Customers can cancel an order paid on delivery until it ships, which puts its items back in stock
+router.post('/:orderId/cancel', asyncHandler(async (req, res) => {
+  const order = await Order.findOne({ where: { id: req.params.orderId, visitorId: req.visitorId } });
+  if (!order) {
+    return res.status(404).json({ error: 'Order not found' });
+  }
+
+  const refusal = getStatusChangeRefusal(order, 'cancelled');
+  // Changing nothing means another request changed the status first
+  if (refusal || !await changeStatus(order, 'cancelled')) {
+    return res.status(409).json({ error: refusal ?? 'This order changed meanwhile. Reload your orders to see it.' });
   }
 
   res.json(order);

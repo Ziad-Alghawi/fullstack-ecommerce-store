@@ -16,13 +16,13 @@ A full-stack online store built with React, TypeScript and an Express API, cover
 - Cart with quantity updates and item removal
 - Delivery options with a live payment summary
 - Coupons: the customer types a code at checkout and the discount is taken off the items, whether they pay on delivery or by card. Try `WELCOME10` for 10% off
-- Order placement and order history, with delivered or arriving status per package
+- Order placement and order history, with each order's status: processing, shipped, delivered or cancelled. Customers can cancel an order paid on delivery until it ships, which puts its items back in stock
 - Card payment with Stripe Checkout in test mode, next to paying on delivery
 - A separate cart and order history for each visitor, without sign-up, limited to 50 orders each
 - Optional accounts with email and password: the cart and orders follow the user to any device, and a guest's cart and orders move to their account when they log in
 - An account page with the user's email and links to their orders and to change their password, and a "Forgot password" email link to choose a new one
 - Admin page to add, edit and delete products and set their category and stock, and to create coupons, for the accounts listed in `ADMIN_USER_IDS`, who can also remove any review
-- Package tracking with delivery progress
+- Package tracking with the order's progress
 - Loading, empty and error states, and small notifications that confirm actions like adding to the cart or explain why a change failed, with a retry. Screen readers announce them too
 - Responsive layout for phone and desktop
 

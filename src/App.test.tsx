@@ -27,6 +27,8 @@ const order = {
   id: 'order-1',
   orderTimeMs: 1723456800000,
   totalCostCents: 1090,
+  paymentMethod: 'delivery',
+  status: 'shipped',
   products: [{
     productId: product.id,
     quantity: 1,

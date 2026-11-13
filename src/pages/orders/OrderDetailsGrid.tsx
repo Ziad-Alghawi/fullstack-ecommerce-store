@@ -3,7 +3,7 @@ import { CartIcon } from '../../components/Icons';
 import { ButtonSpinner } from '../../components/PageStatus';
 import { useAction } from '../../hooks/useAction';
 import { useAddToCart } from '../../hooks/useAddToCart';
-import { formatDeliveryStatus } from '../../utils/date';
+import { describeDelivery } from '../../utils/orderStatus';
 import type { LoadCart, Order, OrderProduct } from '../../types/store';
 
 interface BuyAgainButtonProps {
@@ -48,8 +48,9 @@ export function OrderDetailsGrid({ order, loadCart }: OrderDetailsGridProps) {
             <Link className="product-name" to={`/products/${orderProduct.product.id}`}>
               {orderProduct.product.name}
             </Link>
-            <div className="product-delivery-date" data-testid="order-product-delivery-date">
-              {formatDeliveryStatus(orderProduct.estimatedDeliveryTimeMs)}
+            <div className={`product-delivery-date${order.status === 'cancelled' ? ' product-delivery-cancelled' : ''}`}
+              data-testid="order-product-delivery-date">
+              {describeDelivery(order.status, orderProduct.estimatedDeliveryTimeMs)}
             </div>
             <div className="product-quantity">
               Quantity: {orderProduct.quantity}

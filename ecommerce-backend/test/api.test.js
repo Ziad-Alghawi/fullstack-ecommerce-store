@@ -810,6 +810,84 @@ test('two orders at once cannot both take the last one', async () => {
   await deleteProduct(product);
 });
 
+function cancelOrder(who, orderId) {
+  return api(`/api/orders/${orderId}/cancel`, { ...identify(who), method: 'POST' });
+}
+
+test('a customer cancels an order paid on delivery before it ships, which gives back its stock', async () => {
+  const product = await createProduct({ ...newProduct, stock: 5 });
+  const visitorId = randomUUID();
+  await addProduct(visitorId, product.id, 2);
+  const order = await (await placeOrder(visitorId)).json();
+  assert.equal(order.status, 'processing');
+  assert.equal(await getStock(product.id), 3);
+
+  // Another visitor's order is not found, like one that doesn't exist
+  assert.equal((await cancelOrder(randomUUID(), order.id)).status, 404);
+
+  const response = await cancelOrder(visitorId, order.id);
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).status, 'cancelled');
+  assert.equal((await getOrders(visitorId))[0].status, 'cancelled');
+  assert.equal(await getStock(product.id), 5);
+
+  const again = await cancelOrder(visitorId, order.id);
+  assert.equal(again.status, 409);
+  assert.equal((await again.json()).error, 'This order is already cancelled.');
+  assert.equal(await getStock(product.id), 5);
+  await deleteProduct(product);
+});
+
+test('two cancels at once give the stock back once', async () => {
+  const product = await createProduct({ ...newProduct, stock: 5 });
+  const visitorId = randomUUID();
+  await addProduct(visitorId, product.id, 2);
+  const order = await (await placeOrder(visitorId)).json();
+
+  const responses = await Promise.all([cancelOrder(visitorId, order.id), cancelOrder(visitorId, order.id)]);
+  assert.deepEqual(responses.map(({ status }) => status).sort(), [200, 409]);
+  assert.equal(await getStock(product.id), 5);
+  await deleteProduct(product);
+});
+
+test('an order paid by card cannot be cancelled', async () => {
+  const visitorId = randomUUID();
+  await addToCart(visitorId);
+  const session = await startCheckout(visitorId);
+  session.payment_status = 'paid';
+  const order = await (await getPaidOrder(visitorId, session)).json();
+  assert.equal(order.status, 'processing');
+
+  const refused = await cancelOrder(visitorId, order.id);
+  assert.equal(refused.status, 409);
+  assert.match((await refused.json()).error, /paid by card/);
+});
+
+test('orders from before statuses are delivered once all their packages have arrived', { skip: Boolean(process.env.TEST_DATABASE_URL) && 'needs the SQLite file' }, async () => {
+  const [arrived, onTheWay] = [randomUUID(), randomUUID()];
+  for (const visitorId of [arrived, onTheWay]) {
+    await addToCart(visitorId);
+    await placeOrder(visitorId);
+  }
+  const arrivedOrder = (await getOrders(arrived))[0];
+
+  // Turn the database back into one from before statuses, with one order already delivered
+  await stopServer();
+  const { default: initSqlJs } = await import('sql.js');
+  const SQL = await initSqlJs();
+  const databaseFile = path.join(workDir, 'database.sqlite');
+  const database = new SQL.Database(fs.readFileSync(databaseFile));
+  const products = [{ ...arrivedOrder.products[0], estimatedDeliveryTimeMs: Date.now() - 1000 }];
+  database.run('UPDATE Orders SET products = ? WHERE id = ?', [JSON.stringify(products), arrivedOrder.id]);
+  database.run('ALTER TABLE Orders DROP COLUMN status');
+  fs.writeFileSync(databaseFile, database.export());
+  database.close();
+  await startServer();
+
+  assert.equal((await getOrders(arrived))[0].status, 'delivered');
+  assert.equal((await getOrders(onTheWay))[0].status, 'processing');
+});
+
 test('a deleted product stays in carts and orders but can no longer be added', async () => {
   const visitorId = randomUUID();
   const product = await createProduct();
@@ -947,6 +1025,16 @@ test('only logged in customers who ordered the product can review it', async () 
   assert.equal((await getReviews(customer, product.id)).canReview, true);
   assert.equal((await postReview(customer, { stars: 5 }, product.id)).status, 201);
   assert.equal((await getReviews({}, product.id)).reviews.length, 1);
+});
+
+test('a cancelled order does not count for reviewing', async () => {
+  const product = await createProduct();
+  const buyer = await createBuyer(product.id);
+  const [order] = await getOrders(buyer);
+
+  assert.equal((await cancelOrder(buyer, order.id)).status, 200);
+  assert.equal((await getReviews(buyer, product.id)).canReview, false);
+  assert.equal((await postReview(buyer, { stars: 5 }, product.id)).status, 403);
 });
 
 test('refuses review fields that are missing or invalid', async () => {

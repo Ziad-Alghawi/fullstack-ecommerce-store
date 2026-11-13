@@ -39,35 +39,10 @@
   accent-color: var(--color-brand);
 }
 
-.admin-status {
-  display: inline-block;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-full);
-  background-color: var(--color-surface-hover);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-}
-
-.admin-status-active {
-  background-color: var(--color-brand-subtle);
-  color: var(--color-brand-active);
-}
-
 .admin-statuses {
   display: inline-flex;
   flex-wrap: wrap;
   gap: var(--space-1);
-}
-
-.admin-status-featured {
-  background-color: var(--color-brand-accent);
-  color: var(--color-brand-dark);
-}
-
-.admin-status-expired {
-  background-color: var(--color-error-subtle);
-  color: var(--color-error);
 }
 
 .admin-form {

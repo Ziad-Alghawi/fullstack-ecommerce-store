@@ -1,4 +1,5 @@
 import express from 'express';
+import { Op } from 'sequelize';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { getUserId, requireUser } from '../middleware/auth.js';
 import { isAdmin } from '../middleware/admin.js';
@@ -41,9 +42,12 @@ function getAuthorName(email) {
   return localPart ? `${localPart.slice(0, 2)}***` : 'Customer';
 }
 
-// Logged in users keep their orders, so this is every order the user has placed
+// Logged in users keep their orders, so this is every order the user has placed. A cancelled one doesn't count
 async function hasOrdered(userId, productId) {
-  const orders = await Order.unscoped().findAll({ where: { visitorId: userId }, attributes: ['products'] });
+  const orders = await Order.unscoped().findAll({
+    where: { visitorId: userId, status: { [Op.ne]: 'cancelled' } },
+    attributes: ['products']
+  });
   return orders.some((order) => order.products.some((orderProduct) => orderProduct.productId === productId));
 }
 

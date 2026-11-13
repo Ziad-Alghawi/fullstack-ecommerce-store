@@ -296,6 +296,8 @@ Returns all orders, sorted by most recent first.
     "totalCostCents": "number",
     // "card" or "delivery"
     "paymentMethod": "string",
+    // "processing", "shipped", "delivered" or "cancelled"
+    "status": "string",
     "products": [
       {
         "productId": "uuid",
@@ -328,6 +330,8 @@ Creates a new order from the current cart items.
   "totalCostCents": "number",
   // "card" or "delivery"
   "paymentMethod": "string",
+  // "processing", "shipped", "delivered" or "cancelled"
+  "status": "string",
   "products": [
     {
       "productId": "uuid",
@@ -358,6 +362,8 @@ Returns a specific order.
   "totalCostCents": "number",
   // "card" or "delivery"
   "paymentMethod": "string",
+  // "processing", "shipped", "delivered" or "cancelled"
+  "status": "string",
   "products": [
     {
       "productId": "uuid",
@@ -369,6 +375,18 @@ Returns a specific order.
   ]
 }
 ```
+
+## POST /api/orders/:orderId/cancel
+Cancels an order paid on delivery that hasn't shipped yet.
+
+**URL Parameters:**
+- `orderId`: ID of the order
+
+**Response:**
+- Status 200 with the order, now with `status` `"cancelled"`
+- Side effect: Its items go back in stock
+- Status 404 if the order doesn't exist or belongs to someone else
+- Status 409 with the reason if the order was paid by card or has already shipped, been delivered or been cancelled
 
 ## GET /api/payment-summary
 Calculates and returns the payment summary for the current cart.

@@ -37,7 +37,9 @@
 .tracking-page .progress-labels-container {
   display: flex;
   justify-content: space-between;
-  margin-bottom: var(--space-3);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
   color: var(--color-text-muted);
   font-weight: var(--font-weight-medium);
 }
@@ -58,6 +60,11 @@
   height: 100%;
   border-radius: var(--radius-full);
   background-color: var(--color-brand);
+}
+
+.tracking-page .tracking-cancelled {
+  margin: 0;
+  color: var(--color-text-muted);
 }
 
 @media (max-width: 640px) {

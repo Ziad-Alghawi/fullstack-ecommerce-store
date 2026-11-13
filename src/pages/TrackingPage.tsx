@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { Header } from '../components/Header';
 import { PageTitle } from '../components/PageTitle';
 import { ErrorMessage, LoadingMessage } from '../components/PageStatus';
-import { formatDeliveryStatus } from '../utils/date';
-import type { CartItem, Order, OrderProduct } from '../types/store';
+import { describeDelivery, ORDER_STATUS_LABELS } from '../utils/orderStatus';
+import type { CartItem, Order, OrderProduct, OrderStatus } from '../types/store';
 import './TrackingPage.css';
 
 interface PackageTrackingProps {
@@ -13,14 +13,15 @@ interface PackageTrackingProps {
   orderProduct: OrderProduct;
 }
 
-function PackageTracking({ order, orderProduct }: PackageTrackingProps) {
-  const totalDeliveryTimeMs = orderProduct.estimatedDeliveryTimeMs - order.orderTimeMs;
-  const timePassedMs = Date.now() - order.orderTimeMs;
-  const deliveryPercent = Math.min((timePassedMs / totalDeliveryTimeMs) * 100, 100);
+// How far along the bar each step is. The labels sit at its start, middle and end
+const PROGRESS_STEPS: { status: OrderStatus; percent: number }[] = [
+  { status: 'processing', percent: 10 },
+  { status: 'shipped', percent: 50 },
+  { status: 'delivered', percent: 100 }
+];
 
-  const isPreparing = deliveryPercent < 33;
-  const isShipped = deliveryPercent >= 33 && deliveryPercent < 100;
-  const isDelivered = deliveryPercent === 100;
+function PackageTracking({ order, orderProduct }: PackageTrackingProps) {
+  const currentStep = PROGRESS_STEPS.find((step) => step.status === order.status);
 
   return (
     <div className="order-tracking card">
@@ -29,7 +30,7 @@ function PackageTracking({ order, orderProduct }: PackageTrackingProps) {
       </Link>
 
       <h1 className="delivery-date">
-        {formatDeliveryStatus(orderProduct.estimatedDeliveryTimeMs)}
+        {describeDelivery(order.status, orderProduct.estimatedDeliveryTimeMs)}
       </h1>
 
       <div className="tracking-product">
@@ -41,24 +42,30 @@ function PackageTracking({ order, orderProduct }: PackageTrackingProps) {
         </div>
       </div>
 
-      <div className="progress-labels-container">
-        <div className={isPreparing ? 'current-status' : undefined}>
-          Preparing
-        </div>
-        <div className={isShipped ? 'current-status' : undefined}>
-          Shipped
-        </div>
-        <div className={isDelivered ? 'current-status' : undefined}>
-          Delivered
-        </div>
-      </div>
+      {currentStep ? (
+        <>
+          <ol className="progress-labels-container">
+            {PROGRESS_STEPS.map(({ status }) => (
+              <li key={status} className={status === order.status ? 'current-status' : undefined}
+                aria-current={status === order.status ? 'step' : undefined}>
+                {ORDER_STATUS_LABELS[status]}
+              </li>
+            ))}
+          </ol>
 
-      <div className="progress-bar-container" role="progressbar"
-        aria-label="Delivery progress" aria-valuenow={Math.round(deliveryPercent)}
-        aria-valuemin={0} aria-valuemax={100}>
-        <div className="progress-bar"
-          style={{ width: `${deliveryPercent}%` }}></div>
-      </div>
+          <div className="progress-bar-container" role="progressbar"
+            aria-label="Delivery progress" aria-valuenow={currentStep.percent}
+            aria-valuetext={ORDER_STATUS_LABELS[order.status]}
+            aria-valuemin={0} aria-valuemax={100}>
+            <div className="progress-bar"
+              style={{ width: `${currentStep.percent}%` }}></div>
+          </div>
+        </>
+      ) : (
+        <p className="tracking-cancelled" data-testid="tracking-cancelled">
+          This order was cancelled before it shipped, so this package won't be delivered.
+        </p>
+      )}
     </div>
   );
 }

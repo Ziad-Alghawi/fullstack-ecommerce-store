@@ -34,7 +34,13 @@ export function OrdersPage({ cart, loadCart, onRetry }: OrdersPageProps) {
     fetchOrders();
   }, []);
 
-  let pageContent = <OrderGrid orders={orders} loadCart={loadCart} />;
+  const showCancelledOrder = (cancelledOrder: Order) => {
+    setOrders((current) => current.map((order) => (
+      order.id === cancelledOrder.id ? { ...order, status: cancelledOrder.status } : order
+    )));
+  };
+
+  let pageContent = <OrderGrid orders={orders} loadCart={loadCart} onCancelled={showCancelledOrder} />;
 
   if (hasError) {
     pageContent = <ErrorMessage onButtonClick={onRetry} />;

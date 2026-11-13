@@ -85,12 +85,15 @@ export interface OrderProduct {
   product: Product;
 }
 
+export type OrderStatus = 'processing' | 'shipped' | 'delivered' | 'cancelled';
+
 export interface Order {
   id: string;
   orderTimeMs: number;
   totalCostCents: number;
   products: OrderProduct[];
   paymentMethod: 'card' | 'delivery';
+  status: OrderStatus;
 }
 
 export type LoadCart = () => Promise<void>;

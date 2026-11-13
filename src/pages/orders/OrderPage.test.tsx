@@ -26,6 +26,8 @@ describe('OrdersPage component', () => {
       id: "27cba69d-4c3d-4098-b42d-ac7fa62b7664",
       orderTimeMs: 1723456800000,
       totalCostCents: 3506,
+      paymentMethod: 'delivery',
+      status: 'processing',
       products: [{
         productId: "e43638ce-6aa0-4b85-b27f-e1d07eb678c6",
         quantity: 1,
@@ -61,6 +63,8 @@ describe('OrdersPage component', () => {
       id: "b6b6c212-d30e-4d4a-805d-90b52ce6b37d",
       orderTimeMs: 1718013600000,
       totalCostCents: 4190,
+      paymentMethod: 'card',
+      status: 'delivered',
       products: [{
         productId: "15b6fc6f-327a-4ec4-896f-486349e85a3d",
         quantity: 2,
@@ -152,19 +156,45 @@ describe('OrdersPage component', () => {
     expect(payments.map((payment) => payment.textContent)).toEqual(['Paid by card', 'Pay on delivery']);
   });
 
-  it('says whether each package was delivered or is still on its way', async () => {
-    // Between the two delivery dates of the first order
-    vi.setSystemTime(new Date(2024, 7, 14, 12));
+  it('shows the status of each order, with the estimated date until it is delivered', async () => {
     render(
       <MemoryRouter>
         <OrdersPage cart={cart} />
       </MemoryRouter>
     );
 
-    const deliveryDates = await screen.findAllByTestId('order-product-delivery-date');
+    const statuses = await screen.findAllByTestId('order-status');
+    expect(statuses.map((status) => status.textContent)).toEqual(['Processing', 'Delivered']);
+    const deliveryDates = screen.getAllByTestId('order-product-delivery-date');
     expect(deliveryDates[0]).toHaveTextContent('Arriving on Thursday, August 15');
-    expect(deliveryDates[1]).toHaveTextContent('Delivered on Monday, August 12');
-    vi.useRealTimers();
+    expect(deliveryDates[2]).toHaveTextContent('Delivered');
+  });
+
+  it('cancels an order paid on delivery that has not shipped, after asking', async () => {
+    const user = userEvent.setup();
+    axios.post.mockClear();
+    axios.post.mockResolvedValueOnce({ data: { ...orders[0], products: [], status: 'cancelled' } });
+    render(
+      <MemoryRouter>
+        <OrdersPage cart={cart} />
+      </MemoryRouter>
+    );
+
+    const [newOrder, oldOrder] = await screen.findAllByTestId('order-container');
+    // Delivered and card orders can't be cancelled
+    expect(within(oldOrder).queryByTestId('cancel-order-button')).not.toBeInTheDocument();
+
+    await user.click(within(newOrder).getByTestId('cancel-order-button'));
+    expect(axios.post).not.toHaveBeenCalled();
+    await user.click(within(newOrder).getByRole('button', { name: 'Keep order' }));
+    await user.click(within(newOrder).getByTestId('cancel-order-button'));
+    await user.click(within(newOrder).getByTestId('confirm-cancel-order-button'));
+
+    expect(axios.post).toHaveBeenCalledWith('/api/orders/27cba69d-4c3d-4098-b42d-ac7fa62b7664/cancel');
+    expect(await within(newOrder).findByTestId('order-status')).toHaveTextContent('Cancelled');
+    expect(within(newOrder).queryByTestId('cancel-order-button')).not.toBeInTheDocument();
+    // The products stay as they were, as the API answers without them
+    expect(within(newOrder).getAllByTestId('order-product-delivery-date')[0]).toHaveTextContent('Cancelled');
   });
 
   it('says so when there are no orders yet', async () => {
