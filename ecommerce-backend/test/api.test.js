@@ -164,6 +164,8 @@ MAX_ORDERS=50
     PORT: String(port),
     MAX_VISITORS: '3',
     MAX_ORDERS: '2',
+    // The tests make far more requests from one address than a customer would
+    RATE_LIMIT_SCALE: '100',
     // Spaces and capitals as someone might paste them
     ADMIN_USER_IDS: ` ${adminId.toUpperCase()} ,${randomUUID()}`,
     // Tests delete visitors, so they only reach Postgres when given a throwaway database
@@ -1712,4 +1714,94 @@ test('deleted products stay deleted after a restart, even when none are left', a
 
   assert.deepEqual(await getProducts(), []);
   assert.equal((await api('/api/admin/images', admin)).status, 200);
+});
+
+test('sends security headers, with a content security policy that lets the browser reach Supabase', async () => {
+  const response = await api('/api/products');
+  const policy = response.headers.get('content-security-policy');
+
+  assert.match(policy, /default-src 'self'/);
+  assert.match(policy, new RegExp(`connect-src 'self' ${supabaseUrl}`));
+  assert.match(policy, /script-src 'self'/);
+  assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(response.headers.get('x-frame-options'), 'SAMEORIGIN');
+  assert.equal(response.headers.get('x-powered-by'), null);
+});
+
+test('only allows the configured origins to call the API from another site', async () => {
+  const allowedOrigin = async (origin) => (await api('/api/products', { headers: { Origin: origin } }))
+    .headers.get('access-control-allow-origin');
+
+  // Outside production, the Vite dev server is allowed by default
+  assert.equal(await allowedOrigin('http://localhost:5173'), 'http://localhost:5173');
+  assert.equal(await allowedOrigin('https://evil.example'), null);
+
+  await stopServer();
+  await startServer({ NODE_ENV: 'production' });
+  assert.equal(await allowedOrigin('http://localhost:5173'), null);
+
+  await stopServer();
+  await startServer({ NODE_ENV: 'production', CORS_ORIGIN: 'https://shop.example, https://www.shop.example' });
+  assert.equal(await allowedOrigin('https://www.shop.example'), 'https://www.shop.example');
+  assert.equal(await allowedOrigin('https://evil.example'), null);
+  await stopServer();
+  await startServer();
+});
+
+test('refuses a request body over 10 kB', async () => {
+  const response = await api('/api/cart-items', {
+    visitorId: randomUUID(), method: 'POST', body: { productId, quantity: 1, note: 'x'.repeat(11 * 1024) }
+  });
+  assert.equal(response.status, 413);
+  assert.ok((await response.json()).error);
+});
+
+test('unknown API paths are not found, and every admin path needs an admin first', async () => {
+  const unknown = await api('/api/nothing-here');
+  assert.equal(unknown.status, 404);
+  assert.deepEqual(await unknown.json(), { error: 'Not found' });
+
+  assert.equal((await api('/api/admin/nothing-here')).status, 401);
+  assert.equal((await api('/api/admin/nothing-here', { token: await createToken() })).status, 403);
+  assert.equal((await api('/api/admin/nothing-here', await asAdmin())).status, 404);
+});
+
+test('limits how often one address can guess coupons, place orders, write reviews and check tokens', async () => {
+  await stopServer();
+  await startServer({ RATE_LIMIT_SCALE: '1' });
+
+  // Every request with a code shares one budget of 60, wherever the code is typed
+  const visitorId = randomUUID();
+  for (let i = 0; i < 58; i++) {
+    assert.equal((await api(`/api/coupons/GUESS${i}`)).status, 404);
+  }
+  assert.equal((await api('/api/payment-summary?couponCode=GUESSA', { visitorId })).status, 400);
+  assert.equal((await api('/api/orders', { visitorId, method: 'POST', body: { couponCode: 'GUESSB' } })).status, 400);
+  const limited = await api('/api/coupons/WELCOME10');
+  assert.equal(limited.status, 429);
+  assert.equal((await limited.json()).error, 'Too many requests. Please wait a few minutes and try again.');
+  assert.ok(limited.headers.get('ratelimit-policy'));
+  // Without a code, checkout isn't slowed down
+  assert.equal((await api('/api/payment-summary', { visitorId })).status, 200);
+
+  // 1 order was already tried above
+  for (let i = 0; i < 29; i++) {
+    assert.equal((await placeOrder(visitorId)).status, 400);
+  }
+  assert.equal((await placeOrder(visitorId)).status, 429);
+
+  for (let i = 0; i < 20; i++) {
+    assert.equal((await postReview({}, { stars: 5 })).status, 401);
+  }
+  assert.equal((await postReview({}, { stars: 5 })).status, 429);
+
+  for (let i = 0; i < 100; i++) {
+    assert.equal((await api('/api/me')).status, 200);
+  }
+  assert.equal((await api('/api/me')).status, 429);
+
+  // The products don't share these limits
+  assert.equal((await api('/api/products')).status, 200);
+  await stopServer();
+  await startServer();
 });

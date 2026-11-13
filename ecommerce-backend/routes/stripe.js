@@ -10,6 +10,7 @@ import { corsOrigins } from '../utils/corsOrigins.js';
 import { stripe } from '../utils/stripe.js';
 import { takePaidStock } from '../utils/stock.js';
 import { readCoupon } from '../middleware/coupon.js';
+import { checkoutLimit } from '../middleware/rateLimits.js';
 
 // The Stripe sandbox is shared with another app, so this store tags its sessions and skips the rest
 const APP_TAG = 'react-ecommerce';
@@ -84,7 +85,7 @@ router.get('/config', (req, res) => {
 
 router.use(requireStripe);
 
-router.post('/checkout-sessions', requireVisitor, readCoupon, asyncHandler(async (req, res) => {
+router.post('/checkout-sessions', checkoutLimit, requireVisitor, readCoupon, asyncHandler(async (req, res) => {
   const origin = req.get('Origin');
   if (!isStoreOrigin(req, origin)) {
     return res.status(400).json({ error: 'Card payment only works from the store' });
@@ -132,7 +133,7 @@ router.post('/checkout-sessions', requireVisitor, readCoupon, asyncHandler(async
 }));
 
 // The success page asks for the order, so it appears even without the webhook, as locally
-router.get('/checkout-sessions/:sessionId/order', requireVisitor, asyncHandler(async (req, res) => {
+router.get('/checkout-sessions/:sessionId/order', checkoutLimit, requireVisitor, asyncHandler(async (req, res) => {
   const session = await stripe.checkout.sessions.retrieve(req.params.sessionId).catch((error) => {
     if (error.statusCode === 404) {
       return null;

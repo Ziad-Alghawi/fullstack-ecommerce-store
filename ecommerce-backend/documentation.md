@@ -23,6 +23,7 @@ Here's a list of all the URL Paths you can use with this backend and what each U
 - [GET /api/orders](#get-apiorders)
 - [POST /api/orders](#post-apiorders)
 - [GET /api/orders/:orderId](#get-apiordersorderid)
+- [POST /api/orders/:orderId/cancel](#post-apiordersorderidcancel)
 
 **Payment Summary, Coupons, Reset**
 - [GET /api/payment-summary](#get-apipayment-summary)
@@ -45,6 +46,9 @@ Here's a list of all the URL Paths you can use with this backend and what each U
 - [GET /api/admin/coupons](#get-apiadmincoupons)
 - [POST /api/admin/coupons](#post-apiadmincoupons)
 - [PUT /api/admin/coupons/:couponId](#put-apiadmincouponscouponid)
+- [GET /api/admin/orders](#get-apiadminorders)
+- [PATCH /api/admin/orders/:orderId](#patch-apiadminordersorderid)
+- [GET /api/admin/stats](#get-apiadminstats)
 
 **Visitors:** the cart, order, payment summary and Checkout Session routes need an `X-Visitor-Id` header with a UUID. Each ID has its own cart and orders, so a browser can keep its own data without an account. Requests without a valid ID get `400`.
 
@@ -60,7 +64,9 @@ Here's a list of all the URL Paths you can use with this backend and what each U
 
 **Card payment:** only on when `STRIPE_SECRET_KEY` is a Stripe test key. Otherwise every `/api/stripe` route except `GET /api/stripe/config` answers `404`. The API sets all prices from the database, and an order paid by card is only created once Stripe says the session is paid.
 
-**Errors:** a rejected request gets a `4xx` status and a JSON body like `{ "error": "Cart is empty" }`. An unexpected server error, such as a failed database call, gets `500` with the same kind of body.
+**Errors:** a rejected request gets a `4xx` status and a JSON body like `{ "error": "Cart is empty" }`. An unexpected server error, such as a failed database call, gets `500` with the same kind of body. An unknown `/api` path gets `404`, and a JSON body over 10 kB gets `413`.
+
+**Rate limits:** each IP address can make up to 1000 API requests in 15 minutes. Some routes have a lower limit of their own over the same 15 minutes: 60 requests that check a coupon code (looking one up, or a payment summary, order or card payment that sends one), 30 to place, pay for or cancel orders, 20 to write, edit or delete reviews and 100 to `GET /api/me`. Past a limit, the API answers `429` and says in the `RateLimit` header when to try again. The Stripe webhook isn't limited.
 
 ## GET /api/products
 Returns a list of products, without the ones an admin deleted. All filters are optional and work together.

@@ -7,6 +7,7 @@ import { Order } from '../models/Order.js';
 import { Product } from '../models/Product.js';
 import { MAX_REVIEW_TEXT_LENGTH, Review } from '../models/Review.js';
 import { isUuid } from '../utils/isUuid.js';
+import { reviewLimit } from '../middleware/rateLimits.js';
 import { maskEmail } from '../utils/maskEmail.js';
 
 // Mounted under /api/products/:productId, so it needs the parent's productId
@@ -83,7 +84,7 @@ router.get('/', asyncHandler(async (req, res) => {
   });
 }));
 
-router.post('/', requireUser, asyncHandler(async (req, res) => {
+router.post('/', reviewLimit, requireUser, asyncHandler(async (req, res) => {
   const { user, product } = req;
 
   if (!await hasOrdered(user.id, product.id)) {
@@ -109,7 +110,7 @@ router.post('/', requireUser, asyncHandler(async (req, res) => {
   res.status(201).json(toResponse(review, user.id));
 }));
 
-router.put('/:reviewId', requireUser, asyncHandler(async (req, res) => {
+router.put('/:reviewId', reviewLimit, requireUser, asyncHandler(async (req, res) => {
   const { review, user } = req;
   if (review.userId !== user.id) {
     return res.status(403).json({ error: 'You can only edit your own review.' });
@@ -125,7 +126,7 @@ router.put('/:reviewId', requireUser, asyncHandler(async (req, res) => {
   res.json(toResponse(review, user.id));
 }));
 
-router.delete('/:reviewId', requireUser, asyncHandler(async (req, res) => {
+router.delete('/:reviewId', reviewLimit, requireUser, asyncHandler(async (req, res) => {
   const { review, user } = req;
   if (review.userId !== user.id && !isAdmin(user.id)) {
     return res.status(403).json({ error: 'You can only delete your own review.' });

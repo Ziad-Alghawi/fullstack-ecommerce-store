@@ -3,6 +3,7 @@ import './loadEnv.js';
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
+import helmet from 'helmet';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { sequelize } from './models/index.js';
@@ -23,6 +24,7 @@ import stripeRoutes, { handleWebhook } from './routes/stripe.js';
 import { corsOrigins } from './utils/corsOrigins.js';
 import { loadVisitors, requireVisitor } from './middleware/visitor.js';
 import { requireAdmin } from './middleware/admin.js';
+import { apiLimit } from './middleware/rateLimits.js';
 import { CartItem } from './models/CartItem.js';
 import { Order } from './models/Order.js';
 import { Product } from './models/Product.js';
@@ -37,10 +39,24 @@ const PORT = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Render runs the app behind one proxy, which gives the client's IP address that rate limits count by
+app.set('trust proxy', 1);
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      // Logging in talks to Supabase from the browser. Stripe Checkout is a page of its own, so it needs nothing here
+      connectSrc: ["'self'", ...(process.env.SUPABASE_URL ? [new URL(process.env.SUPABASE_URL).origin] : [])]
+    }
+  }
+}));
 app.use(compression());
 app.use(cors({ origin: corsOrigins }));
-app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), handleWebhook);
-app.use(express.json());
+// Before the rate limit, as Stripe sends every event from its own servers
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json', limit: '256kb' }), handleWebhook);
+app.use('/api', apiLimit);
+// The largest request, a product or a review, is well under 10 kB
+app.use(express.json({ limit: '10kb' }));
 
 app.use('/api/products', productRoutes);
 app.use('/api/products/:productId/reviews', reviewRoutes);
@@ -54,10 +70,17 @@ app.use('/api/coupons', couponRoutes);
 app.get('/api/featured-coupon', getFeaturedCoupon);
 app.use('/api/me', meRoutes);
 app.use('/api/stripe', stripeRoutes);
-app.use('/api/admin/coupons', requireAdmin, adminCouponRoutes);
-app.use('/api/admin/orders', requireAdmin, adminOrderRoutes);
-app.use('/api/admin/stats', requireAdmin, adminStatsRoutes);
-app.use('/api/admin', requireAdmin, adminRoutes);
+// Checked once for every admin path, so an admin route can't be added without it
+app.use('/api/admin', requireAdmin);
+app.use('/api/admin/coupons', adminCouponRoutes);
+app.use('/api/admin/orders', adminOrderRoutes);
+app.use('/api/admin/stats', adminStatsRoutes);
+app.use('/api/admin', adminRoutes);
+
+// An unknown API path is an error, not a page for React Router
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'Not found' });
+});
 
 // The built frontend, including the product images from its public folder
 app.use(express.static(path.join(__dirname, 'dist')));

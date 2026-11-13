@@ -1,12 +1,12 @@
 import express from 'express';
 import { asyncHandler } from '../middleware/asyncHandler.js';
-import { findValidCoupon, isExpired } from '../middleware/coupon.js';
+import { couponLimit, findValidCoupon, isExpired } from '../middleware/coupon.js';
 import { Coupon } from '../models/Coupon.js';
 
 const router = express.Router();
 
 // Lets checkout say whether a code works before using it. Only says what a valid code gives
-router.get('/:code', asyncHandler(async (req, res) => {
+router.get('/:code', couponLimit, asyncHandler(async (req, res) => {
   const { coupon, error } = await findValidCoupon(req.params.code);
   if (error) {
     return res.status(404).json({ error });

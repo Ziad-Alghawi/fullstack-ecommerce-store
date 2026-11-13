@@ -10,6 +10,7 @@ import { rejectInvalidId } from '../utils/isUuid.js';
 import { getStockShortage, giveBackStock, takeStock } from '../utils/stock.js';
 import { changeStatus, getStatusChangeRefusal } from '../utils/orderStatus.js';
 import { maskEmail } from '../utils/maskEmail.js';
+import { checkoutLimit } from '../middleware/rateLimits.js';
 
 const router = express.Router();
 
@@ -55,7 +56,7 @@ export async function getOrderRefusal(visitorId, cartItems) {
   return shortage && { status: 409, error: shortage };
 }
 
-router.post('/', readCoupon, asyncHandler(async (req, res) => {
+router.post('/', checkoutLimit, readCoupon, asyncHandler(async (req, res) => {
   const cartItems = await CartItem.findAll({ where: { visitorId: req.visitorId } });
 
   const refusal = await getOrderRefusal(req.visitorId, cartItems);
@@ -126,7 +127,7 @@ router.get('/:orderId', asyncHandler(async (req, res) => {
 }));
 
 // Customers can cancel an order paid on delivery until it ships, which puts its items back in stock
-router.post('/:orderId/cancel', asyncHandler(async (req, res) => {
+router.post('/:orderId/cancel', checkoutLimit, asyncHandler(async (req, res) => {
   const order = await Order.findOne({ where: { id: req.params.orderId, visitorId: req.visitorId } });
   if (!order) {
     return res.status(404).json({ error: 'Order not found' });
