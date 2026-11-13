@@ -1,53 +1,102 @@
 # React E-Commerce Store
 
-A full-stack online store built with React, TypeScript and an Express API, covering the flow from product search to order tracking.
+A full-stack online store built with React, TypeScript and an Express API: product search and filters, a cart, coupons, two ways to pay, order tracking with real statuses, customer accounts and an admin area to run the store.
 
 **Live demo:** https://react-ecommerce-8359.onrender.com
 
 > The demo runs on a free server that sleeps when idle, so the first visit may take about a minute to load.
 
-![Store home page](docs/screenshots/react-store.png)
+![The store's home page with category filters and product cards](docs/screenshots/home.png)
+
+## Try It
+
+- **Pay by card** with Stripe's test card `4242 4242 4242 4242`, any future date and any CVC. No money moves.
+- **Use a coupon:** type `WELCOME10` at checkout for 10% off the items. Checkout also suggests it.
+- **Pay on delivery**, then cancel the order from your orders page before it ships. Its items go back in stock.
+- **Sold out products:** the Straw Wide Brim Sun Hat can't be added to the cart, and the Woven Straw Tote Bag has only 2 left.
+- **Create an account** to keep your cart and orders on every device. What you added as a guest moves to the account when you log in.
+
+The admin area needs an account listed in `ADMIN_USER_IDS`, so the screenshots below show it.
 
 ## Features
 
-- Product catalog with search by name or keyword, category links, a price range and sorting by price, rating or newest, all kept in the URL so links and the back button work
-- Product pages with customer reviews: customers who ordered a product can rate and review it, and its rating includes their reviews
-- Stock for every product: the shop says when only a few are left, out of stock products can't be added to the cart, and placing an order takes its items out of stock with either payment method. Demo products that run low are restocked once a day
-- Cart with quantity updates and item removal
-- Delivery options with a live payment summary
-- Coupons: the customer types a code at checkout and the discount is taken off the items, whether they pay on delivery or by card. Try `WELCOME10` for 10% off
-- Order placement and order history, with each order's status: processing, shipped, delivered or cancelled. Customers can cancel an order paid on delivery until it ships, which puts its items back in stock
-- Card payment with Stripe Checkout in test mode, next to paying on delivery
-- A separate cart and order history for each visitor, without sign-up, limited to 50 orders each
-- Optional accounts with email and password: the cart and orders follow the user to any device, and a guest's cart and orders move to their account when they log in
-- An account page with the user's email and links to their orders and to change their password, and a "Forgot password" email link to choose a new one
-- Admin page to add, edit and delete products and set their category and stock, and to create coupons, for the accounts listed in `ADMIN_USER_IDS`, who can also remove any review
-- Admin overview with the orders of the last 24 hours and 7 days, the week's revenue, low stock products and the 5 best sellers
-- Admin orders page with every customer's orders, filtered by status and payment, where admins mark orders shipped, delivered or cancelled
-- Package tracking with the order's progress
-- Loading, empty and error states, and small notifications that confirm actions like adding to the cart or explain why a change failed, with a retry. Screen readers announce them too
-- Responsive layout for phone and desktop
+**Shopping**
+- Search by name or keyword, browse by category, filter by price and sort by price, rating or newest. Every filter is kept in the URL, so links and the back button work
+- Product pages with verified reviews: customers who ordered a product can rate and review it, and the shop shows a masked name such as "ja\*\*\*"
+- Stock for every product: the shop says when only a few are left, and sold out products can't be added. Demo products that run low are restocked once a day
+- A cart with quantities, three delivery options and a live payment summary
+- Coupons typed at checkout, with the discount worked out by the API every time
+- Order history with each order's status (processing, shipped, delivered or cancelled) and package tracking
+- Cancelling an order paid on delivery until it ships, which puts its items back in stock
+- A separate cart and order history for each visitor without signing up, or optional accounts with email and password, a password reset by email and an account page
+- Notifications that confirm actions or explain what failed, with a retry, and loading, empty and error states everywhere
+
+**Admin**
+- An overview with the orders of the last 24 hours and 7 days, the week's revenue, low stock products and the 5 best sellers
+- Every order in one table, filtered by status and payment, where admins mark orders shipped, delivered or cancelled
+- Products to add, edit and delete, with a category, stock and one of the store's photos
+- Coupons with a percentage, an optional last day, and whether checkout suggests them
+- Removing any review
+
+**Payments**
+- Pay on delivery, or by card with Stripe Checkout in test mode
+- The API builds every Stripe payment from the cart in the database, so nothing the browser sends sets a price, and a coupon becomes a one-time Stripe discount
+- A card order is only created once Stripe confirms the payment, through the webhook or the page the customer returns to, and one payment always makes exactly one order
+
+**Quality**
+- Unit, API and end-to-end tests, run by GitHub Actions on every push
+- Security headers, a content security policy, rate limits, body size limits and admin checks on every admin route
+- Keyboard and screen reader friendly: labelled controls, visible focus, focus kept in place after changes, and an automated accessibility check in the end-to-end tests
+- Lighthouse 100 for performance, accessibility, best practices and SEO on the home, product and checkout pages (local production build, mobile settings)
+
+## Screenshots
+
+| Product page | Checkout |
+| --- | --- |
+| ![A product page with its photo, rating, price and reviews](docs/screenshots/product.png) | ![Checkout with delivery options, the payment summary and a coupon field](docs/screenshots/checkout.png) |
+| **Admin overview and products** | **Admin orders** |
+| ![The admin overview with order counts, revenue, low stock and top products, above the product table](docs/screenshots/admin-products.png) | ![The admin orders table with filters, statuses and buttons to ship or cancel](docs/screenshots/admin-orders.png) |
 
 ## Tech Stack
 
-- **Frontend:** React 19, TypeScript, Vite, React Router, Axios, Day.js
-- **Backend:** Node.js, Express, Sequelize, Postgres on Supabase (SQLite locally)
+- **Frontend:** React 19 with the React Compiler, TypeScript, Vite, React Router, Axios, Day.js
+- **Backend:** Node.js, Express, Sequelize, helmet, express-rate-limit
+- **Database:** Postgres on Supabase in production, SQLite locally
 - **Accounts:** Supabase Auth, with tokens verified in the API using jose
-- **Payments:** Stripe Checkout, in test mode
-- **Testing and tooling:** Vitest, Testing Library, Node test runner, ESLint, GitHub Actions
+- **Payments:** Stripe Checkout in test mode
+- **Testing:** Vitest and Testing Library, the Node test runner, Playwright with axe
+- **Tooling and hosting:** ESLint, GitHub Actions, Render
+
+## Architecture
+
+```text
+Browser ──────────────► Express API (Render) ─────────► Postgres (Supabase)
+  React app              /api/*  JSON routes            SQLite file locally
+  served by the API      /*      the built React app
+     │                       │
+     │ login                 │ checks tokens against Supabase's public keys
+     ▼                       ▼
+Supabase Auth           Stripe Checkout ◄── webhook: checkout.session.completed
+```
+
+- **One service.** In production the Express server serves both the API under `/api` and the built frontend, so they share one origin and need no CORS.
+- **Visitors and accounts.** The browser makes up a visitor ID and sends it as `X-Visitor-Id`, which keeps a cart and orders per browser without an account. A logged in user sends their Supabase token instead. The API verifies it with the project's public keys and uses the user ID in place of the visitor ID.
+- **The API decides.** Prices, discounts, stock, order totals, who is an admin and which status changes are allowed are all worked out on the server. The frontend only shows what the API says.
+- **Stock without transactions.** The local SQLite driver can't hold a transaction open, so taking stock is a single conditional `UPDATE` per item, and an order that runs short gives back what it took. Status changes work the same way, so two cancels at once can't return stock twice.
+- **Schema changes on startup.** `sync()` creates missing tables, and columns added later are added by `server.js` on startup, so a deploy upgrades the Postgres database by itself.
+
+The endpoints are described in [ecommerce-backend/documentation.md](ecommerce-backend/documentation.md).
 
 ## Run Locally
 
 Requires Node.js 22 or newer.
-
-Install the dependencies:
 
 ```bash
 npm install
 npm --prefix ecommerce-backend install
 ```
 
-Start the backend on http://localhost:3000. It creates the database and loads the demo data on first run.
+Start the backend on http://localhost:3000. It creates a SQLite database and loads the demo data on first run.
 
 ```bash
 npm run dev:backend
@@ -59,160 +108,106 @@ In a second terminal, start the frontend on http://localhost:5173:
 npm run dev
 ```
 
-The dev server forwards API requests to the backend, so no configuration is needed. Optional settings are described in [.env.example](.env.example) and [ecommerce-backend/.env.example](ecommerce-backend/.env.example).
+The dev server forwards API requests to the backend, so nothing needs configuring. Without the optional settings below, the store runs in guest-only mode with paying on delivery.
 
-## Database
+## Environment Variables
 
-Locally, the backend keeps its data in a SQLite file, so there's nothing to set up. In production it uses Postgres on Supabase, because the free Render server has no persistent disk: a SQLite file there was wiped on every deploy, restart and sleep, taking every visitor's cart and orders with it.
+The frontend reads `.env.local` when it's built, and the backend reads `ecommerce-backend/.env` when it starts, where real environment variables win. [.env.example](.env.example) and [ecommerce-backend/.env.example](ecommerce-backend/.env.example) describe each one.
 
-To use Postgres, set `DATABASE_URL` to a connection string. For Supabase, copy the Session pooler URL from **Connect** in the project dashboard (the direct connection is IPv6 only) and fill in the database password. The server connects over SSL, creates the tables on startup and adds the demo products and delivery options only when those tables are empty, so data survives restarts and deploys.
-
-```bash
-cp ecommerce-backend/.env.example ecommerce-backend/.env
-# Fill in DATABASE_URL, then:
-npm run dev:backend
-```
-
-The server reads `ecommerce-backend/.env` on startup, and real environment variables take precedence over it. Restart it after changing the file.
-
-Supabase pauses free projects after a week without activity, so a [GitHub Actions workflow](.github/workflows/keep-alive.yml) loads the products from the live API every 3 days. It can also be run by hand from the Actions tab.
-
-## Accounts
-
-Logging in is optional. Without the settings below, the store runs in guest-only mode: the login is hidden and each browser keeps its own cart, as before.
-
-To turn accounts on, use a Supabase project (it can be the same one as the database):
-
-1. In **Authentication > Sign In / Providers**, enable the Email provider. With **Confirm email** on, new users get a link to confirm their address before they can log in.
-2. In **Authentication > URL Configuration**, set the **Site URL** to the store's URL and add it, plus `http://localhost:5173` for local development, to the **Redirect URLs**. Add `/reset-password` on each too, such as `https://<your-store>/reset-password`, or use a wildcard like `https://<your-store>/**`. The confirmation and password reset links come back to one of these, and Supabase sends any other address to the Site URL instead.
-3. In **Project Settings > JWT Keys**, make sure the project signs tokens with an asymmetric key (ECC P-256 or RSA, the default for new projects). The API checks tokens against the project's public keys, so it needs no secret.
-4. Set the variables. `VITE_` ones are read when the frontend is built, so rebuild after changing them.
-
-| Variable | Where | Value |
+| Variable | Where | What it does |
 | --- | --- | --- |
-| `VITE_SUPABASE_URL` | Frontend (`.env.local`) | Project URL, `https://<project-ref>.supabase.co` |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Frontend (`.env.local`) | Publishable key (`sb_publishable_...`) from **Project Settings > API Keys** |
-| `SUPABASE_URL` | Backend (`ecommerce-backend/.env`) | The same Project URL |
-| `ADMIN_USER_IDS` | Backend (`ecommerce-backend/.env`) | Optional. User IDs of the admins, comma-separated (see below) |
+| `VITE_SUPABASE_URL` | Frontend | Supabase project URL. With the key below, turns on login |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Frontend | Supabase publishable key (`sb_publishable_...`), safe to ship to the browser |
+| `VITE_API_URL` | Frontend | The API's URL, only when it's hosted apart from the frontend |
+| `VITE_SITE_URL` | Frontend | The store's address for link preview images. Defaults to the live demo |
+| `DATABASE_URL` | Backend | Postgres connection string. Without it, a local SQLite file is used |
+| `SUPABASE_URL` | Backend | The same project URL, to verify login tokens and allow Supabase in the content security policy |
+| `ADMIN_USER_IDS` | Backend | Comma-separated Supabase user IDs of the admins |
+| `STRIPE_SECRET_KEY` | Backend | Stripe test key (`sk_test_...`). Without it, card payment is hidden |
+| `STRIPE_WEBHOOK_SECRET` | Backend | Signing secret of the Stripe webhook (`whsec_...`) |
+| `CORS_ORIGIN` | Backend | Other origins allowed to call the API. Defaults to the Vite dev server, and to none in production |
+| `DEMO_RESTOCK` | Backend | `false` turns off the daily restock of demo products |
+| `PORT` | Backend | Server port, 3000 by default. Render sets it |
 
-The publishable key is meant to be public. The secret key and the database password are never needed by the frontend.
-
-When a user is logged in, the frontend sends their access token with each API request. The API verifies it and uses the user ID in place of the visitor ID, so the cart and orders are the same on every device. On the first request after logging in, anything the browser had as a guest moves to the account. An invalid or expired token gets `401`, and the frontend then logs out and carries on as a guest.
-
-### Forgotten passwords
-
-**Forgot password?** on the login page asks for the email and has Supabase send a link to it. The page says the same whether or not the email has an account, so it can't be used to find out who shops here. The link logs the user in on `/reset-password`, where they choose a new password, and then goes to their account page. A link that was already used or has expired says so and offers a new one. The account page links to the same form to change the password while logged in.
-
-Supabase's built-in email service is meant for trying things out: it only sends to the addresses of the project's team and only a few emails an hour. For real customers, set up your own SMTP server in **Authentication > Emails > SMTP Settings**.
-
-### Admins
-
-Admins get an **Admin** link in the header, to a page where they add, edit and delete products, set each product's category and stock, and manage coupons. A new product uses one of the store's existing photos and starts without a rating.
-
-To make an account an admin, sign up in the store, then in the Supabase dashboard open **Authentication > Users**, click the user and copy their **User UID**. Put it in `ADMIN_USER_IDS` in the backend's settings (several IDs are separated by commas) and restart the backend.
-
-The API decides who is an admin from the verified token alone, so nothing the browser sends can make a user an admin: admin routes answer `401` without a valid token and `403` for anyone else. The frontend only shows the link when `GET /api/me` says the user is an admin.
-
-Deleting a product hides it rather than removing it: it disappears from the shop and search, but carts and past orders that have it keep working, and the orders page shows it as no longer available.
-
-### Reviews
-
-Every product has its own page, linked from the shop and from past orders, with its reviews below. A logged in user who has ordered the product can give it 1 to 5 stars and an optional text of up to 500 characters, then edit or delete it. Each user can review a product once, and every review is marked as a verified purchase. Guests and users who haven't ordered the product see why they can't review it. Admins can delete any review.
-
-The API checks all of this itself, and takes the user from the verified token only. A review shows a masked name, the first 2 characters of the reviewer's email followed by "***" (such as "ja***"), or "Customer" when the token has no email. Only this masked name is saved with the review, never the email.
-
-The demo products came with a rating, such as 4.5 stars from 87 ratings. Reviews are added to it: after every new, edited or deleted review, the API works out the average of the demo rating and the reviews, rounded to the nearest half star, and saves it on the product. The shop and the product page read the same saved rating, so they always match.
-
-## Coupons
-
-Admins create coupons on the admin page, with a code, a percentage off, an optional last day, whether it's active and whether it's featured. Checkout suggests the newest featured coupon that's active and hasn't expired, and suggests nothing when there's none. The store starts with `WELCOME10`, 10% off with no end date, featured.
-
-Checkout only sends the code. The API looks it up and works out the discount for the payment summary, the order and the card payment every time, so a discount can't be changed in the browser and a coupon that's turned off or expires before paying stops counting. The discount comes off the items before shipping and tax. For card payment, the API gives Stripe a coupon made for that one payment, so Stripe's page shows the discount and charges the same total.
-
-## Demo Restock
-
-Anyone can order from the public demo, so its products would sell out for good. Once a day, every demo product with fewer than 5 left goes back to the stock it started with, such as 15 basketballs. Products that start low stay that way on purpose: the sun hat starts sold out and the tote bag with 2 left, to show how the shop looks then. Products an admin added are never restocked, as their stock is the admin's to manage.
-
-There's no scheduled job, because the free server sleeps. The server checks when it starts and when products are requested, and the time of the last restock is kept in the database, so restarts don't restock more often. Set `DEMO_RESTOCK=false` in the backend's settings to turn it off, for example for a store with real stock.
-
-## Card Payment
-
-Checkout offers **Pay with card** next to **Pay on delivery**, for guests and logged in users alike. It uses Stripe Checkout in test mode, so no money moves: pay with the test card `4242 4242 4242 4242`, any future date and any CVC. Without `STRIPE_SECRET_KEY`, the button is hidden and checkout works as before.
-
-- The API builds the Checkout Session from the cart in the database: a line per product, plus shipping and tax from the same payment summary checkout shows, so Stripe charges exactly the order total. Nothing the browser sends sets a price.
-- The order is only created once Stripe says the session is paid, by whichever comes first: the webhook (`checkout.session.completed`) or the success page Stripe sends the customer back to, which asks the API to check the session. So it also works locally without a webhook. An order's Stripe session ID is unique in the database, so one payment makes exactly one order, and only the request that created it empties the cart.
-- Cancelling on Stripe's page goes back to checkout with the cart unchanged.
-- Stock is checked before the customer goes to Stripe and taken when the payment is confirmed. The order is already paid by then, so if an item sold out in the meantime, its stock stops at 0 instead of going negative.
-- The Stripe sandbox is shared with another app, so every session is tagged with `app: "react-ecommerce"` in its metadata, and the webhook answers `200` and does nothing for events without the tag.
-- Only a test key (`sk_test_` or `rk_test_`) turns card payment on. With a live key, the server logs a warning and leaves it off.
-- Orders show whether they were paid by card or are paid on delivery.
-
-To set it up, in the Stripe Dashboard in test mode:
-
-1. Copy the secret key from **Developers > API keys** into `STRIPE_SECRET_KEY`.
-2. For the deployed store, add an endpoint in **Developers > Webhooks** with the URL `https://<your-store>/api/stripe/webhook` and the event `checkout.session.completed`, then copy its signing secret into `STRIPE_WEBHOOK_SECRET`. Locally, the webhook is optional: `stripe listen --forward-to localhost:3000/api/stripe/webhook` prints a signing secret to use.
-
-| Variable | Where | Value |
-| --- | --- | --- |
-| `STRIPE_SECRET_KEY` | Backend (`ecommerce-backend/.env`) | Test secret key (`sk_test_...`) |
-| `STRIPE_WEBHOOK_SECRET` | Backend (`ecommerce-backend/.env`) | Webhook signing secret (`whsec_...`) |
-
-The frontend needs no Stripe key, because the customer pays on Stripe's own page.
-
-## Link Previews
-
-The page has a description and Open Graph tags, so a link shared on LinkedIn, X or in a chat shows the store's name, a short description and a preview image ([public/og-image.jpg](public/og-image.jpg), 1200 x 630). Link previews only load an image from a full URL, so the build fills in the store's address: the live demo by default, or `VITE_SITE_URL` when the store runs somewhere else. LinkedIn keeps a preview for a while, so after changing it, ask for a fresh one in the [Post Inspector](https://www.linkedin.com/post-inspector/).
-
-## Tests
-
-Frontend:
+## Testing
 
 ```bash
-npm test
-npm run lint
-npm run build
+npm run lint && npm test && npm run build
+npm --prefix ecommerce-backend run lint && npm --prefix ecommerce-backend test
 ```
 
-Backend (starts a real server on a free port and calls the API):
-
-```bash
-npm --prefix ecommerce-backend test
-npm --prefix ecommerce-backend run lint
-```
-
-The backend tests use SQLite even when `DATABASE_URL` is set, because they delete data. To run them against Postgres, set `TEST_DATABASE_URL` to a throwaway database. The login tests sign their own tokens and serve the public key from a local stand-in for Supabase, so they need no project either. The card payment tests do the same with a local stand-in for the Stripe API, and sign their own webhook events.
-
-End-to-end tests with Playwright click through a production build of the store, served by the backend on a fresh SQLite database. A local stand-in for Supabase Auth logs users in, and card payment stays off, so no Supabase project or Stripe key is needed. They cover browsing and search, ordering as a guest, coupons, stock limits, cancelling and an admin shipping an order:
+- **Frontend unit tests** (Vitest, Testing Library) render pages and components with a stubbed API.
+- **API tests** (Node test runner) start the real server on a free port with a throwaway SQLite database and call it over HTTP. Local stand-ins for Supabase Auth and the Stripe API sign their own tokens and webhook events, so no accounts or keys are needed. To run them against Postgres, set `TEST_DATABASE_URL` to a throwaway database.
+- **End-to-end tests** (Playwright) click through a production build of the store, served by the backend on a fresh SQLite database, with a stand-in for Supabase Auth and card payment off. They cover browsing, filtering and search, a guest order paid on delivery, coupons, stock limits, cancelling, an admin shipping an order, keyboard focus and an axe accessibility check of the new pages.
 
 ```bash
 npx playwright install chromium   # once
 npm run test:e2e
 ```
 
-The run builds the frontend into `ecommerce-backend/dist` with the test settings, so run `npm run build` again before starting the backend on its own.
+The end-to-end run builds the frontend into `ecommerce-backend/dist` with its test settings, so run `npm run build` again before starting the backend on its own.
 
-GitHub Actions runs all of these on every push, with the end-to-end tests as a separate job.
+GitHub Actions runs the checks on every push, with the end-to-end tests as a separate job that uploads a report when they fail.
+
+## Security
+
+- helmet sets security headers, including a content security policy that only allows the store's own scripts and connections to the API and Supabase
+- Rate limits per IP address: 1000 API requests per 15 minutes, and lower limits for checking coupon codes, placing and cancelling orders, writing reviews and checking login tokens. Every request that sends a coupon code shares one limit, so codes can't be guessed through another route. Logging in itself goes to Supabase, which limits it
+- JSON bodies are limited to 10 kB
+- Every `/api/admin` path checks for an admin's verified token before any route runs, and who is an admin is only decided from the token
+- In production, CORS allows no other origins unless `CORS_ORIGIN` lists them
+- Reviews and orders save a masked name instead of the customer's email
+
+## Deployment
+
+[render.yaml](render.yaml) describes the Render service: it builds the frontend, installs the backend and starts it. Set the variables marked `sync: false` in the Render dashboard, and redeploy after changing a `VITE_` one, as they're read by the build.
+
+### Database
+
+Locally, the backend keeps its data in a SQLite file, so there's nothing to set up. In production it uses Postgres on Supabase, because the free Render server has no persistent disk.
+
+For Supabase, copy the Session pooler URL from **Connect** in the project dashboard (the direct connection is IPv6 only), fill in the database password and set it as `DATABASE_URL`. The server connects over SSL, creates the tables and adds any new columns on startup, and adds the demo data only to empty tables, so data survives restarts and deploys. When the status column is first added, older orders whose packages have all arrived start as delivered, and the rest as processing.
+
+Supabase pauses free projects after a week without activity, so a [GitHub Actions workflow](.github/workflows/keep-alive.yml) loads the products from the live API every 3 days.
+
+### Accounts
+
+1. In **Authentication > Sign In / Providers**, enable the Email provider.
+2. In **Authentication > URL Configuration**, set the **Site URL** to the store's URL and add it, plus `http://localhost:5173`, to the **Redirect URLs**, with `/reset-password` on each or a wildcard like `https://<your-store>/**`.
+3. In **Project Settings > JWT Keys**, make sure the project signs tokens with an asymmetric key (the default for new projects). The API checks tokens against the public keys, so it needs no secret.
+4. Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_URL`.
+
+To make an account an admin, sign up in the store, copy the user's **User UID** from **Authentication > Users**, add it to `ADMIN_USER_IDS` and restart the backend.
+
+Supabase's built-in email service only sends to the project's team and a few emails an hour. For real customers, set up SMTP in **Authentication > Emails > SMTP Settings**.
+
+### Card Payment
+
+In the Stripe Dashboard in test mode, copy the secret key from **Developers > API keys** into `STRIPE_SECRET_KEY`. For the deployed store, add a webhook endpoint at `https://<your-store>/api/stripe/webhook` for the event `checkout.session.completed` and copy its signing secret into `STRIPE_WEBHOOK_SECRET`. Locally the webhook is optional, as the page Stripe returns to confirms the payment too. Only a test key turns card payment on.
+
+The Stripe sandbox is shared with another app, so every session is tagged with `app: "react-ecommerce"` and the webhook ignores events without the tag.
 
 ## Project Structure
 
 ```text
 .
-├── .github/workflows/    # CI pipeline and database keep-alive
+├── .github/workflows/    # CI (checks and end-to-end tests) and the database keep-alive
 ├── docs/screenshots/     # README images
+├── e2e/                  # Playwright tests and the server they run against
 ├── ecommerce-backend/    # Express API
-│   ├── defaultData/      # Demo products and delivery options
-│   ├── middleware/       # Visitor ID, login tokens, admin check and async error handling
+│   ├── defaultData/      # Demo products, delivery options and coupons
+│   ├── middleware/       # Visitor ID, login tokens, admin check, coupons and rate limits
 │   ├── models/           # Sequelize models
 │   ├── routes/           # API routes
 │   ├── test/             # API tests
-│   ├── utils/            # Shared helpers
+│   ├── utils/            # Stock, order status, demo restock and other helpers
 │   ├── documentation.md  # API reference
 │   └── server.js         # Server entry point
-├── public/               # Favicon, product photos and rating images
+├── public/               # Favicon, link preview image and product photos
 ├── src/
 │   ├── components/       # Shared components
-│   ├── pages/            # Home, product and reviews, checkout, orders, tracking, login, account, admin
 │   ├── hooks/            # Shared hooks
+│   ├── pages/            # Home, product, checkout, orders, tracking, login, account and admin pages
 │   ├── types/            # Shared TypeScript types
 │   └── utils/            # Helpers and their tests
 └── render.yaml           # Render deployment config
@@ -220,6 +215,6 @@ GitHub Actions runs all of these on every push, with the end-to-end tests as a s
 
 ## Background
 
-This project started from a React course. The backend is based on the [SuperSimpleDev course starter code](https://github.com/SuperSimpleDev/ecommerce-project), and I built the frontend while following the course, then migrated it to TypeScript. Since then I've extended it with a separate cart and orders per visitor, optional accounts with Supabase Auth, an admin page for products, product pages with reviews, card payment with Stripe, an order limit, loading, empty and error states, input validation, frontend and backend tests, CI and deployment config.
+This project started from a React course. The backend is based on the [SuperSimpleDev course starter code](https://github.com/SuperSimpleDev/ecommerce-project), and I built the frontend while following the course, then migrated it to TypeScript. Since then I've extended it with a separate cart and orders per visitor, accounts with Supabase Auth, product pages with reviews, categories and filters, stock, coupons, card payment with Stripe, order statuses with an admin orders dashboard and overview, a security pass, accessibility work, unit, API and end-to-end tests, CI and deployment config.
 
 Product photos are from Unsplash and Pexels and credited in [CREDITS.md](public/images/products/CREDITS.md).
