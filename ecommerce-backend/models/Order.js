@@ -36,6 +36,10 @@ export const Order = sequelize.define('Order', {
     allowNull: false,
     defaultValue: 'delivery'
   },
+  // The customer's masked email, like reviews show it. Null for a guest
+  customerName: {
+    type: DataTypes.STRING
+  },
   // One of ORDER_STATUSES. Admins move it forward, and customers can cancel an order paid on delivery
   status: {
     type: DataTypes.STRING,

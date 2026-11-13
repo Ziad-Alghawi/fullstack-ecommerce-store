@@ -638,7 +638,9 @@ test("admin routes need an admin's valid token", async () => {
     ['DELETE', `/api/admin/products/${productId}`],
     ['GET', '/api/admin/coupons'],
     ['POST', '/api/admin/coupons', newCoupon],
-    ['PUT', `/api/admin/coupons/${randomUUID()}`, newCoupon]
+    ['PUT', `/api/admin/coupons/${randomUUID()}`, newCoupon],
+    ['GET', '/api/admin/orders'],
+    ['PATCH', `/api/admin/orders/${randomUUID()}`, { status: 'shipped' }]
   ];
   const refusals = [
     ['without a token', {}, 401],
@@ -861,6 +863,96 @@ test('an order paid by card cannot be cancelled', async () => {
   const refused = await cancelOrder(visitorId, order.id);
   assert.equal(refused.status, 409);
   assert.match((await refused.json()).error, /paid by card/);
+});
+
+async function getAdminOrders(query = '') {
+  const response = await api(`/api/admin/orders${query}`, await asAdmin());
+  assert.equal(response.status, 200);
+  return response.json();
+}
+
+async function setOrderStatus(orderId, status) {
+  return api(`/api/admin/orders/${orderId}`, { ...await asAdmin(), method: 'PATCH', body: { status } });
+}
+
+test('an admin lists the newest orders with a masked customer, and filters them', async () => {
+  const guestId = randomUUID();
+  await addToCart(guestId);
+  const guestOrder = await (await placeOrder(guestId)).json();
+
+  const customer = { token: await createToken(randomUUID(), { email: 'mary.major@example.com' }) };
+  await addProduct(customer, productId, 3);
+  const customerOrder = await (await placeOrder(customer)).json();
+
+  const cardCustomer = { token: await createToken(randomUUID(), { email: 'card.holder@example.com' }) };
+  await addToCart(cardCustomer);
+  const session = await startCheckout(cardCustomer);
+  session.payment_status = 'paid';
+  const cardOrder = await (await getPaidOrder(cardCustomer, session)).json();
+
+  const { orders, total } = await getAdminOrders();
+  assert.equal(total, orders.length);
+  assert.deepEqual(orders.slice(0, 3).map(({ id }) => id), [cardOrder.id, customerOrder.id, guestOrder.id]);
+  assert.deepEqual(orders[1], {
+    id: customerOrder.id,
+    orderTimeMs: customerOrder.orderTimeMs,
+    customerName: 'ma***',
+    items: [{ name: 'Gray Hand Knit Wool Socks', quantity: 3 }],
+    totalCostCents: customerOrder.totalCostCents,
+    paymentMethod: 'delivery',
+    status: 'processing',
+    nextStatuses: ['shipped', 'cancelled']
+  });
+  assert.equal(orders[0].customerName, 'ca***');
+  assert.deepEqual(orders[0].nextStatuses, ['shipped']);
+  assert.equal(orders[2].customerName, 'Guest');
+  assert.ok(!JSON.stringify(orders).includes('example.com'));
+  assert.ok(!JSON.stringify(orders).includes(guestId));
+
+  const cardOrders = await getAdminOrders('?paymentMethod=card');
+  assert.ok(cardOrders.orders.some(({ id }) => id === cardOrder.id));
+  assert.ok(cardOrders.orders.every(({ paymentMethod }) => paymentMethod === 'card'));
+  await setOrderStatus(guestOrder.id, 'shipped');
+  const shipped = await getAdminOrders('?status=shipped&paymentMethod=delivery');
+  assert.deepEqual(shipped.orders.map(({ id }) => id), [guestOrder.id]);
+
+  for (const query of ['?status=lost', '?paymentMethod=cash', '?status=shipped&status=delivered']) {
+    const response = await api(`/api/admin/orders${query}`, await asAdmin());
+    assert.equal(response.status, 400, query);
+  }
+});
+
+test('an admin ships and delivers an order, or cancels it before it ships', async () => {
+  const product = await createProduct({ ...newProduct, stock: 5 });
+  const [shippedId, cancelledId] = [randomUUID(), randomUUID()];
+  for (const visitorId of [shippedId, cancelledId]) {
+    await addProduct(visitorId, product.id, 2);
+    await placeOrder(visitorId);
+  }
+  const [toShip] = await getOrders(shippedId);
+  const [toCancel] = await getOrders(cancelledId);
+  assert.equal(await getStock(product.id), 1);
+
+  const shipped = await setOrderStatus(toShip.id, 'shipped');
+  assert.equal(shipped.status, 200);
+  assert.deepEqual(await shipped.json().then(({ status, nextStatuses }) => ({ status, nextStatuses })),
+    { status: 'shipped', nextStatuses: ['delivered'] });
+  assert.equal((await getOrders(shippedId))[0].status, 'shipped');
+
+  // Too late to cancel, for the customer and the admin
+  assert.equal((await cancelOrder(shippedId, toShip.id)).status, 409);
+  const refused = await setOrderStatus(toShip.id, 'cancelled');
+  assert.equal(refused.status, 409);
+  assert.equal((await refused.json()).error, "A shipped order can't be marked cancelled.");
+  assert.equal((await setOrderStatus(toShip.id, 'processing')).status, 409);
+  assert.equal((await setOrderStatus(toShip.id, 'delivered')).status, 200);
+  assert.equal((await setOrderStatus(toShip.id, 'shipped')).status, 409);
+
+  assert.equal((await setOrderStatus(toCancel.id, 'lost')).status, 400);
+  assert.equal((await setOrderStatus(randomUUID(), 'shipped')).status, 404);
+  assert.equal((await setOrderStatus(toCancel.id, 'cancelled')).status, 200);
+  assert.equal(await getStock(product.id), 3);
+  await deleteProduct(product);
 });
 
 test('orders from before statuses are delivered once all their packages have arrived', { skip: Boolean(process.env.TEST_DATABASE_URL) && 'needs the SQLite file' }, async () => {

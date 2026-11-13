@@ -22,6 +22,11 @@ export function getStatusChangeRefusal(order, status) {
   return null;
 }
 
+// The statuses an admin can move the order to now
+export function getNextStatuses(order) {
+  return NEXT_STATUSES[order.status].filter((status) => !getStatusChangeRefusal(order, status));
+}
+
 // One statement checks and changes the status, so two requests at once can't both cancel the
 // order and give its stock back twice. Returns whether this request changed it
 export async function changeStatus(order, status) {

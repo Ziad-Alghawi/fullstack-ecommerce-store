@@ -558,6 +558,52 @@ Hides a product from the store. Carts and orders that have it keep working.
 - Status 204 (No response)
 - Status 404 if the product doesn't exist or was already deleted
 
+## GET /api/admin/orders
+Returns the newest 100 orders of every customer, newest first, for the admin orders page.
+
+**Query Parameters:**
+- `status` (optional): `processing`, `shipped`, `delivered` or `cancelled`
+- `paymentMethod` (optional): `card` or `delivery`
+
+**Response:**
+```js
+{
+  "orders": [
+    {
+      "id": "uuid",
+      "orderTimeMs": "number",
+      // The masked email, like "ma***", "Customer" for a user without an email, or "Guest"
+      "customerName": "string",
+      "items": [{ "name": "string", "quantity": "number" }],
+      "totalCostCents": "number",
+      "paymentMethod": "string",
+      "status": "string",
+      // The statuses the order can be moved to now
+      "nextStatuses": ["string"]
+    }
+  ],
+  // How many orders match the filters, including those not listed
+  "total": "number"
+}
+```
+- Status 400 with the reason if a filter is invalid
+
+## PATCH /api/admin/orders/:orderId
+Moves an order to its next status: processing to shipped or cancelled, shipped to delivered. Only orders paid on delivery can be cancelled, which puts their items back in stock.
+
+**Request:**
+```js
+{
+  "status": "string"
+}
+```
+
+**Response:**
+- Status 200 with the order, in the same shape as in [GET /api/admin/orders](#get-apiadminorders)
+- Status 400 if the status isn't one of the four
+- Status 404 if the order doesn't exist
+- Status 409 with the reason if the order can't move to that status
+
 ## GET /api/admin/coupons
 Returns every coupon, oldest first, including those turned off or expired.
 

@@ -7,6 +7,7 @@ import { Order } from '../models/Order.js';
 import { Product } from '../models/Product.js';
 import { MAX_REVIEW_TEXT_LENGTH, Review } from '../models/Review.js';
 import { isUuid } from '../utils/isUuid.js';
+import { maskEmail } from '../utils/maskEmail.js';
 
 // Mounted under /api/products/:productId, so it needs the parent's productId
 const router = express.Router({ mergeParams: true });
@@ -34,12 +35,6 @@ router.param('reviewId', asyncHandler(async (req, res, next) => {
 function toResponse(review, userId) {
   const { userId: authorId, ...fields } = review.toJSON();
   return { ...fields, isMine: authorId === userId };
-}
-
-// "jane.doe@example.com" is shown as "ja***", so the email can't be worked out from it
-function getAuthorName(email) {
-  const localPart = email?.split('@')[0];
-  return localPart ? `${localPart.slice(0, 2)}***` : 'Customer';
 }
 
 // Logged in users keep their orders, so this is every order the user has placed. A cancelled one doesn't count
@@ -108,7 +103,7 @@ router.post('/', requireUser, asyncHandler(async (req, res) => {
     ...fields,
     productId: product.id,
     userId: user.id,
-    authorName: getAuthorName(user.email)
+    authorName: maskEmail(user.email)
   });
   await updateRating(product);
   res.status(201).json(toResponse(review, user.id));

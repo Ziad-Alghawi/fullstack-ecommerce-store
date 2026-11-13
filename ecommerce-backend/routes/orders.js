@@ -9,6 +9,7 @@ import { readCoupon } from '../middleware/coupon.js';
 import { rejectInvalidId } from '../utils/isUuid.js';
 import { getStockShortage, giveBackStock, takeStock } from '../utils/stock.js';
 import { changeStatus, getStatusChangeRefusal } from '../utils/orderStatus.js';
+import { maskEmail } from '../utils/maskEmail.js';
 
 const router = express.Router();
 
@@ -70,7 +71,7 @@ router.post('/', readCoupon, asyncHandler(async (req, res) => {
 
   let order;
   try {
-    order = await createOrder(req.visitorId, cartItems, { totalCostCents });
+    order = await createOrder(req.visitorId, cartItems, { totalCostCents, customerName: getCustomerName(req.user) });
   } catch (error) {
     await giveBackStock(cartItems);
     throw error;
@@ -81,8 +82,15 @@ router.post('/', readCoupon, asyncHandler(async (req, res) => {
   res.status(201).json(order);
 }));
 
+// What the admin orders page shows for the customer, saved with the order. Null for a guest
+export function getCustomerName(user) {
+  return user ? maskEmail(user.email) : null;
+}
+
 // Items are { productId, quantity, deliveryOptionId }, from the cart or from a paid Stripe session
-export async function createOrder(visitorId, items, { totalCostCents, paymentMethod = 'delivery', stripeSessionId = null }) {
+export async function createOrder(visitorId, items, {
+  totalCostCents, paymentMethod = 'delivery', stripeSessionId = null, customerName = null
+}) {
   const products = await Promise.all(items.map(async ({ productId, quantity, deliveryOptionId }) => ({
     productId,
     quantity,
@@ -95,6 +103,7 @@ export async function createOrder(visitorId, items, { totalCostCents, paymentMet
     products,
     paymentMethod,
     stripeSessionId,
+    customerName,
     visitorId
   });
 }

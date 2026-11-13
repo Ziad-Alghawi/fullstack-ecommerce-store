@@ -5,7 +5,7 @@ import { CartItem } from '../models/CartItem.js';
 import { Order } from '../models/Order.js';
 import { Product } from '../models/Product.js';
 import { calculatePaymentSummary } from './paymentSummary.js';
-import { createOrder, getOrderRefusal } from './orders.js';
+import { createOrder, getCustomerName, getOrderRefusal } from './orders.js';
 import { corsOrigins } from '../utils/corsOrigins.js';
 import { stripe } from '../utils/stripe.js';
 import { takePaidStock } from '../utils/stock.js';
@@ -55,7 +55,8 @@ async function fulfillCheckout(session) {
     order = await createOrder(visitorId, items, {
       totalCostCents: session.amount_total,
       paymentMethod: 'card',
-      stripeSessionId: session.id
+      stripeSessionId: session.id,
+      customerName: session.metadata.customerName ?? null
     });
   } catch (error) {
     const orderFromOtherPath = await findOrder();
@@ -122,7 +123,7 @@ router.post('/checkout-sessions', requireVisitor, readCoupon, asyncHandler(async
     mode: 'payment',
     line_items: [...productLines, ...extraLines],
     discounts,
-    metadata: { app: APP_TAG, visitorId: req.visitorId },
+    metadata: { app: APP_TAG, visitorId: req.visitorId, ...(req.user && { customerName: getCustomerName(req.user) }) },
     success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/checkout`
   });

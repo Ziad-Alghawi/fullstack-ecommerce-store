@@ -35,6 +35,7 @@ const ForgotPasswordPage = lazyPage(() => import('./pages/ForgotPasswordPage').t
 const ResetPasswordPage = lazyPage(() => import('./pages/ResetPasswordPage').then((module) => module.ResetPasswordPage));
 const AccountPage = lazyPage(() => import('./pages/AccountPage').then((module) => module.AccountPage));
 const AdminPage = lazyPage(() => import('./pages/admin/AdminPage').then((module) => module.AdminPage));
+const AdminOrdersPage = lazyPage(() => import('./pages/admin/AdminOrdersPage').then((module) => module.AdminOrdersPage));
 const ProductPage = lazyPage(() => import('./pages/product/ProductPage').then((module) => module.ProductPage));
 
 // The API answers a request it won't accept (4xx) with the reason. Repeating it can't help
@@ -145,6 +146,7 @@ function App() {
                     {isAuthEnabled && <Route path="reset-password" element={<ResetPasswordPage cart={cart} />} />}
                     {isAuthEnabled && <Route path="account" element={<AccountPage cart={cart} />} />}
                     {isAuthEnabled && <Route path="admin" element={<AdminPage cart={cart} onRetry={retry} />} />}
+                    {isAuthEnabled && <Route path="admin/orders" element={<AdminOrdersPage cart={cart} onRetry={retry} />} />}
                     <Route path="*" element={<NotFoundPage cart={cart} />} />
                   </Routes>
                 </Suspense>

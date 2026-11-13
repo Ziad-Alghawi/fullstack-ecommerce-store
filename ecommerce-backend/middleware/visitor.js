@@ -2,7 +2,7 @@ import { Account } from '../models/Account.js';
 import { CartItem } from '../models/CartItem.js';
 import { Order } from '../models/Order.js';
 import { isUuid } from '../utils/isUuid.js';
-import { getUserId } from './auth.js';
+import { getUser } from './auth.js';
 
 // The database is shared and small, so only the most recent guests keep their
 // cart and orders. Logged in users always keep theirs. MAX_VISITORS can lower it, for example in tests
@@ -89,7 +89,8 @@ export async function loadVisitors() {
 // user's, or else the guest's. Both are kept under visitorId and have the order limit
 export async function requireVisitor(req, res, next) {
   try {
-    const userId = await getUserId(req);
+    req.user = await getUser(req);
+    const userId = req.user?.id;
     const guestId = req.get('X-Visitor-Id');
     if (!userId && !isUuid(guestId)) {
       return res.status(400).json({ error: 'Missing or invalid X-Visitor-Id header' });

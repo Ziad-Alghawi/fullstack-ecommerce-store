@@ -2,6 +2,50 @@
   max-width: 1100px;
 }
 
+.admin-nav {
+  display: flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-nav-link {
+  margin-bottom: -1px;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+}
+
+.admin-nav-link:hover {
+  color: var(--color-text);
+}
+
+.admin-nav-link.active {
+  border-bottom-color: var(--color-brand);
+  color: var(--color-brand-active);
+}
+
+.admin-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.admin-filters .form-field {
+  flex: 1 1 150px;
+  max-width: 240px;
+}
+
+.admin-empty {
+  margin: 0;
+  padding: var(--space-6) var(--space-4);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
 .admin-heading {
   display: flex;
   flex-wrap: wrap;
@@ -204,6 +248,26 @@
   color: var(--color-text-muted);
 }
 
+.admin-order-id {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-order-cell-id {
+  white-space: nowrap;
+}
+
+.admin-order-items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-order-cell-payment {
+  white-space: nowrap;
+}
+
 /* As narrow as its buttons, so the other columns get the rest */
 .admin-cell-actions {
   width: 1%;
@@ -256,9 +320,29 @@
     grid-row: span 5;
   }
 
-  .admin-coupons-table tr {
+  .admin-coupons-table tr,
+  .admin-orders-table tr {
     grid-template-columns: minmax(0, 1fr) auto;
     row-gap: var(--space-1);
+  }
+
+  /* Each order is a card: date and status, then one line per detail */
+  .admin-orders-table td {
+    grid-column: 1 / -1;
+  }
+
+  .admin-orders-table .admin-order-cell-id {
+    grid-column: 1;
+  }
+
+  .admin-orders-table .admin-order-cell-status {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .admin-orders-table td[data-label]::before {
+    content: attr(data-label) ": ";
+    color: var(--color-text-muted);
   }
 
   .admin-cell-actions {

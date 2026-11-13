@@ -96,5 +96,25 @@ export interface Order {
   status: OrderStatus;
 }
 
+export interface AdminOrder {
+  id: string;
+  orderTimeMs: number;
+  // The customer's masked email, "Customer" without one, or "Guest"
+  customerName: string;
+  items: { name: string; quantity: number }[];
+  totalCostCents: number;
+  paymentMethod: Order['paymentMethod'];
+  status: OrderStatus;
+  // Where an admin can move the order now
+  nextStatuses: OrderStatus[];
+}
+
+export interface AdminOrderList {
+  // The newest orders that match the filters
+  orders: AdminOrder[];
+  // How many orders match, including those not listed
+  total: number;
+}
+
 export type LoadCart = () => Promise<void>;
 export type CartStatus = 'loading' | 'ready' | 'failed';
