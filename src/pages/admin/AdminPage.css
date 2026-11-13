@@ -27,6 +27,111 @@
   color: var(--color-brand-active);
 }
 
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: 0 0 var(--space-4);
+}
+
+.admin-stat {
+  padding: var(--space-4) var(--space-5);
+}
+
+.admin-stat dt {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.admin-stat dd {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.admin-overview-lists {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.admin-overview-card {
+  padding: var(--space-4) var(--space-5);
+}
+
+.admin-overview-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-md);
+}
+
+.admin-overview-count {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-hover);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.admin-overview-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-sm);
+}
+
+.admin-overview-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.admin-overview-list .stock-note {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.admin-overview-product {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.admin-overview-product:hover {
+  color: var(--color-brand);
+  text-decoration: underline;
+}
+
+.admin-overview-product .product-thumbnail {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+}
+
+.admin-overview-sold {
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-overview-empty {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
 .admin-filters {
   display: flex;
   flex-wrap: wrap;
@@ -286,7 +391,30 @@
 }
 
 /* Each product becomes a small card: picture, details, then the buttons */
+@media (max-width: 800px) {
+  .admin-overview-lists {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 640px) {
+  .admin-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+  }
+
+  .admin-stat {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .admin-stat:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .admin-stat dd {
+    font-size: var(--font-size-xl);
+  }
+
   .admin-form {
     padding: var(--space-4);
   }

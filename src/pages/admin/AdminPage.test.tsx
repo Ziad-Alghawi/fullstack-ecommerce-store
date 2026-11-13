@@ -34,7 +34,19 @@ const welcome = { id: 'c1f6a8a2-4b7e-4f0e-9d3b-1a2b3c4d5e6f', code: 'WELCOME10',
 const oldSale = { id: 'd2a7b9c3-5c8f-4a1f-8e4c-2b3c4d5e6f70', code: 'OLDSALE', percentOff: 30, expiresAt: '2020-01-31T22:59:59.999Z', active: true, featured: false };
 const paused = { id: 'e3b8cad4-6d90-4b2a-9f5d-3c4d5e6f7081', code: 'PAUSED', percentOff: 5, expiresAt: null, active: false, featured: false };
 
+const stats = {
+  ordersLastDay: 3,
+  ordersLastWeek: 12,
+  revenueLastWeekCents: 45678,
+  lowStockProducts: [{ id: basketball.id, name: basketball.name, stock: 2 }],
+  topProducts: [
+    { id: socks.id, name: socks.name, image: socks.image, unitsSold: 14 },
+    { id: basketball.id, name: basketball.name, image: basketball.image, unitsSold: 5 }
+  ]
+};
+
 const workingApi = {
+  'get /api/admin/stats': { data: stats },
   'get /api/products': { data: [socks, basketball] },
   'get /api/admin/images': { data: [basketball.image, socks.image] },
   'get /api/products/categories': { data: ['Clothing', 'Accessories', 'Sports'] },
@@ -108,6 +120,35 @@ describe('AdminPage component', () => {
     await user.click(await screen.findByTestId('error-message-button'));
 
     expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows an overview of recent orders, low stock and top products', async () => {
+    renderAdminPage();
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Store overview' })).toBeInTheDocument();
+    expect(screen.getByTestId('admin-stat-orders-day')).toHaveTextContent('3');
+    expect(screen.getByTestId('admin-stat-orders-week')).toHaveTextContent('12');
+    expect(screen.getByTestId('admin-stat-revenue')).toHaveTextContent('$456.78');
+    expect(within(screen.getByTestId('admin-low-stock')).getByRole('listitem'))
+      .toHaveTextContent('Intermediate Size BasketballOnly 2 left');
+    expect(within(screen.getByTestId('admin-top-products')).getAllByRole('listitem').map((item) => item.textContent))
+      .toEqual(['Gray Hand Knit Wool Socks14 sold', 'Intermediate Size Basketball5 sold']);
+  });
+
+  it('says when no product is low and nothing has sold yet', async () => {
+    api['get /api/admin/stats'] = { data: { ...stats, lowStockProducts: [], topProducts: [] } };
+    renderAdminPage();
+
+    expect(await screen.findByText('Every product has more than 5 in stock')).toBeInTheDocument();
+    expect(screen.getByText('No sales yet')).toBeInTheDocument();
+  });
+
+  it('updates the low stock list after saving a product', async () => {
+    renderAdminPage();
+    await user.click(await screen.findByRole('button', { name: 'Edit Gray Hand Knit Wool Socks' }));
+    await user.click(screen.getByTestId('admin-save-button'));
+
+    await waitFor(() => expect(requestsTo('get /api/admin/stats')).toHaveLength(2));
   });
 
   it('lists the products', async () => {

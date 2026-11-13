@@ -107,7 +107,7 @@ describe('AdminOrdersPage component', () => {
     expect(screen.getByRole('table', { name: '2 orders' })).toBeInTheDocument();
     const adminNav = screen.getByRole('navigation', { name: 'Admin' });
     expect(within(adminNav).getByRole('link', { name: 'Orders' })).toHaveAttribute('aria-current', 'page');
-    expect(within(adminNav).getByRole('link', { name: 'Products' })).toHaveAttribute('href', '/admin');
+    expect(within(adminNav).getByRole('link', { name: 'Overview' })).toHaveAttribute('href', '/admin');
   });
 
   it('only offers the status changes the API allows', async () => {

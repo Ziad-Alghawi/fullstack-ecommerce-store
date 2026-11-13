@@ -9,7 +9,8 @@ import { getLoadFailure, type AdminLoadStatus } from './adminLoadStatus';
 import { AdminProductRow } from './AdminProductRow';
 import { ProductForm } from './ProductForm';
 import { AdminCoupons } from './AdminCoupons';
-import type { CartItem, Coupon, Product } from '../../types/store';
+import { AdminOverview } from './AdminOverview';
+import type { AdminStats, CartItem, Coupon, Product } from '../../types/store';
 import './AdminPage.css';
 
 interface AdminPageProps {
@@ -23,6 +24,7 @@ export function AdminPage({ cart, onRetry }: AdminPageProps) {
   const [images, setImages] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [stats, setStats] = useState<AdminStats | null>(null);
   const [status, setStatus] = useState<AdminLoadStatus>('loading');
   const [editing, setEditing] = useState<Product | 'new' | null>(null);
 
@@ -33,6 +35,17 @@ export function AdminPage({ cart, onRetry }: AdminPageProps) {
     }
     setProducts(response.data);
   };
+
+  const loadStats = async () => {
+    const response = await axios.get<AdminStats>('/api/admin/stats');
+    if (!Array.isArray(response.data?.topProducts)) {
+      throw new Error('Unexpected stats response');
+    }
+    setStats(response.data);
+  };
+
+  // Stock changes can add or remove low stock products
+  const loadProductsAndStats = () => Promise.all([loadProducts(), loadStats()]);
 
   const loadCoupons = async () => {
     const response = await axios.get<Coupon[]>('/api/admin/coupons');
@@ -46,7 +59,7 @@ export function AdminPage({ cart, onRetry }: AdminPageProps) {
     if (!userId) {
       return;
     }
-    Promise.all([axios.get<string[]>('/api/admin/images'), axios.get<string[]>('/api/products/categories'), loadProducts(), loadCoupons()])
+    Promise.all([axios.get<string[]>('/api/admin/images'), axios.get<string[]>('/api/products/categories'), loadProducts(), loadStats(), loadCoupons()])
       .then(([imagesResponse, categoriesResponse]) => {
         if (!Array.isArray(imagesResponse.data) || !Array.isArray(categoriesResponse.data)) {
           throw new Error('Unexpected images or categories response');
@@ -59,7 +72,7 @@ export function AdminPage({ cart, onRetry }: AdminPageProps) {
   }, [userId]);
 
   const closeFormAfterSaving = async () => {
-    await loadProducts();
+    await loadProductsAndStats();
     setEditing(null);
   };
 
@@ -67,20 +80,22 @@ export function AdminPage({ cart, onRetry }: AdminPageProps) {
     if (editing !== 'new' && editing?.id === product.id) {
       setEditing(null);
     }
-    await loadProducts();
+    await loadProductsAndStats();
   };
 
   let pageContent;
 
-  if (!userId || status !== 'ready') {
+  if (!userId || status !== 'ready' || !stats) {
     pageContent = <AdminPageStatus isLoggedIn={Boolean(userId)} status={status} onRetry={onRetry} />;
   } else {
     pageContent = (
       <>
         <AdminNav />
 
-        <div className="admin-heading">
-          <h1 className="page-title">Manage products</h1>
+        <AdminOverview stats={stats} />
+
+        <div className="admin-heading admin-section">
+          <h2 className="admin-section-title">Products</h2>
           {!editing && (
             <button className="button-primary" type="button" onClick={() => setEditing('new')}
               data-testid="admin-add-button">
@@ -125,7 +140,7 @@ export function AdminPage({ cart, onRetry }: AdminPageProps) {
 
   return (
     <>
-      <PageTitle title="Manage products" />
+      <PageTitle title="Admin" />
 
       <Header cart={cart} />
 

@@ -16,6 +16,7 @@ import paymentSummaryRoutes from './routes/paymentSummary.js';
 import adminRoutes from './routes/admin.js';
 import adminCouponRoutes from './routes/adminCoupons.js';
 import adminOrderRoutes from './routes/adminOrders.js';
+import adminStatsRoutes from './routes/adminStats.js';
 import couponRoutes, { getFeaturedCoupon } from './routes/coupons.js';
 import meRoutes from './routes/me.js';
 import stripeRoutes, { handleWebhook } from './routes/stripe.js';
@@ -55,6 +56,7 @@ app.use('/api/me', meRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/admin/coupons', requireAdmin, adminCouponRoutes);
 app.use('/api/admin/orders', requireAdmin, adminOrderRoutes);
+app.use('/api/admin/stats', requireAdmin, adminStatsRoutes);
 app.use('/api/admin', requireAdmin, adminRoutes);
 
 // The built frontend, including the product images from its public folder

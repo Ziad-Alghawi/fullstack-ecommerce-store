@@ -604,6 +604,23 @@ Moves an order to its next status: processing to shipped or cancelled, shipped t
 - Status 404 if the order doesn't exist
 - Status 409 with the reason if the order can't move to that status
 
+## GET /api/admin/stats
+Returns the numbers at the top of the admin page. Days are rolling 24 hour periods, so they don't depend on the server's time zone.
+
+**Response:**
+```js
+{
+  "ordersLastDay": "number",
+  "ordersLastWeek": "number",
+  // Total of the orders placed in the last 7 days, without cancelled ones
+  "revenueLastWeekCents": "number",
+  // Products in the shop with 5 or fewer left, fewest first
+  "lowStockProducts": [{ "id": "uuid", "name": "string", "stock": "number" }],
+  // The 5 products that sold the most units, without cancelled orders, most first
+  "topProducts": [{ "id": "uuid", "name": "string", "image": "string", "unitsSold": "number" }]
+}
+```
+
 ## GET /api/admin/coupons
 Returns every coupon, oldest first, including those turned off or expired.
 

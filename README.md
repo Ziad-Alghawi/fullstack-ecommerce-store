@@ -22,6 +22,7 @@ A full-stack online store built with React, TypeScript and an Express API, cover
 - Optional accounts with email and password: the cart and orders follow the user to any device, and a guest's cart and orders move to their account when they log in
 - An account page with the user's email and links to their orders and to change their password, and a "Forgot password" email link to choose a new one
 - Admin page to add, edit and delete products and set their category and stock, and to create coupons, for the accounts listed in `ADMIN_USER_IDS`, who can also remove any review
+- Admin overview with the orders of the last 24 hours and 7 days, the week's revenue, low stock products and the 5 best sellers
 - Admin orders page with every customer's orders, filtered by status and payment, where admins mark orders shipped, delivered or cancelled
 - Package tracking with the order's progress
 - Loading, empty and error states, and small notifications that confirm actions like adding to the cart or explain why a change failed, with a retry. Screen readers announce them too

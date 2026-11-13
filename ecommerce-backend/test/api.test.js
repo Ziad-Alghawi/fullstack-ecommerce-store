@@ -640,7 +640,8 @@ test("admin routes need an admin's valid token", async () => {
     ['POST', '/api/admin/coupons', newCoupon],
     ['PUT', `/api/admin/coupons/${randomUUID()}`, newCoupon],
     ['GET', '/api/admin/orders'],
-    ['PATCH', `/api/admin/orders/${randomUUID()}`, { status: 'shipped' }]
+    ['PATCH', `/api/admin/orders/${randomUUID()}`, { status: 'shipped' }],
+    ['GET', '/api/admin/stats']
   ];
   const refusals = [
     ['without a token', {}, 401],
@@ -953,6 +954,58 @@ test('an admin ships and delivers an order, or cancels it before it ships', asyn
   assert.equal((await setOrderStatus(toCancel.id, 'cancelled')).status, 200);
   assert.equal(await getStock(product.id), 3);
   await deleteProduct(product);
+});
+
+async function getStats() {
+  const response = await api('/api/admin/stats', await asAdmin());
+  assert.equal(response.status, 200);
+  return response.json();
+}
+
+test('the admin overview counts recent orders and revenue, without cancelled sales', async () => {
+  const before = await getStats();
+  const product = await createProduct({ ...newProduct, name: 'Bestselling Scarf', stock: 100 });
+  const orders = [];
+  // Logged in, as guests can be dropped for the visitor limit, taking their orders with them
+  for (const buyer of [{ token: await createToken() }, { token: await createToken() }]) {
+    for (let i = 0; i < 3; i++) {
+      await addProduct(buyer, product.id, 10);
+    }
+    orders.push(await (await placeOrder(buyer)).json());
+  }
+
+  const after = await getStats();
+  assert.equal(after.ordersLastDay, before.ordersLastDay + 2);
+  assert.equal(after.ordersLastWeek, before.ordersLastWeek + 2);
+  assert.equal(after.revenueLastWeekCents, before.revenueLastWeekCents + orders[0].totalCostCents * 2);
+  assert.ok(after.topProducts.length <= 5);
+  assert.deepEqual(after.topProducts.find(({ id }) => id === product.id),
+    { id: product.id, name: 'Bestselling Scarf', image: product.image, unitsSold: 60 });
+  assert.deepEqual(after.topProducts.map(({ unitsSold }) => unitsSold),
+    after.topProducts.map(({ unitsSold }) => unitsSold).sort((a, b) => b - a));
+
+  await setOrderStatus(orders[1].id, 'cancelled');
+  const cancelled = await getStats();
+  assert.equal(cancelled.ordersLastDay, before.ordersLastDay + 2);
+  assert.equal(cancelled.revenueLastWeekCents, before.revenueLastWeekCents + orders[0].totalCostCents);
+  assert.notEqual(cancelled.topProducts.find(({ id }) => id === product.id)?.unitsSold, 60);
+  await deleteProduct(product);
+});
+
+test('the admin overview lists the products that are running low, fewest first', async () => {
+  const low = await createProduct({ ...newProduct, name: 'Last Scarf', stock: 1 });
+  const enough = await createProduct({ ...newProduct, name: 'Plenty Scarf', stock: 6 });
+
+  const { lowStockProducts } = await getStats();
+  assert.deepEqual(lowStockProducts.find(({ id }) => id === low.id), { id: low.id, name: 'Last Scarf', stock: 1 });
+  assert.ok(!lowStockProducts.some(({ id }) => id === enough.id));
+  assert.ok(lowStockProducts.every(({ stock }) => stock <= 5));
+  assert.deepEqual(lowStockProducts.map(({ stock }) => stock), lowStockProducts.map(({ stock }) => stock).sort((a, b) => a - b));
+
+  // Deleted products are no longer in the shop, so they don't need restocking
+  await deleteProduct(low);
+  assert.ok(!(await getStats()).lowStockProducts.some(({ id }) => id === low.id));
+  await deleteProduct(enough);
 });
 
 test('orders from before statuses are delivered once all their packages have arrived', { skip: Boolean(process.env.TEST_DATABASE_URL) && 'needs the SQLite file' }, async () => {

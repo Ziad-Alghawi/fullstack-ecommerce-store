@@ -116,5 +116,16 @@ export interface AdminOrderList {
   total: number;
 }
 
+export interface AdminStats {
+  ordersLastDay: number;
+  ordersLastWeek: number;
+  // Without cancelled orders
+  revenueLastWeekCents: number;
+  // At or below 5 in stock, fewest first
+  lowStockProducts: Pick<Product, 'id' | 'name' | 'stock'>[];
+  // The 5 that sold the most units, most first
+  topProducts: (Pick<Product, 'id' | 'name' | 'image'> & { unitsSold: number })[];
+}
+
 export type LoadCart = () => Promise<void>;
 export type CartStatus = 'loading' | 'ready' | 'failed';
