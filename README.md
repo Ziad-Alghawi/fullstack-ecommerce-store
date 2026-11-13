@@ -182,7 +182,16 @@ npm --prefix ecommerce-backend run lint
 
 The backend tests use SQLite even when `DATABASE_URL` is set, because they delete data. To run them against Postgres, set `TEST_DATABASE_URL` to a throwaway database. The login tests sign their own tokens and serve the public key from a local stand-in for Supabase, so they need no project either. The card payment tests do the same with a local stand-in for the Stripe API, and sign their own webhook events.
 
-GitHub Actions runs all of these on every push.
+End-to-end tests with Playwright click through a production build of the store, served by the backend on a fresh SQLite database. A local stand-in for Supabase Auth logs users in, and card payment stays off, so no Supabase project or Stripe key is needed. They cover browsing and search, ordering as a guest, coupons, stock limits, cancelling and an admin shipping an order:
+
+```bash
+npx playwright install chromium   # once
+npm run test:e2e
+```
+
+The run builds the frontend into `ecommerce-backend/dist` with the test settings, so run `npm run build` again before starting the backend on its own.
+
+GitHub Actions runs all of these on every push, with the end-to-end tests as a separate job.
 
 ## Project Structure
 
