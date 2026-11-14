@@ -26,24 +26,35 @@ async function restockDemoProducts() {
 let nextRunAtMs = 0;
 let running = null;
 
+// After a failed run, so a broken database isn't asked again on every product request
+const RETRY_MS = 10 * 60 * 1000;
+
 async function restockIfDayHasPassed() {
-  // Not findOrCreate, which needs a transaction the local SQLite file can't hold open
-  const state = await DemoRestock.findByPk(1) ?? DemoRestock.build({ id: 1, lastRunAt: new Date(0) });
-  if (Date.now() - state.lastRunAt.getTime() >= INTERVAL_MS) {
+  let lastRunAt = (await DemoRestock.findByPk(1))?.lastRunAt ?? new Date(0);
+  if (Date.now() - lastRunAt.getTime() >= INTERVAL_MS) {
     await restockDemoProducts();
-    await state.update({ lastRunAt: new Date() });
+    lastRunAt = new Date();
+    // Always sends the ID, as Postgres doesn't make one up for this table like SQLite does.
+    // Not findOrCreate, which needs a transaction the local SQLite file can't hold open
+    await DemoRestock.upsert({ id: 1, lastRunAt });
     console.log('Restocked the demo products.');
   }
-  nextRunAtMs = state.lastRunAt.getTime() + INTERVAL_MS;
+  nextRunAtMs = lastRunAt.getTime() + INTERVAL_MS;
 }
 
-// Runs on startup and with product requests. Requests that arrive together wait for the same run
+// Runs on startup and with product requests. Requests that arrive together wait for the same run.
+// The restock is a demo extra, so a failure is logged and never stops the server or a request
 export function restockIfDue() {
   if (!isOn || Date.now() < nextRunAtMs) {
     return Promise.resolve();
   }
-  running ??= restockIfDayHasPassed().finally(() => {
-    running = null;
-  });
+  running ??= restockIfDayHasPassed()
+    .catch((error) => {
+      console.error('The demo restock failed:', error);
+      nextRunAtMs = Date.now() + RETRY_MS;
+    })
+    .finally(() => {
+      running = null;
+    });
   return running;
 }

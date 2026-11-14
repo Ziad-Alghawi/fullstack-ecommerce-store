@@ -13,11 +13,13 @@ const defaultPort = defaultPorts[dbType];
 export let sequelize;
 
 if (process.env.DATABASE_URL) {
+  // A Postgres on this machine, like the one the tests run against in CI, has no SSL
+  const isLocal = ['localhost', '127.0.0.1'].includes(new URL(process.env.DATABASE_URL).hostname);
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
     dialectOptions: {
       // Supabase signs its certificate with its own CA, which Node doesn't trust by default
-      ssl: { require: true, rejectUnauthorized: false }
+      ssl: isLocal ? false : { require: true, rejectUnauthorized: false }
     },
     logging: false
   });

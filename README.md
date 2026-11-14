@@ -137,7 +137,7 @@ npm --prefix ecommerce-backend run lint && npm --prefix ecommerce-backend test
 ```
 
 - **Frontend unit tests** (Vitest, Testing Library) render pages and components with a stubbed API.
-- **API tests** (Node test runner) start the real server on a free port with a throwaway SQLite database and call it over HTTP. Local stand-ins for Supabase Auth and the Stripe API sign their own tokens and webhook events, so no accounts or keys are needed. To run them against Postgres, set `TEST_DATABASE_URL` to a throwaway database.
+- **API tests** (Node test runner) start the real server on a free port with a throwaway SQLite database and call it over HTTP. Local stand-ins for Supabase Auth and the Stripe API sign their own tokens and webhook events, so no accounts or keys are needed. To run them against Postgres, set `TEST_DATABASE_URL` to an empty throwaway database, for example one started with `docker run -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:17` and `postgres://postgres:postgres@localhost:5432/postgres`. A database on `localhost` is reached without SSL.
 - **End-to-end tests** (Playwright) click through a production build of the store, served by the backend on a fresh SQLite database, with a stand-in for Supabase Auth and card payment off. They cover browsing, filtering and search, a guest order paid on delivery, coupons, stock limits, cancelling, an admin shipping an order, keyboard focus and an axe accessibility check of the new pages.
 
 ```bash
@@ -147,7 +147,7 @@ npm run test:e2e
 
 The end-to-end run builds the frontend into `ecommerce-backend/dist` with its test settings, so run `npm run build` again before starting the backend on its own.
 
-GitHub Actions runs the checks on every push, with the end-to-end tests as a separate job that uploads a report when they fail.
+GitHub Actions runs the checks on every push, runs the API tests a second time on Postgres, as production uses it, and runs the end-to-end tests as a separate job that uploads a report when they fail.
 
 ## Security
 

@@ -39,7 +39,8 @@ router.get('/', asyncHandler(async (req, res) => {
   res.json({
     ordersLastDay: await Order.count({ where: placedSince(DAY_MS) }),
     ordersLastWeek: await Order.count({ where: placedSince(7 * DAY_MS) }),
-    revenueLastWeekCents: await Order.sum('totalCostCents', { where: lastWeekSold }) ?? 0,
+    // Unscoped, as Postgres refuses the default order by creation next to a sum
+    revenueLastWeekCents: await Order.unscoped().sum('totalCostCents', { where: lastWeekSold }) ?? 0,
     // Unscoped, as the default order by creation would come first
     lowStockProducts: await Product.unscoped().findAll({
       where: { stock: { [Op.lte]: LOW_STOCK } },
