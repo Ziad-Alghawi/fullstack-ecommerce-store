@@ -57,6 +57,15 @@
   padding: var(--space-6);
 }
 
+.product-shelf {
+  margin-top: var(--space-6);
+}
+
+.product-shelf-title {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-xl);
+}
+
 .reviews-title {
   margin: 0 0 var(--space-4);
   font-size: var(--font-size-xl);

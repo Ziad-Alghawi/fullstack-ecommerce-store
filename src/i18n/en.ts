@@ -98,7 +98,9 @@ export const en = {
   },
   product: {
     title: 'Product',
-    notFound: "We couldn't find this product"
+    notFound: "We couldn't find this product",
+    related: 'You may also like',
+    recentlyViewed: 'Recently viewed'
   },
   reviews: {
     title: 'Customer reviews',

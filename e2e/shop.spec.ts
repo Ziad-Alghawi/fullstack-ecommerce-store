@@ -36,3 +36,22 @@ test('a sold out product cannot be added, and the cart holds no more than is in 
   await expect(page.getByRole('alert', { name: 'Errors' })).toContainText('Only 2 of Woven Straw Tote Bag left in stock. You already have 2 in your cart.');
   await expect(page.getByTestId('header-cart-link')).toHaveAccessibleName('Cart, 2 items');
 });
+
+test('a product page suggests others from its category and shows what was viewed before', async ({ page }) => {
+  await page.goto('/');
+  await productCard(page, 'Gray Hand Knit Wool Socks').getByRole('link', { name: 'Gray Hand Knit Wool Socks' }).click();
+
+  const related = page.getByRole('region', { name: 'You may also like' });
+  await expect(related.getByTestId('product-container')).toHaveCount(4);
+  await expect(related).not.toContainText('Gray Hand Knit Wool Socks');
+  await expect(page.getByRole('region', { name: 'Recently viewed' })).toHaveCount(0);
+
+  const next = related.getByRole('heading', { level: 3 }).first();
+  const nextName = (await next.textContent())!;
+  await next.getByRole('link').click();
+
+  await expect(page.getByRole('heading', { level: 1, name: nextName })).toBeVisible();
+  expect(await page.evaluate('window.scrollY')).toBe(0);
+  await expect(page.getByRole('region', { name: 'Recently viewed' })).toContainText('Gray Hand Knit Wool Socks');
+  await expect(page.getByRole('region', { name: 'You may also like' })).not.toContainText(nextName);
+});

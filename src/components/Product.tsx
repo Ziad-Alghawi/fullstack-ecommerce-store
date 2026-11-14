@@ -9,10 +9,13 @@ interface ProductProps {
   product: ProductType;
   loadCart: LoadCart;
   lazyLoadImage?: boolean;
+  // A level below the heading of the section the card is in
+  headingLevel?: 2 | 3;
 }
 
-export function Product({ product, loadCart, lazyLoadImage = false }: ProductProps) {
+export function Product({ product, loadCart, lazyLoadImage = false, headingLevel = 2 }: ProductProps) {
   const productPath = `/products/${product.id}`;
+  const Heading = `h${headingLevel}` as const;
   const { t, formatMoney } = useI18n();
 
   return (
@@ -26,9 +29,9 @@ export function Product({ product, loadCart, lazyLoadImage = false }: ProductPro
           width="480" height="480" loading={lazyLoadImage ? 'lazy' : 'eager'} />
       </Link>
 
-      <h2 className="product-name limit-text-to-2-lines">
+      <Heading className="product-name limit-text-to-2-lines">
         <Link className="product-link" to={productPath}>{product.name}</Link>
-      </h2>
+      </Heading>
 
       {/* After the name, so keyboard users reach it second, though it sits on the photo */}
       <WishlistButton product={product} />

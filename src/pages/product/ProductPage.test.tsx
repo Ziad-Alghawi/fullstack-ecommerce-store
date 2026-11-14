@@ -251,4 +251,48 @@ describe('ProductPage component', () => {
 
     expect(await screen.findByTestId('review')).toHaveTextContent('Warm and soft.');
   });
+
+  describe('other products', () => {
+    const other = (index: number, fields = {}) => ({
+      ...product, id: `15b6fc6f-327a-4ec4-896f-486349e85a3${index}`, name: `Other product ${index}`, ...fields
+    });
+
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it('suggests up to 4 others from the same category, best rated first', async () => {
+      api['get /api/products?category=Home+%26+Kitchen&sort=rating'] = {
+        data: [other(1), product, other(2), other(3), other(4), other(5)]
+      };
+      renderProductPage();
+
+      const related = await screen.findByRole('region', { name: 'You may also like' });
+      expect(within(related).getAllByTestId('product-container').map((card) => card.querySelector('h3')?.textContent))
+        .toEqual(['Other product 1', 'Other product 2', 'Other product 3', 'Other product 4']);
+    });
+
+    it('shows what this browser viewed before, without deleted products, and remembers this one', async () => {
+      localStorage.setItem('recentlyViewed', JSON.stringify([other(1).id, product.id, other(2).id]));
+      api[`get /api/products/${other(1).id}`] = { data: other(1) };
+      api[`get /api/products/${other(2).id}`] = { data: other(2, { deletedAt: '2025-06-20T10:00:00.000Z' }) };
+      renderProductPage();
+
+      const recent = await screen.findByRole('region', { name: 'Recently viewed' });
+      expect(within(recent).getAllByTestId('product-container')).toHaveLength(1);
+      expect(recent).toHaveTextContent('Other product 1');
+      expect(JSON.parse(localStorage.getItem('recentlyViewed')!)).toEqual([product.id, other(1).id, other(2).id]);
+      expect(requestsTo(`get /api/products/${product.id}`)).toHaveLength(1);
+    });
+
+    it('leaves both out when there is nothing to show', async () => {
+      renderProductPage();
+
+      await screen.findByRole('heading', { level: 1 });
+      await waitFor(() => expect(requestsTo('get /api/products?category=Home+%26+Kitchen&sort=rating')).toHaveLength(1));
+      expect(screen.queryByTestId('related-products')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('recently-viewed')).not.toBeInTheDocument();
+      expect(localStorage.getItem('recentlyViewed')).toBe(JSON.stringify([product.id]));
+    });
+  });
 });

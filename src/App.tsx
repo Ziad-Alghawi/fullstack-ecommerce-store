@@ -88,8 +88,10 @@ function App() {
     loadCart().catch(() => setCartStatus('failed'));
   }, [retryCount, owner, loadCart]);
 
+  // A new page starts at the top, like after a full page load. Filters change only the query, so they keep the place
   useEffect(() => {
     currentPath.current = location.pathname;
+    window.scrollTo(0, 0);
   }, [location.pathname]);
 
   // Changing the key of <Routes> remounts the page, which loads its data again

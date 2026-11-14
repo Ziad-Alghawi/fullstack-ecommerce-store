@@ -109,7 +109,9 @@ export const de: Messages = {
   },
   product: {
     title: 'Produkt',
-    notFound: 'Dieses Produkt wurde nicht gefunden'
+    notFound: 'Dieses Produkt wurde nicht gefunden',
+    related: 'Das könnte dir auch gefallen',
+    recentlyViewed: 'Zuletzt angesehen'
   },
   reviews: {
     title: 'Kundenbewertungen',

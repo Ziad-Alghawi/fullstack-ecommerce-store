@@ -8,17 +8,11 @@ import { AddToCart } from '../../components/AddToCart';
 import { WishlistButton } from '../../components/WishlistButton';
 import { ProductRating } from '../../components/Rating';
 import { Reviews } from './Reviews';
+import { RecentlyViewed, RelatedProducts } from './ProductShelves';
+import { fetchProduct } from './fetchProduct';
 import { useI18n } from '../../hooks/useI18n';
 import type { CartItem, LoadCart, Product } from '../../types/store';
 import './ProductPage.css';
-
-async function fetchProduct(productId: string | undefined) {
-  const response = await axios.get<Product>(`/api/products/${productId}`);
-  if (typeof response.data?.id !== 'string') {
-    throw new Error('Unexpected product response');
-  }
-  return response.data;
-}
 
 interface ProductPageProps {
   cart: CartItem[];
@@ -81,6 +75,9 @@ export function ProductPage({ cart, loadCart, onRetry }: ProductPageProps) {
         </article>
 
         <Reviews productId={product.id} onReviewsChange={async () => setProduct(await fetchProduct(productId))} />
+
+        <RelatedProducts product={product} loadCart={loadCart} />
+        <RecentlyViewed product={product} loadCart={loadCart} />
       </>
     );
   } else if (hasError) {
