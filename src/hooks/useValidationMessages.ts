@@ -13,7 +13,7 @@ function describeProblem(field: Field, { t, formatNumber }: I18n) {
   const limit = (value: string) => formatNumber(Number(value));
 
   if (validity.valueMissing) return messages.valueMissing;
-  if (validity.typeMismatch) return messages.typeMismatch;
+  if (validity.typeMismatch) return field.type === 'email' ? messages.invalidEmail : '';
   if (validity.badInput) return messages.badInput;
   if (field instanceof HTMLSelectElement) return '';
   if (validity.tooShort) return messages.tooShort(field.minLength);

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 import { Header } from '../components/Header';
 import { PageTitle } from '../components/PageTitle';
@@ -16,6 +17,17 @@ interface WishlistPageProps {
 export function WishlistPage({ cart, loadCart }: WishlistPageProps) {
   const wishlist = useWishlist();
   const { t } = useI18n();
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const itemCount = wishlist?.items.length ?? 0;
+  const previousCount = useRef(itemCount);
+
+  // Removing a product takes away the heart that was clicked, so keyboard focus moves to the title
+  useEffect(() => {
+    if (itemCount < previousCount.current) {
+      titleRef.current?.focus();
+    }
+    previousCount.current = itemCount;
+  }, [itemCount]);
 
   let pageContent;
 
@@ -49,7 +61,7 @@ export function WishlistPage({ cart, loadCart }: WishlistPageProps) {
       <Header cart={cart} />
 
       <main className="wishlist-page page">
-        <h1 className="page-title">{t.wishlist.title}</h1>
+        <h1 className="page-title" ref={titleRef} tabIndex={-1}>{t.wishlist.title}</h1>
 
         {pageContent}
       </main>

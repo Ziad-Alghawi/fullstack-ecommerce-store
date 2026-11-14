@@ -10,13 +10,17 @@ const router = express.Router();
 router.param('productId', rejectInvalidId('Product not found'));
 router.use(requireUser);
 
-// Newest first. A product an admin deleted stays on the list with deletedAt set, so the user sees it's gone
+// Newest first. A product an admin deleted stays on the list with deletedAt set, so the user sees it's gone.
+// Products are only ever hidden, but an item without its product is left out rather than sent half empty
 router.get('/', asyncHandler(async (req, res) => {
   const items = await WishlistItem.findAll({ where: { userId: req.user.id } });
   const products = await Product.findAll({ where: { id: items.map(({ productId }) => productId) }, paranoid: false });
   const productsById = new Map(products.map((product) => [product.id, product]));
 
-  res.json(items.map(({ productId, createdAt }) => ({ productId, createdAt, product: productsById.get(productId) })));
+  res.json(items.flatMap(({ productId, createdAt }) => {
+    const product = productsById.get(productId);
+    return product ? [{ productId, createdAt, product }] : [];
+  }));
 }));
 
 // Saving a product again changes nothing. Deleted products can't be saved

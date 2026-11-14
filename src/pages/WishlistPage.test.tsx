@@ -19,19 +19,27 @@ const socks: Product = {
 
 const scarf: Product = { ...socks, id: '15b6fc6f-327a-4ec4-896f-486349e85a3d', name: 'Plaid Wool Scarf', deletedAt: '2026-11-01T00:00:00.000Z' };
 
-function renderPage(wishlist: Partial<Wishlist> | null) {
+function page(wishlist: Partial<Wishlist> | null) {
   const list = wishlist && {
     items: [], status: 'ready', reload: vi.fn(), has: () => true, save: vi.fn(), remove: vi.fn(), ...wishlist
   } as Wishlist;
-  render(
-    <MemoryRouter>
-      <AuthContext value={{ user: list ? { id: 'user-1' } as User : null, isAdmin: false, logOut: vi.fn() }}>
-        <WishlistContext value={list}>
-          <WishlistPage cart={[]} loadCart={vi.fn()} />
-        </WishlistContext>
-      </AuthContext>
-    </MemoryRouter>
-  );
+  return {
+    list,
+    element: (
+      <MemoryRouter>
+        <AuthContext value={{ user: list ? { id: 'user-1' } as User : null, isAdmin: false, logOut: vi.fn() }}>
+          <WishlistContext value={list}>
+            <WishlistPage cart={[]} loadCart={vi.fn()} />
+          </WishlistContext>
+        </AuthContext>
+      </MemoryRouter>
+    )
+  };
+}
+
+function renderPage(wishlist: Partial<Wishlist> | null) {
+  const { list, element } = page(wishlist);
+  render(element);
   return list;
 }
 
@@ -63,6 +71,16 @@ describe('WishlistPage', () => {
     expect(second).toHaveTextContent('Plaid Wool Scarf');
     expect(within(second).getByTestId('product-unavailable')).toHaveTextContent('No longer available');
     expect(within(second).queryByTestId('add-to-cart-button')).not.toBeInTheDocument();
+  });
+
+  it('moves keyboard focus to the title when a product is removed, as its heart goes away', () => {
+    const socksItem = { productId: socks.id, createdAt: '2026-11-02T00:00:00.000Z', product: socks };
+    const scarfItem = { productId: scarf.id, createdAt: '2026-11-01T00:00:00.000Z', product: scarf };
+    const { rerender } = render(page({ items: [socksItem, scarfItem] }).element);
+
+    rerender(page({ items: [scarfItem] }).element);
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Your wishlist' })).toHaveFocus();
   });
 
   it('loads the list again after an error', async () => {

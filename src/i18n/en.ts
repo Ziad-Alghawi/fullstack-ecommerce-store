@@ -411,7 +411,7 @@ export const en = {
   // Shown by the browser when a form field is filled in wrong
   validation: {
     valueMissing: 'Please fill in this field.',
-    typeMismatch: 'Please enter a valid email address.',
+    invalidEmail: 'Please enter a valid email address.',
     tooShort: (minLength: number) => `Please use at least ${minLength} characters.`,
     rangeUnderflow: (min: string) => `Please enter ${min} or more.`,
     rangeOverflow: (max: string) => `Please enter ${max} or less.`,

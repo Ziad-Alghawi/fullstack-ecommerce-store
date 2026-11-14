@@ -12,6 +12,7 @@ function Form() {
   return (
     <form data-testid="form">
       <input aria-label="Email" type="email" required />
+      <input aria-label="Backup email" type="email" defaultValue="not-an-email" />
       <input aria-label="Percent" type="number" min="1" max="90" defaultValue="95" />
       <input aria-label="Code" type="text" pattern="[A-Z]{3}" title="3 Großbuchstaben" defaultValue="ab" />
       <input aria-label="One star" type="radio" name="stars" value="1" required />
@@ -27,6 +28,7 @@ describe('useValidationMessages', () => {
     expect((screen.getByTestId('form') as HTMLFormElement).checkValidity()).toBe(false);
 
     expect(screen.getByLabelText<HTMLInputElement>('Email').validationMessage).toBe('Bitte fülle dieses Feld aus.');
+    expect(screen.getByLabelText<HTMLInputElement>('Backup email').validationMessage).toBe('Bitte gib eine gültige E-Mail-Adresse ein.');
     expect(screen.getByLabelText<HTMLInputElement>('Percent').validationMessage).toBe('Bitte gib höchstens 90 ein.');
     expect(screen.getByLabelText<HTMLInputElement>('Code').validationMessage).toBe('3 Großbuchstaben');
   });

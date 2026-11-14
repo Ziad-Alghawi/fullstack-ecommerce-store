@@ -77,7 +77,7 @@ export function RecentlyViewed({ product, loadCart }: ShelfProps) {
       addRecentlyViewed(productId);
     }
 
-    Promise.allSettled(ids.map(fetchProduct)).then((results) => {
+    Promise.allSettled(ids.map((id) => fetchProduct(id))).then((results) => {
       if (isCurrent) {
         setProducts(results.flatMap((result) => (result.status === 'fulfilled' && !result.value.deletedAt ? [result.value] : [])));
       }

@@ -1,6 +1,6 @@
 # React E-Commerce Store
 
-A full-stack online store built with React, TypeScript and an Express API: product search and filters, a cart, coupons, two ways to pay, order tracking with real statuses, customer accounts and an admin area to run the store.
+A full-stack online store built with React, TypeScript and an Express API: product search and filters, a cart, coupons, two ways to pay, order tracking with real statuses, customer accounts with a wishlist, an admin area to run the store, English and German, and a dark mode.
 
 **Live demo:** https://react-ecommerce-8359.onrender.com
 
@@ -14,7 +14,8 @@ A full-stack online store built with React, TypeScript and an Express API: produ
 - **Use a coupon:** type `WELCOME10` at checkout for 10% off the items. Checkout also suggests it.
 - **Cancel an order** from your orders page before it ships. Its items go back in stock, and a card payment is refunded in full.
 - **Sold out products:** the Straw Wide Brim Sun Hat can't be added to the cart, and the Woven Straw Tote Bag has only 2 left.
-- **Create an account** to keep your cart and orders on every device. What you added as a guest moves to the account when you log in.
+- **Create an account** to keep your cart, orders and wishlist on every device. What you added as a guest moves to the account when you log in.
+- **Switch to German** with DE in the header, or **turn on dark mode** with the moon next to it. Both are remembered, and until you choose, the store follows your browser's language and your system's theme.
 
 The admin area needs an account listed in `ADMIN_USER_IDS`, so the screenshots below show it.
 
@@ -23,6 +24,8 @@ The admin area needs an account listed in `ADMIN_USER_IDS`, so the screenshots b
 **Shopping**
 - Search by name or keyword, browse by category, filter by price and sort by price, rating or newest. Every filter is kept in the URL, so links and the back button work
 - Product pages with verified reviews: customers who ordered a product can rate and review it, and the shop shows a masked name such as "ja\*\*\*"
+- Up to 4 suggestions from the same category on every product page, best rated first, and the last 4 products this browser looked at
+- A wishlist for logged in customers, saved with the heart on any product. Guests are asked to log in, and a product deleted since shows as no longer available
 - Stock for every product: the shop says when only a few are left, and sold out products can't be added. Demo products that run low are restocked once a day
 - A cart with quantities, three delivery options and a live payment summary
 - Coupons typed at checkout, with the discount worked out by the API every time
@@ -30,6 +33,11 @@ The admin area needs an account listed in `ADMIN_USER_IDS`, so the screenshots b
 - Cancelling an order until it ships, which puts its items back in stock and refunds a card payment
 - A separate cart and order history for each visitor without signing up, or optional accounts with email and password, a password reset by email and an account page
 - Notifications that confirm actions or explain what failed, with a retry, and loading, empty and error states everywhere
+
+**Language and look**
+- English and German for every page, notification and form hint, chosen in the header, remembered in the browser and taken from the browser's language at first
+- Dates and numbers are written the way the language does, while prices stay in US dollars. The API sends a code with each reason a shopper can run into, so those are translated too. Rarer ones, like an admin form field the browser already checks, stay in English
+- A dark mode that follows the system's theme, with a toggle in the header. Every color is a CSS variable with a light and a dark value, and the end-to-end tests check contrast in both
 
 **Admin**
 - An overview with the orders of the last 24 hours and 7 days, the week's revenue, low stock products and the 5 best sellers
@@ -57,6 +65,8 @@ The admin area needs an account listed in `ADMIN_USER_IDS`, so the screenshots b
 | ![A product page with its photo, rating, price and reviews](docs/screenshots/product.png) | ![Checkout with delivery options, the payment summary and a coupon field](docs/screenshots/checkout.png) |
 | **Admin overview and products** | **Admin orders** |
 | ![The admin overview with order counts, revenue, low stock and top products, above the product table](docs/screenshots/admin-products.png) | ![The admin orders table with filters, statuses and buttons to ship or cancel](docs/screenshots/admin-orders.png) |
+| **Wishlist in dark mode** | **Product page in German** |
+| ![A wishlist with four saved products, shown in dark mode](docs/screenshots/wishlist-dark.png) | ![A product page in German with its reviews and four suggested products from the same category](docs/screenshots/product-german.png) |
 
 ## Tech Stack
 
@@ -84,7 +94,8 @@ Supabase Auth           Stripe Checkout ◄── webhook: checkout.session.comp
 - **Visitors and accounts.** The browser makes up a visitor ID and sends it as `X-Visitor-Id`, which keeps a cart and orders per browser without an account. A logged in user sends their Supabase token instead. The API verifies it with the project's public keys and uses the user ID in place of the visitor ID.
 - **The API decides.** Prices, discounts, stock, order totals, who is an admin and which status changes are allowed are all worked out on the server. The frontend only shows what the API says.
 - **Stock without transactions.** The local SQLite driver can't hold a transaction open, so taking stock is a single conditional `UPDATE` per item, and an order that runs short gives back what it took. Status changes work the same way, so two cancels at once can't return stock twice.
-- **Schema changes on startup.** `sync()` creates missing tables, and columns added later are added by `server.js` on startup, so a deploy upgrades the Postgres database by itself.
+- **Schema changes on startup.** `sync()` creates missing tables, like the wishlist's, and columns added later are added by `server.js` on startup, so a deploy upgrades the Postgres database by itself.
+- **Translations in one place.** The English messages in `src/i18n/en.ts` define the type the German ones must match, so a missing or extra key fails the build. A test checks that every code the API sends has a message.
 
 The endpoints are described in [ecommerce-backend/documentation.md](ecommerce-backend/documentation.md).
 
@@ -139,7 +150,7 @@ npm --prefix ecommerce-backend run lint && npm --prefix ecommerce-backend test
 
 - **Frontend unit tests** (Vitest, Testing Library) render pages and components with a stubbed API.
 - **API tests** (Node test runner) start the real server on a free port with a throwaway SQLite database and call it over HTTP. Local stand-ins for Supabase Auth and the Stripe API sign their own tokens and webhook events, so no accounts or keys are needed. To run them against Postgres, set `TEST_DATABASE_URL` to an empty throwaway database, for example one started with `docker run -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:17` and `postgres://postgres:postgres@localhost:5432/postgres`. A database on `localhost` is reached without SSL.
-- **End-to-end tests** (Playwright) click through a production build of the store, served by the backend on a fresh SQLite database, with a stand-in for Supabase Auth and card payment off. They cover browsing, filtering and search, a guest order paid on delivery, coupons, stock limits, cancelling, an admin shipping an order, keyboard focus and an axe accessibility check of the new pages.
+- **End-to-end tests** (Playwright) click through a production build of the store, served by the backend on a fresh SQLite database, with a stand-in for Supabase Auth and card payment off. They cover browsing, filtering and search, related and recently viewed products, a guest order paid on delivery, coupons, stock limits, cancelling, an admin shipping an order, the wishlist, switching to German, dark mode, keyboard focus and an axe accessibility check of the pages in both themes.
 
 ```bash
 npx playwright install chromium   # once
@@ -208,7 +219,8 @@ The Stripe sandbox is shared with another app, so every session is tagged with `
 ├── src/
 │   ├── components/       # Shared components
 │   ├── hooks/            # Shared hooks
-│   ├── pages/            # Home, product, checkout, orders, tracking, login, account and admin pages
+│   ├── i18n/             # English and German messages, and formatting for each language
+│   ├── pages/            # Home, product, checkout, orders, tracking, login, account, wishlist and admin pages
 │   ├── types/            # Shared TypeScript types
 │   └── utils/            # Helpers and their tests
 └── render.yaml           # Render deployment config
@@ -216,6 +228,6 @@ The Stripe sandbox is shared with another app, so every session is tagged with `
 
 ## Background
 
-This project started from a React course. The backend is based on the [SuperSimpleDev course starter code](https://github.com/SuperSimpleDev/ecommerce-project), and I built the frontend while following the course, then migrated it to TypeScript. Since then I've extended it with a separate cart and orders per visitor, accounts with Supabase Auth, product pages with reviews, categories and filters, stock, coupons, card payment with Stripe, order statuses with an admin orders dashboard and overview, a security pass, accessibility work, unit, API and end-to-end tests, CI and deployment config.
+This project started from a React course. The backend is based on the [SuperSimpleDev course starter code](https://github.com/SuperSimpleDev/ecommerce-project), and I built the frontend while following the course, then migrated it to TypeScript. Since then I've extended it with a separate cart and orders per visitor, accounts with Supabase Auth, product pages with reviews, categories and filters, stock, coupons, card payment with Stripe, order statuses with an admin orders dashboard and overview, a wishlist, related and recently viewed products, German, a dark mode, a security pass, accessibility work, unit, API and end-to-end tests, CI and deployment config.
 
 Product photos are from Unsplash and Pexels and credited in [CREDITS.md](public/images/products/CREDITS.md).

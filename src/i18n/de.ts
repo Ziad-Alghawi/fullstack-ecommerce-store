@@ -67,7 +67,7 @@ export const de: Messages = {
   },
   stock: {
     outOfStock: 'Ausverkauft',
-    onlyLeft: (stock) => `Nur noch ${stock} da`,
+    onlyLeft: (stock) => `Nur noch ${stock} auf Lager`,
     inStock: (stock) => `${stock} auf Lager`
   },
   addToCart: {
@@ -84,7 +84,7 @@ export const de: Messages = {
   },
   home: {
     title: 'Alltägliches, direkt geliefert',
-    intro: 'Basics für Zuhause, Küche und Kleiderschrank, mit kostenlosem Versand für jede Bestellung.',
+    intro: 'Basics für Zuhause, Küche und Kleiderschrank, mit kostenloser Versandoption für jede Bestellung.',
     resultsFor: (search) => `Ergebnisse für „${search}“`,
     noResults: (search) => `Keine Produkte für „${search}“ gefunden`,
     noMatch: 'Keine Produkte passen zu diesen Filtern',
@@ -238,7 +238,7 @@ export const de: Messages = {
   account: {
     title: 'Dein Konto',
     loginDetails: 'Anmeldedaten',
-    customerSince: 'Kunde seit',
+    customerSince: 'Dabei seit',
     ordersTitle: 'Deine Bestellungen',
     ordersText: 'Sendungen verfolgen, erneut kaufen oder Gekauftes bewerten',
     passwordTitle: 'Passwort ändern',
@@ -397,10 +397,10 @@ export const de: Messages = {
   },
   apiErrors: {
     outOfStock: ({ product, inCart }) => `${product} ist ausverkauft.${inCartNote(inCart)}`,
-    lowStock: ({ product, stock, inCart }) => `Von ${product} sind nur noch ${stock} da.${inCartNote(inCart)}`,
+    lowStock: ({ product, stock, inCart }) => `Von ${product} sind nur noch ${stock} auf Lager.${inCartNote(inCart)}`,
     outOfStockInOrder: ({ product }) => `${product} ist ausverkauft. Entferne es aus dem Warenkorb, um fortzufahren.`,
     lowStockInOrder: ({ product, stock }) => (
-      `Von ${product} sind nur noch ${stock} da. Verringere die Menge im Warenkorb, um fortzufahren.`
+      `Von ${product} sind nur noch ${stock} auf Lager. Verringere die Menge im Warenkorb, um fortzufahren.`
     ),
     emptyCart: () => 'Dein Warenkorb ist leer.',
     orderLimit: ({ max }) => `Dieser Demo-Shop speichert bis zu ${max} Bestellungen pro Besucher, und du hast das Limit erreicht.`,
@@ -421,7 +421,7 @@ export const de: Messages = {
   },
   validation: {
     valueMissing: 'Bitte fülle dieses Feld aus.',
-    typeMismatch: 'Bitte gib eine gültige E-Mail-Adresse ein.',
+    invalidEmail: 'Bitte gib eine gültige E-Mail-Adresse ein.',
     tooShort: (minLength) => `Bitte verwende mindestens ${minLength} Zeichen.`,
     rangeUnderflow: (min) => `Bitte gib ${min} oder mehr ein.`,
     rangeOverflow: (max) => `Bitte gib höchstens ${max} ein.`,

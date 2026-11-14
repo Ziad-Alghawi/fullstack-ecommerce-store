@@ -17,7 +17,7 @@ test('a visitor switches to German, which stays after a reload', async ({ page }
   await expect(page.getByTestId('header-cart-link')).toHaveAccessibleName('Warenkorb, 2 Artikel');
   await tote.getByTestId('add-to-cart-button').click();
   await expect(page.getByRole('alert', { name: 'Fehler' }))
-    .toContainText('Von Woven Straw Tote Bag sind nur noch 2 da. Du hast schon 2 im Warenkorb.');
+    .toContainText('Von Woven Straw Tote Bag sind nur noch 2 auf Lager. Du hast schon 2 im Warenkorb.');
 
   await page.goto('/page-that-does-not-exist');
   await expect(page.getByRole('heading', { level: 1, name: 'Seite nicht gefunden' })).toBeVisible();

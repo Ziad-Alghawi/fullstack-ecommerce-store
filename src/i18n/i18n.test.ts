@@ -46,7 +46,7 @@ describe('createI18n', () => {
     const refusal = { error: 'Only 2 of Tote Bag left in stock.', code: 'lowStock', params: { product: 'Tote Bag', stock: 2, inCart: 2 } };
 
     expect(en.apiError(refusal)).toBe('Only 2 of Tote Bag left in stock. You already have 2 in your cart.');
-    expect(de.apiError(refusal)).toBe('Von Tote Bag sind nur noch 2 da. Du hast schon 2 im Warenkorb.');
+    expect(de.apiError(refusal)).toBe('Von Tote Bag sind nur noch 2 auf Lager. Du hast schon 2 im Warenkorb.');
   });
 
   it("falls back to the API's own message, and to nothing without one", () => {
