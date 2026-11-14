@@ -1,8 +1,9 @@
 import { Link } from 'react-router';
-import { AddToCart } from '../../components/AddToCart';
-import { ProductRating } from '../../components/Rating';
-import { useI18n } from '../../hooks/useI18n';
-import type { LoadCart, Product as ProductType } from '../../types/store';
+import { AddToCart } from './AddToCart';
+import { ProductRating } from './Rating';
+import { WishlistButton } from './WishlistButton';
+import { useI18n } from '../hooks/useI18n';
+import type { LoadCart, Product as ProductType } from '../types/store';
 
 interface ProductProps {
   product: ProductType;
@@ -12,7 +13,7 @@ interface ProductProps {
 
 export function Product({ product, loadCart, lazyLoadImage = false }: ProductProps) {
   const productPath = `/products/${product.id}`;
-  const { formatMoney } = useI18n();
+  const { t, formatMoney } = useI18n();
 
   return (
     <div className="product-container card"
@@ -29,13 +30,20 @@ export function Product({ product, loadCart, lazyLoadImage = false }: ProductPro
         <Link className="product-link" to={productPath}>{product.name}</Link>
       </h2>
 
+      {/* After the name, so keyboard users reach it second, though it sits on the photo */}
+      <WishlistButton product={product} />
+
       <ProductRating rating={product.rating} />
 
       <div className="product-price">
         {formatMoney(product.priceCents)}
       </div>
 
-      <AddToCart product={product} loadCart={loadCart} />
+      {product.deletedAt ? (
+        <div className="product-unavailable" data-testid="product-unavailable">{t.common.noLongerAvailable}</div>
+      ) : (
+        <AddToCart product={product} loadCart={loadCart} />
+      )}
     </div>
   );
 }

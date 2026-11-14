@@ -1,5 +1,6 @@
 import { Product } from './Product';
-import type { LoadCart, Product as ProductType } from '../../types/store';
+import './ProductsGrid.css';
+import type { LoadCart, Product as ProductType } from '../types/store';
 
 // Roughly the first row on a wide screen. The rest load as the user scrolls
 const EAGER_IMAGE_COUNT = 6;

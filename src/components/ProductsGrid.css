@@ -1,0 +1,93 @@
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-5);
+}
+
+.product-container {
+  --card-padding: var(--space-4);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: var(--card-padding);
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+
+.product-container:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.product-container .product-image-container {
+  display: block;
+  aspect-ratio: 1;
+  margin-bottom: var(--card-padding);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: var(--color-surface-hover);
+}
+
+.product-container .wishlist-button {
+  top: calc(var(--card-padding) + var(--space-2));
+  right: calc(var(--card-padding) + var(--space-2));
+}
+
+.product-container .product-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-container .product-name {
+  min-height: calc(2 * 1.4em);
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+}
+
+.product-container .product-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.product-container .product-link:hover {
+  color: var(--color-brand);
+  text-decoration: underline;
+}
+
+.product-container .product-price {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Pushes the actions to the bottom, so the buttons line up across a row */
+.product-container .product-actions,
+.product-container .product-unavailable {
+  margin-top: auto;
+  padding-top: var(--space-4);
+}
+
+.product-container .product-unavailable {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+@media (max-width: 520px) {
+  .products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  .product-container {
+    --card-padding: var(--space-3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-container:hover {
+    transform: none;
+  }
+}

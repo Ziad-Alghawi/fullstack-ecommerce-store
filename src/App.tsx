@@ -13,6 +13,7 @@ import { ActionFailureContext } from './hooks/useAction';
 import { ToastContext, useToasts } from './hooks/useToast';
 import { AuthContext, useAuthUser, useIsAdmin } from './hooks/useAuth';
 import { I18nContext, useI18n, useLanguage } from './hooks/useI18n';
+import { WishlistContext, useWishlistState } from './hooks/useWishlist';
 import { isAuthEnabled, logOut } from './utils/supabase';
 import type { ApiError, CartItem, CartStatus } from './types/store';
 import './App.css';
@@ -36,6 +37,7 @@ const LoginPage = lazyPage(() => import('./pages/LoginPage').then((module) => mo
 const ForgotPasswordPage = lazyPage(() => import('./pages/ForgotPasswordPage').then((module) => module.ForgotPasswordPage));
 const ResetPasswordPage = lazyPage(() => import('./pages/ResetPasswordPage').then((module) => module.ResetPasswordPage));
 const AccountPage = lazyPage(() => import('./pages/AccountPage').then((module) => module.AccountPage));
+const WishlistPage = lazyPage(() => import('./pages/WishlistPage').then((module) => module.WishlistPage));
 const AdminPage = lazyPage(() => import('./pages/admin/AdminPage').then((module) => module.AdminPage));
 const AdminOrdersPage = lazyPage(() => import('./pages/admin/AdminOrdersPage').then((module) => module.AdminOrdersPage));
 const ProductPage = lazyPage(() => import('./pages/product/ProductPage').then((module) => module.ProductPage));
@@ -63,6 +65,7 @@ function App() {
   const { t, apiError } = i18n;
   const user = useAuthUser();
   const isAdmin = useIsAdmin(user?.id);
+  const wishlist = useWishlistState(user?.id);
   // Whose cart and orders are shown. Pages load them again when it changes
   const owner = user === undefined ? null : user?.id ?? 'guest';
 
@@ -136,31 +139,34 @@ function App() {
     <I18nContext value={i18n}>
       <div className="app-content">
         <AuthContext value={isAuthEnabled ? { user: user ?? null, isAdmin, logOut } : null}>
-          <ToastContext value={showToast}>
-            <ActionFailureContext value={reportActionFailure}>
-              {owner ? (
-                <Suspense fallback={<LoadingMessage />}>
-                  <Routes key={`${retryCount}-${owner}`}>
-                    <Route index element={<HomePage cart={cart} loadCart={loadCart} onRetry={retry} />} />
-                    <Route path="products/:productId" element={<ProductPage cart={cart} loadCart={loadCart} onRetry={retry} />} />
-                    <Route path="checkout" element={<CheckoutPage cart={cart} cartStatus={cartStatus} loadCart={loadCart} onRetry={retry} />} />
-                    <Route path="checkout/success" element={<CheckoutSuccessPage cart={cart} loadCart={loadCart} onRetry={retry} />} />
-                    <Route path="orders" element={<OrdersPage cart={cart} loadCart={loadCart} onRetry={retry} />} />
-                    <Route path="tracking/:orderId/:productId" element={<TrackingPage cart={cart} onRetry={retry} />} />
-                    {isAuthEnabled && <Route path="login" element={<LoginPage cart={cart} />} />}
-                    {isAuthEnabled && <Route path="forgot-password" element={<ForgotPasswordPage cart={cart} />} />}
-                    {isAuthEnabled && <Route path="reset-password" element={<ResetPasswordPage cart={cart} />} />}
-                    {isAuthEnabled && <Route path="account" element={<AccountPage cart={cart} />} />}
-                    {isAuthEnabled && <Route path="admin" element={<AdminPage cart={cart} onRetry={retry} />} />}
-                    {isAuthEnabled && <Route path="admin/orders" element={<AdminOrdersPage cart={cart} onRetry={retry} />} />}
-                    <Route path="*" element={<NotFoundPage cart={cart} />} />
-                  </Routes>
-                </Suspense>
-              ) : (
-                <LoadingMessage />
-              )}
-            </ActionFailureContext>
-          </ToastContext>
+          <WishlistContext value={wishlist}>
+            <ToastContext value={showToast}>
+              <ActionFailureContext value={reportActionFailure}>
+                {owner ? (
+                  <Suspense fallback={<LoadingMessage />}>
+                    <Routes key={`${retryCount}-${owner}`}>
+                      <Route index element={<HomePage cart={cart} loadCart={loadCart} onRetry={retry} />} />
+                      <Route path="products/:productId" element={<ProductPage cart={cart} loadCart={loadCart} onRetry={retry} />} />
+                      <Route path="checkout" element={<CheckoutPage cart={cart} cartStatus={cartStatus} loadCart={loadCart} onRetry={retry} />} />
+                      <Route path="checkout/success" element={<CheckoutSuccessPage cart={cart} loadCart={loadCart} onRetry={retry} />} />
+                      <Route path="orders" element={<OrdersPage cart={cart} loadCart={loadCart} onRetry={retry} />} />
+                      <Route path="tracking/:orderId/:productId" element={<TrackingPage cart={cart} onRetry={retry} />} />
+                      {isAuthEnabled && <Route path="login" element={<LoginPage cart={cart} />} />}
+                      {isAuthEnabled && <Route path="forgot-password" element={<ForgotPasswordPage cart={cart} />} />}
+                      {isAuthEnabled && <Route path="reset-password" element={<ResetPasswordPage cart={cart} />} />}
+                      {isAuthEnabled && <Route path="account" element={<AccountPage cart={cart} />} />}
+                      {isAuthEnabled && <Route path="wishlist" element={<WishlistPage cart={cart} loadCart={loadCart} />} />}
+                      {isAuthEnabled && <Route path="admin" element={<AdminPage cart={cart} onRetry={retry} />} />}
+                      {isAuthEnabled && <Route path="admin/orders" element={<AdminOrdersPage cart={cart} onRetry={retry} />} />}
+                      <Route path="*" element={<NotFoundPage cart={cart} />} />
+                    </Routes>
+                  </Suspense>
+                ) : (
+                  <LoadingMessage />
+                )}
+              </ActionFailureContext>
+            </ToastContext>
+          </WishlistContext>
         </AuthContext>
       </div>
 

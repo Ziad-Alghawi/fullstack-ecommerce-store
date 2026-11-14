@@ -219,6 +219,19 @@ export const de: Messages = {
     refunded: ' Die Zahlung wurde erstattet.',
     notFound: 'Dieses Paket wurde nicht gefunden'
   },
+  wishlist: {
+    title: 'Deine Merkliste',
+    link: 'Merkliste',
+    save: (name) => `${name} merken`,
+    saved: (name) => `${name} ist jetzt auf deiner Merkliste`,
+    removed: (name) => `${name} von der Merkliste entfernt`,
+    view: 'Zur Merkliste',
+    logInHint: 'Melde dich an, um dir Produkte zu merken',
+    logInPrompt: 'Melde dich an, um deine Merkliste zu sehen',
+    empty: 'Deine Merkliste ist leer',
+    emptyText: 'Tippe bei einem Produkt auf das Herz, um es dir für später zu merken.',
+    linkText: 'Produkte, die du dir für später gemerkt hast'
+  },
   account: {
     title: 'Dein Konto',
     loginDetails: 'Anmeldedaten',

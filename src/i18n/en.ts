@@ -208,6 +208,19 @@ export const en = {
     refunded: ' Its payment was refunded.',
     notFound: "We couldn't find this package"
   },
+  wishlist: {
+    title: 'Your wishlist',
+    link: 'Wishlist',
+    save: (name: string) => `Save ${name} to your wishlist`,
+    saved: (name: string) => `${name} saved to your wishlist`,
+    removed: (name: string) => `${name} removed from your wishlist`,
+    view: 'View wishlist',
+    logInHint: 'Log in to save products to your wishlist',
+    logInPrompt: 'Log in to see your wishlist',
+    empty: 'Your wishlist is empty',
+    emptyText: 'Tap the heart on a product to save it for later.',
+    linkText: 'Products you saved for later'
+  },
   account: {
     title: 'Your account',
     loginDetails: 'Login details',

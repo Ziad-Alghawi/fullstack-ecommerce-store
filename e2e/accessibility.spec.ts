@@ -1,13 +1,6 @@
-import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
-import { addToCart, goToCheckout, logIn, placeOrder } from './helpers.ts';
+import { expect, test } from '@playwright/test';
+import { addToCart, expectNoViolations, goToCheckout, logIn, placeOrder } from './helpers.ts';
 import { ADMIN } from './settings.ts';
-
-// WCAG 2.1 A and AA, the level Lighthouse and most audits check
-async function expectNoViolations(page: Page) {
-  const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
-  expect(violations.map(({ id, nodes }) => `${id}: ${nodes.map(({ target }) => target.join(' ')).join(', ')}`)).toEqual([]);
-}
 
 test('the orders and tracking pages pass an accessibility check', async ({ page }) => {
   await page.goto('/');

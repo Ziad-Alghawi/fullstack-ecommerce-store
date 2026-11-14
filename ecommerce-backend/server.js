@@ -20,6 +20,7 @@ import adminOrderRoutes from './routes/adminOrders.js';
 import adminStatsRoutes from './routes/adminStats.js';
 import couponRoutes, { getFeaturedCoupon } from './routes/coupons.js';
 import meRoutes from './routes/me.js';
+import wishlistRoutes from './routes/wishlist.js';
 import stripeRoutes, { handleWebhook } from './routes/stripe.js';
 import { corsOrigins } from './utils/corsOrigins.js';
 import { loadVisitors, requireVisitor } from './middleware/visitor.js';
@@ -69,6 +70,7 @@ app.use('/api/payment-summary', requireVisitor, paymentSummaryRoutes);
 app.use('/api/coupons', couponRoutes);
 app.get('/api/featured-coupon', getFeaturedCoupon);
 app.use('/api/me', meRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/stripe', stripeRoutes);
 // Checked once for every admin path, so an admin route can't be added without it
 app.use('/api/admin', requireAdmin);

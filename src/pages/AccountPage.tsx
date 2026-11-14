@@ -55,6 +55,10 @@ export function AccountPage({ cart }: AccountPageProps) {
                 <span className="account-link-title">{t.account.ordersTitle}</span>
                 <span className="account-link-text">{t.account.ordersText}</span>
               </Link>
+              <Link className="account-link card" to="/wishlist" data-testid="account-wishlist-link">
+                <span className="account-link-title">{t.wishlist.title}</span>
+                <span className="account-link-text">{t.wishlist.linkText}</span>
+              </Link>
               <Link className="account-link card" to="/reset-password" data-testid="account-password-link">
                 <span className="account-link-title">{t.account.passwordTitle}</span>
                 <span className="account-link-text">{t.account.passwordText}</span>

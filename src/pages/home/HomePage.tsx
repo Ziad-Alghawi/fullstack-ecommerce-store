@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Header } from '../../components/Header';
 import { PageTitle } from '../../components/PageTitle';
 import { ErrorMessage, LoadingMessage } from '../../components/PageStatus';
-import { ProductsGrid } from './ProductsGrid';
+import { ProductsGrid } from '../../components/ProductsGrid';
 import { ProductFilters } from './ProductFilters';
 import { useI18n } from '../../hooks/useI18n';
 import { getProductsUrl, readProductFilters } from '../../utils/productFilters';

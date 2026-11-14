@@ -5,6 +5,7 @@ import { Header } from '../../components/Header';
 import { PageTitle } from '../../components/PageTitle';
 import { ErrorMessage, LoadingMessage } from '../../components/PageStatus';
 import { AddToCart } from '../../components/AddToCart';
+import { WishlistButton } from '../../components/WishlistButton';
 import { ProductRating } from '../../components/Rating';
 import { Reviews } from './Reviews';
 import { useI18n } from '../../hooks/useI18n';
@@ -52,6 +53,7 @@ export function ProductPage({ cart, loadCart, onRetry }: ProductPageProps) {
           <div className="product-details-image-container">
             <img className="product-details-image" src={product.image} alt={product.name}
               width="480" height="480" />
+            <WishlistButton product={product} />
           </div>
 
           <div className="product-details-info">

@@ -1,0 +1,40 @@
+/* Sits in the corner of the product's photo */
+.wishlist-button {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
+  box-shadow: var(--shadow-sm);
+  transition: color var(--transition), background-color var(--transition);
+}
+
+.wishlist-button:hover {
+  color: var(--color-error);
+  background-color: var(--color-surface-hover);
+}
+
+.wishlist-button[aria-pressed="true"] {
+  color: var(--color-error);
+}
+
+.wishlist-button[aria-pressed="true"] .wishlist-button-icon {
+  fill: currentColor;
+}
+
+.wishlist-button[aria-busy="true"] {
+  opacity: 0.55;
+}
+
+.wishlist-button-icon {
+  width: 22px;
+  height: 22px;
+}

@@ -19,6 +19,11 @@ Here's a list of all the URL Paths you can use with this backend and what each U
 - [PUT /api/cart-items/:productId](#put-apicart-itemsproductid)
 - [DELETE /api/cart-items/:productId](#delete-apicart-itemsproductid)
 
+**Wishlist**
+- [GET /api/wishlist](#get-apiwishlist)
+- [PUT /api/wishlist/:productId](#put-apiwishlistproductid)
+- [DELETE /api/wishlist/:productId](#delete-apiwishlistproductid)
+
 **Orders**
 - [GET /api/orders](#get-apiorders)
 - [POST /api/orders](#post-apiorders)
@@ -286,6 +291,37 @@ Removes an item from the cart.
 
 **Response:**
 - Status: 204 (No response)
+
+## GET /api/wishlist
+The products the logged in user saved, newest first. Needs a valid token. A product an admin deleted stays on the list, with `deletedAt` set.
+
+**Response:**
+```js
+[
+  {
+    "productId": "uuid",
+    "createdAt": "2026-11-14T09:30:00.000Z",
+    // Like GET /api/products/:productId
+    "product": { ... }
+  }
+]
+```
+- Status 401 without a valid token
+
+## PUT /api/wishlist/:productId
+Saves a product to the logged in user's wishlist. Saving it again changes nothing.
+
+**Response:**
+- Status 204 (No response)
+- Status 401 without a valid token
+- Status 404 if the product doesn't exist or was deleted
+
+## DELETE /api/wishlist/:productId
+Removes a product from the logged in user's wishlist. Removing one that isn't there changes nothing.
+
+**Response:**
+- Status 204 (No response)
+- Status 401 without a valid token
 
 ## GET /api/orders
 Returns all orders, sorted by most recent first.

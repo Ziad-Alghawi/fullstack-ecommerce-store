@@ -5,7 +5,7 @@ import { AuthContext } from '../hooks/useAuth';
 import { useI18n } from '../hooks/useI18n';
 import { LANGUAGE_CODES, LANGUAGES } from '../i18n/i18n';
 import type { CartItem } from '../types/store';
-import { CartIcon, SearchIcon, UserIcon } from './Icons';
+import { CartIcon, HeartIcon, SearchIcon, UserIcon } from './Icons';
 import { Logo } from './Logo';
 import './Header.css';
 
@@ -75,6 +75,13 @@ export function Header({ cart }: HeaderProps) {
           data-testid="header-orders-link">
           {t.header.orders}
         </NavLink>
+
+        {auth && (
+          <NavLink className="header-link" to="/wishlist" data-testid="header-wishlist-link">
+            <HeartIcon className="header-link-icon" />
+            <span className="header-link-label">{t.wishlist.link}</span>
+          </NavLink>
+        )}
 
         {auth?.user ? (
           <NavLink className="header-link" to="/account"

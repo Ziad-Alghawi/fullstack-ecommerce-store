@@ -37,6 +37,13 @@ export interface ProductReviews {
   canReview: boolean;
 }
 
+export interface WishlistItem {
+  productId: string;
+  createdAt: string;
+  // With deletedAt set once an admin deleted it
+  product: Product;
+}
+
 export interface CartItem {
   productId: string;
   quantity: number;

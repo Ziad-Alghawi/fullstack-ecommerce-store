@@ -10,6 +10,7 @@
 }
 
 .product-details-image-container {
+  position: relative;
   aspect-ratio: 1;
   border-radius: var(--radius-md);
   overflow: hidden;
