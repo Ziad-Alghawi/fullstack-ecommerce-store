@@ -40,7 +40,7 @@ export const Order = sequelize.define('Order', {
   customerName: {
     type: DataTypes.STRING
   },
-  // One of ORDER_STATUSES. Admins move it forward, and customers can cancel an order paid on delivery
+  // One of ORDER_STATUSES. Admins move it forward, and customers can cancel an order that hasn't shipped
   status: {
     type: DataTypes.STRING,
     allowNull: false,

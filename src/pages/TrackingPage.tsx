@@ -30,7 +30,7 @@ function PackageTracking({ order, orderProduct }: PackageTrackingProps) {
       </Link>
 
       <h1 className="delivery-date">
-        {describeDelivery(order.status, orderProduct.estimatedDeliveryTimeMs)}
+        {describeDelivery(order, orderProduct.estimatedDeliveryTimeMs)}
       </h1>
 
       <div className="tracking-product">
@@ -64,6 +64,7 @@ function PackageTracking({ order, orderProduct }: PackageTrackingProps) {
       ) : (
         <p className="tracking-cancelled" data-testid="tracking-cancelled">
           This order was cancelled before it shipped, so this package won't be delivered.
+          {order.paymentMethod === 'card' && ' Its payment was refunded.'}
         </p>
       )}
     </div>

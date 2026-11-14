@@ -1,10 +1,10 @@
-import { ORDER_STATUS_LABELS } from '../utils/orderStatus';
-import type { OrderStatus } from '../types/store';
+import { getStatusLabel } from '../utils/orderStatus';
+import type { Order } from '../types/store';
 
-export function OrderStatusBadge({ status }: { status: OrderStatus }) {
+export function OrderStatusBadge({ order }: { order: Pick<Order, 'status' | 'paymentMethod'> }) {
   return (
-    <span className={`status-badge status-badge-${status}`} data-testid="order-status">
-      {ORDER_STATUS_LABELS[status]}
+    <span className={`status-badge status-badge-${order.status}`} data-testid="order-status">
+      {getStatusLabel(order)}
     </span>
   );
 }

@@ -12,7 +12,7 @@ A full-stack online store built with React, TypeScript and an Express API: produ
 
 - **Pay by card** with Stripe's test card `4242 4242 4242 4242`, any future date and any CVC. No money moves.
 - **Use a coupon:** type `WELCOME10` at checkout for 10% off the items. Checkout also suggests it.
-- **Pay on delivery**, then cancel the order from your orders page before it ships. Its items go back in stock.
+- **Cancel an order** from your orders page before it ships. Its items go back in stock, and a card payment is refunded in full.
 - **Sold out products:** the Straw Wide Brim Sun Hat can't be added to the cart, and the Woven Straw Tote Bag has only 2 left.
 - **Create an account** to keep your cart and orders on every device. What you added as a guest moves to the account when you log in.
 
@@ -27,7 +27,7 @@ The admin area needs an account listed in `ADMIN_USER_IDS`, so the screenshots b
 - A cart with quantities, three delivery options and a live payment summary
 - Coupons typed at checkout, with the discount worked out by the API every time
 - Order history with each order's status (processing, shipped, delivered or cancelled) and package tracking
-- Cancelling an order paid on delivery until it ships, which puts its items back in stock
+- Cancelling an order until it ships, which puts its items back in stock and refunds a card payment
 - A separate cart and order history for each visitor without signing up, or optional accounts with email and password, a password reset by email and an account page
 - Notifications that confirm actions or explain what failed, with a retry, and loading, empty and error states everywhere
 
@@ -42,6 +42,7 @@ The admin area needs an account listed in `ADMIN_USER_IDS`, so the screenshots b
 - Pay on delivery, or by card with Stripe Checkout in test mode
 - The API builds every Stripe payment from the cart in the database, so nothing the browser sends sets a price, and a coupon becomes a one-time Stripe discount
 - A card order is only created once Stripe confirms the payment, through the webhook or the page the customer returns to, and one payment always makes exactly one order
+- Cancelling a card order refunds the whole payment first, and the order is only cancelled once Stripe accepts the refund. An idempotency key per order means a repeated cancel never refunds twice, and only payments tagged for this store are refunded
 
 **Quality**
 - Unit, API and end-to-end tests, run by GitHub Actions on every push

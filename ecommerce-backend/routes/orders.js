@@ -126,7 +126,7 @@ router.get('/:orderId', asyncHandler(async (req, res) => {
   res.json(order);
 }));
 
-// Customers can cancel an order paid on delivery until it ships, which puts its items back in stock
+// Customers can cancel an order until it ships, which refunds a card payment and puts its items back in stock
 router.post('/:orderId/cancel', checkoutLimit, asyncHandler(async (req, res) => {
   const order = await Order.findOne({ where: { id: req.params.orderId, visitorId: req.visitorId } });
   if (!order) {
@@ -135,7 +135,7 @@ router.post('/:orderId/cancel', checkoutLimit, asyncHandler(async (req, res) => 
 
   const refusal = await changeStatus(order, 'cancelled');
   if (refusal) {
-    return res.status(409).json({ error: refusal });
+    return res.status(refusal.status).json({ error: refusal.error });
   }
 
   res.json(order);

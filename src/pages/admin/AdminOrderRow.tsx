@@ -6,7 +6,7 @@ import { ButtonSpinner } from '../../components/PageStatus';
 import { useAction } from '../../hooks/useAction';
 import { useToast } from '../../hooks/useToast';
 import { formatMoney } from '../../utils/money';
-import { ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from '../../utils/orderStatus';
+import { getStatusLabel, PAYMENT_METHOD_LABELS } from '../../utils/orderStatus';
 import type { AdminOrder, OrderStatus } from '../../types/store';
 
 // Enough of the ID to tell orders apart on the page and in a toast
@@ -28,7 +28,7 @@ function StatusButton({ order, status, label, className = 'button-secondary', on
   const [changeStatus, isChanging] = useAction(async () => {
     const response = await axios.patch<AdminOrder>(`/api/admin/orders/${order.id}`, { status });
     onChanged(response.data);
-    showToast(`Order ${shortId(order)} is now ${ORDER_STATUS_LABELS[status].toLowerCase()}`);
+    showToast(`Order ${shortId(order)} is now ${getStatusLabel(response.data).toLowerCase()}`);
   });
 
   // aria-disabled rather than disabled, which would take keyboard focus off the button. useAction ignores clicks meanwhile
@@ -79,13 +79,15 @@ export function AdminOrderRow({ order, onChanged }: AdminOrderRowProps) {
       <td className="admin-cell-price" data-label="Total">{formatMoney(order.totalCostCents)}</td>
       <td className="admin-order-cell-payment" data-label="Payment">{PAYMENT_METHOD_LABELS[order.paymentMethod]}</td>
       <td className="admin-order-cell-status" ref={statusCell} tabIndex={-1}>
-        <OrderStatusBadge status={order.status} />
+        <OrderStatusBadge order={order} />
       </td>
       <td className="admin-cell-actions">
         {/* The keys swap in new buttons, so a double click on Cancel can't also confirm it */}
         {isConfirmingCancel && canCancel ? (
           <div key="confirm" className="admin-actions" role="group" aria-label={`Cancel order ${id}?`}>
-            <span className="admin-confirm-text">Cancel and restock?</span>
+            <span className="admin-confirm-text">
+              {order.paymentMethod === 'card' ? 'Refund and restock?' : 'Cancel and restock?'}
+            </span>
             <StatusButton order={order} status="cancelled" label={`Cancel order ${id}`} className="button-danger"
               onChanged={showChange}>
               Cancel order

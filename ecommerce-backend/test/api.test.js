@@ -39,6 +39,9 @@ const webhookSecret = 'whsec_test_secret';
 const stripeSessions = new Map();
 const stripeLineItems = new Map();
 const stripeCoupons = new Map();
+// The refunds the server asked for, by idempotency key. Tests set refundError to make Stripe refuse the next ones
+const stripeRefunds = new Map();
+let refundError = null;
 
 function getFreePort() {
   return new Promise((resolve) => {
@@ -93,6 +96,19 @@ async function startStripe() {
       return send(200, coupon);
     }
 
+    if (req.method === 'POST' && req.url === '/v1/refunds') {
+      if (refundError) {
+        return send(402, { error: refundError });
+      }
+      // Like Stripe, a repeated idempotency key gets the first refund back instead of a new one
+      const key = req.headers['idempotency-key'];
+      if (!stripeRefunds.has(key)) {
+        const fields = parseStripeForm(body);
+        stripeRefunds.set(key, { ...fields, id: `re_${randomUUID().replaceAll('-', '')}`, object: 'refund', status: 'succeeded' });
+      }
+      return send(200, stripeRefunds.get(key));
+    }
+
     if (req.method === 'POST' && req.url === '/v1/checkout/sessions') {
       const { line_items: lines, metadata, success_url, cancel_url, discounts } = parseStripeForm(body);
 
@@ -109,6 +125,7 @@ async function startStripe() {
         amount_total: lineItems.reduce((total, line) => total + line.amount_total, 0)
           - Object.values(discounts ?? {}).reduce((total, { coupon }) => total + stripeCoupons.get(coupon).amount_off, 0),
         payment_status: 'unpaid',
+        payment_intent: `pi_${randomUUID().replaceAll('-', '')}`,
         metadata,
         success_url,
         cancel_url
@@ -855,17 +872,88 @@ test('two cancels at once give the stock back once', async () => {
   await deleteProduct(product);
 });
 
-test('an order paid by card cannot be cancelled', async () => {
-  const visitorId = randomUUID();
-  await addToCart(visitorId);
+// A card order of one Plaid Wool Scarf, paid and created like the success page does
+async function placeCardOrder(product, visitorId = randomUUID()) {
+  await addProduct(visitorId, product.id);
   const session = await startCheckout(visitorId);
   session.payment_status = 'paid';
   const order = await (await getPaidOrder(visitorId, session)).json();
-  assert.equal(order.status, 'processing');
+  return { visitorId, session, order };
+}
+
+function refundsFor(session) {
+  return [...stripeRefunds.values()].filter(({ payment_intent }) => payment_intent === session.payment_intent);
+}
+
+test('cancelling a card order refunds the whole payment once, then gives back its stock', async () => {
+  const product = await createProduct({ ...newProduct, stock: 5 });
+  const { visitorId, session, order } = await placeCardOrder(product);
+  assert.equal(await getStock(product.id), 4);
+
+  const response = await cancelOrder(visitorId, order.id);
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).status, 'cancelled');
+  assert.equal(await getStock(product.id), 5);
+  const [refund, ...more] = refundsFor(session);
+  assert.deepEqual(more, []);
+  // No amount, so Stripe refunds all of it
+  assert.equal(refund.amount, undefined);
+  assert.deepEqual(refund.metadata, { app: 'react-ecommerce', orderId: order.id });
+
+  const again = await cancelOrder(visitorId, order.id);
+  assert.equal(again.status, 409);
+  assert.equal((await again.json()).error, 'This order is already cancelled.');
+  assert.equal(refundsFor(session).length, 1);
+  assert.equal(await getStock(product.id), 5);
+  await deleteProduct(product);
+});
+
+test('a customer and an admin cancelling a card order at once refund it and give back its stock once', async () => {
+  const product = await createProduct({ ...newProduct, stock: 5 });
+  const { visitorId, session, order } = await placeCardOrder(product);
+
+  const responses = await Promise.all([cancelOrder(visitorId, order.id), setOrderStatus(order.id, 'cancelled')]);
+  assert.deepEqual(responses.map(({ status }) => status).sort(), [200, 409]);
+  assert.equal(refundsFor(session).length, 1);
+  assert.equal(await getStock(product.id), 5);
+  await deleteProduct(product);
+});
+
+test('a card order stays as it was when Stripe refuses the refund', async () => {
+  const product = await createProduct({ ...newProduct, stock: 5 });
+  const { visitorId, session, order } = await placeCardOrder(product);
+
+  refundError = { type: 'invalid_request_error', code: 'insufficient_funds', message: 'Insufficient funds in Stripe account.' };
+  try {
+    for (const response of [await cancelOrder(visitorId, order.id), await setOrderStatus(order.id, 'cancelled')]) {
+      assert.equal(response.status, 502);
+      assert.equal((await response.json()).error, "The refund didn't go through, so the order wasn't cancelled. Please try again later.");
+    }
+  } finally {
+    refundError = null;
+  }
+  assert.equal((await getOrders(visitorId))[0].status, 'processing');
+  assert.equal(await getStock(product.id), 4);
+  assert.deepEqual(refundsFor(session), []);
+
+  // Once Stripe works again, cancelling does too
+  assert.equal((await cancelOrder(visitorId, order.id)).status, 200);
+  assert.equal(refundsFor(session).length, 1);
+  await deleteProduct(product);
+});
+
+test("a card order whose payment isn't tagged for this store is not refunded", async () => {
+  const product = await createProduct({ ...newProduct, stock: 5 });
+  const { visitorId, session, order } = await placeCardOrder(product);
+  session.metadata = { ...session.metadata, app: 'other-app' };
 
   const refused = await cancelOrder(visitorId, order.id);
   assert.equal(refused.status, 409);
-  assert.match((await refused.json()).error, /paid by card/);
+  assert.equal((await refused.json()).error, "This order's payment can't be refunded by the store.");
+  assert.deepEqual(refundsFor(session), []);
+  assert.equal((await getOrders(visitorId))[0].status, 'processing');
+  assert.equal(await getStock(product.id), 4);
+  await deleteProduct(product);
 });
 
 async function getAdminOrders(query = '') {
@@ -907,7 +995,7 @@ test('an admin lists the newest orders with a masked customer, and filters them'
     nextStatuses: ['shipped', 'cancelled']
   });
   assert.equal(orders[0].customerName, 'ca***');
-  assert.deepEqual(orders[0].nextStatuses, ['shipped']);
+  assert.deepEqual(orders[0].nextStatuses, ['shipped', 'cancelled']);
   assert.equal(orders[2].customerName, 'Guest');
   assert.ok(!JSON.stringify(orders).includes('example.com'));
   assert.ok(!JSON.stringify(orders).includes(guestId));
@@ -1685,9 +1773,17 @@ test('restocks low demo products once a day, unless DEMO_RESTOCK is off', async 
 });
 
 test('card payment is off without a Stripe test key, and paying on delivery still works', async () => {
+  const { visitorId: cardCustomer, order: cardOrder } = await placeCardOrder({ id: productId });
   for (const STRIPE_SECRET_KEY of ['', 'sk_live_not_for_a_demo']) {
     await stopServer();
     await startServer({ STRIPE_SECRET_KEY });
+
+    // An earlier card order can't be refunded, so it can't be cancelled either
+    const { orders } = await getAdminOrders('?paymentMethod=card');
+    assert.deepEqual(orders.find(({ id }) => id === cardOrder.id).nextStatuses, ['shipped']);
+    const refused = await cancelOrder(cardCustomer, cardOrder.id);
+    assert.equal(refused.status, 409);
+    assert.match((await refused.json()).error, /can't be refunded right now/);
 
     assert.deepEqual(await (await api('/api/stripe/config')).json(), { cardPayment: false }, STRIPE_SECRET_KEY);
     const visitorId = randomUUID();

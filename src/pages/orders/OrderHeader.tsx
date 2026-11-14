@@ -36,7 +36,7 @@ export function OrderHeader({ order, statusRef }: OrderHeaderProps) {
 
       <div ref={statusRef} tabIndex={-1}>
         <div className="order-header-label">Status</div>
-        <OrderStatusBadge status={order.status} />
+        <OrderStatusBadge order={order} />
       </div>
 
       <div className="order-id">

@@ -7,13 +7,10 @@ import { Product } from '../models/Product.js';
 import { calculatePaymentSummary } from './paymentSummary.js';
 import { createOrder, getCustomerName, getOrderRefusal } from './orders.js';
 import { corsOrigins } from '../utils/corsOrigins.js';
-import { stripe } from '../utils/stripe.js';
+import { APP_TAG, stripe } from '../utils/stripe.js';
 import { takePaidStock } from '../utils/stock.js';
 import { readCoupon } from '../middleware/coupon.js';
 import { checkoutLimit } from '../middleware/rateLimits.js';
-
-// The Stripe sandbox is shared with another app, so this store tags its sessions and skips the rest
-const APP_TAG = 'react-ecommerce';
 
 const router = express.Router();
 

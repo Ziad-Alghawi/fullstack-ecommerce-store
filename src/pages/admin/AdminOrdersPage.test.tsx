@@ -148,6 +148,22 @@ describe('AdminOrdersPage component', () => {
     expect(within(row).getByTestId('order-status').parentElement).toHaveFocus();
   });
 
+  it('refunds a card order when cancelling it, and shows it refunded', async () => {
+    const cardOrder: AdminOrder = { ...newOrder, paymentMethod: 'card' };
+    api['get /api/admin/orders'] = { data: { orders: [cardOrder], total: 1 } };
+    api[`patch /api/admin/orders/${cardOrder.id}`] = { data: { ...cardOrder, status: 'cancelled', nextStatuses: [] } };
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: 'Cancel order 27cba69d' }));
+    const confirmation = screen.getByRole('group', { name: 'Cancel order 27cba69d?' });
+    expect(confirmation).toHaveTextContent('Refund and restock?');
+    await user.click(within(confirmation).getByRole('button', { name: 'Cancel order 27cba69d' }));
+
+    const row = screen.getByTestId('admin-order-row');
+    expect(await within(row).findByTestId('order-status')).toHaveTextContent('Refunded');
+    expect(requests.at(-1)).toEqual({ request: `patch /api/admin/orders/${cardOrder.id}`, body: { status: 'cancelled' } });
+  });
+
   it('filters by status and payment, keeping the filters in the URL', async () => {
     renderPage();
     await screen.findAllByTestId('admin-order-row');

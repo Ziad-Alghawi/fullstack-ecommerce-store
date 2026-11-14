@@ -181,7 +181,7 @@ describe('OrdersPage component', () => {
     );
 
     const [newOrder, oldOrder] = await screen.findAllByTestId('order-container');
-    // Delivered and card orders can't be cancelled
+    // Delivered orders can't be cancelled
     expect(within(oldOrder).queryByTestId('cancel-order-button')).not.toBeInTheDocument();
 
     await user.click(within(newOrder).getByTestId('cancel-order-button'));
@@ -197,6 +197,25 @@ describe('OrdersPage component', () => {
     expect(within(newOrder).queryByTestId('cancel-order-button')).not.toBeInTheDocument();
     // The products stay as they were, as the API answers without them
     expect(within(newOrder).getAllByTestId('order-product-delivery-date')[0]).toHaveTextContent('Cancelled');
+  });
+
+  it('cancels a card order that has not shipped and shows it refunded', async () => {
+    const user = userEvent.setup();
+    orders[0].paymentMethod = 'card';
+    axios.post.mockResolvedValueOnce({ data: { ...orders[0], products: [], status: 'cancelled' } });
+    render(
+      <MemoryRouter>
+        <OrdersPage cart={cart} />
+      </MemoryRouter>
+    );
+
+    const [cardOrder] = await screen.findAllByTestId('order-container');
+    await user.click(within(cardOrder).getByTestId('cancel-order-button'));
+    const confirmation = within(cardOrder).getByRole('group', { name: 'Cancel this order and refund your payment?' });
+    await user.click(within(confirmation).getByTestId('confirm-cancel-order-button'));
+
+    expect(await within(cardOrder).findByTestId('order-status')).toHaveTextContent('Refunded');
+    expect(within(cardOrder).getAllByTestId('order-product-delivery-date')[0]).toHaveTextContent('Refunded');
   });
 
   it('says so when there are no orders yet', async () => {

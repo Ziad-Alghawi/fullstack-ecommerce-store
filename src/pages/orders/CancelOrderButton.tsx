@@ -13,17 +13,19 @@ interface CancelOrderButtonProps {
 export function CancelOrderButton({ order, onCancelled }: CancelOrderButtonProps) {
   const [isConfirming, setIsConfirming] = useState(false);
   const showToast = useToast();
+  const isCard = order.paymentMethod === 'card';
+  const question = isCard ? 'Cancel this order and refund your payment?' : 'Cancel this order?';
 
   const [cancelOrder, isCancelling] = useAction(async () => {
     const response = await axios.post<Order>(`/api/orders/${order.id}/cancel`);
     onCancelled(response.data);
-    showToast('Order cancelled. Its items are back in stock');
+    showToast(isCard ? 'Order cancelled and your payment refunded' : 'Order cancelled. Its items are back in stock');
   });
 
   // The keys swap in new buttons, so a double click on Cancel order can't also confirm it
   return isConfirming ? (
-    <div key="confirm" className="order-actions" role="group" aria-label="Cancel this order?">
-      <span className="order-confirm-text">Cancel this order?</span>
+    <div key="confirm" className="order-actions" role="group" aria-label={question}>
+      <span className="order-confirm-text">{question}</span>
       <button className="button-danger" type="button" disabled={isCancelling} onClick={cancelOrder}
         data-testid="confirm-cancel-order-button">
         {isCancelling && <ButtonSpinner />}

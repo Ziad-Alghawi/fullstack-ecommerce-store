@@ -280,6 +280,23 @@ describe('App when the API fails', () => {
     expect(screen.getByTestId('place-order-button')).toBeEnabled();
   });
 
+  it("shows why a refund failed instead of the host's generic 502 message", async () => {
+    renderApp();
+    await screen.findByTestId('product-container');
+    api['/api/orders/order-1/cancel'] = {
+      status: 502,
+      data: { error: "The refund didn't go through, so the order wasn't cancelled. Please try again later." }
+    };
+
+    await act(async () => {
+      await axios.post('/api/orders/order-1/cancel').catch(() => {});
+    });
+
+    const toast = screen.getByTestId('toast');
+    expect(toast).toHaveTextContent("The refund didn't go through");
+    expect(within(toast).queryByTestId('toast-action')).not.toBeInTheDocument();
+  });
+
   it('repeats a failed order when Try again is clicked', async () => {
     renderApp('/checkout');
     await user.click(await screen.findByTestId('place-order-button'));

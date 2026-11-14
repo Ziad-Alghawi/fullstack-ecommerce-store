@@ -74,7 +74,7 @@ router.patch('/:orderId', asyncHandler(async (req, res) => {
 
   const refusal = await changeStatus(order, status);
   if (refusal) {
-    return res.status(409).json({ error: refusal });
+    return res.status(refusal.status).json({ error: refusal.error });
   }
 
   const [adminOrder] = await toAdminOrders([order]);

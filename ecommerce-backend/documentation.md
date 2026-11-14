@@ -383,16 +383,17 @@ Returns a specific order.
 ```
 
 ## POST /api/orders/:orderId/cancel
-Cancels an order paid on delivery that hasn't shipped yet.
+Cancels an order that hasn't shipped yet. An order paid by card is first refunded in full through Stripe, and is only cancelled once the refund succeeds.
 
 **URL Parameters:**
 - `orderId`: ID of the order
 
 **Response:**
 - Status 200 with the order, now with `status` `"cancelled"`
-- Side effect: Its items go back in stock
+- Side effect: Its items go back in stock, and a card payment is refunded
 - Status 404 if the order doesn't exist or belongs to someone else
-- Status 409 with the reason if the order was paid by card or has already shipped, been delivered or been cancelled
+- Status 409 with the reason if the order has already shipped, been delivered or been cancelled, or its card payment can't be refunded by the store
+- Status 502 if Stripe refused or failed the refund. The order and its stock stay as they were
 
 ## GET /api/payment-summary
 Calculates and returns the payment summary for the current cart.
@@ -595,7 +596,7 @@ Returns the newest 100 orders of every customer, newest first, for the admin ord
 - Status 400 with the reason if a filter is invalid
 
 ## PATCH /api/admin/orders/:orderId
-Moves an order to its next status: processing to shipped or cancelled, shipped to delivered. Only orders paid on delivery can be cancelled, which puts their items back in stock.
+Moves an order to its next status: processing to shipped or cancelled, shipped to delivered. Cancelling puts the items back in stock and, for an order paid by card, refunds the payment first, as in [POST /api/orders/:orderId/cancel](#post-apiordersorderidcancel).
 
 **Request:**
 ```js
@@ -609,6 +610,7 @@ Moves an order to its next status: processing to shipped or cancelled, shipped t
 - Status 400 if the status isn't one of the four
 - Status 404 if the order doesn't exist
 - Status 409 with the reason if the order can't move to that status
+- Status 502 if the refund for a cancelled card order failed. The order stays as it was
 
 ## GET /api/admin/stats
 Returns the numbers at the top of the admin page. Days are rolling 24 hour periods, so they don't depend on the server's time zone.

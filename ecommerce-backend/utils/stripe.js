@@ -18,3 +18,29 @@ export const stripe = isTestKey
     protocol: apiUrl.protocol.slice(0, -1)
   } : {})
   : null;
+
+// The Stripe sandbox is shared with another app, so this store tags its sessions and skips the rest
+export const APP_TAG = 'react-ecommerce';
+
+// Refunds the whole payment of a card order, or returns why it couldn't. The key makes Stripe
+// answer a repeated request with the first refund instead of refunding again
+export async function refundCardOrder(order) {
+  try {
+    const session = await stripe.checkout.sessions.retrieve(order.stripeSessionId);
+    if (session.metadata?.app !== APP_TAG || !session.payment_intent) {
+      return { status: 409, error: "This order's payment can't be refunded by the store." };
+    }
+    await stripe.refunds.create(
+      { payment_intent: session.payment_intent, metadata: { app: APP_TAG, orderId: order.id } },
+      { idempotencyKey: `refund-order-${order.id}` }
+    );
+    return null;
+  } catch (error) {
+    // Refunded already, for example in the Stripe Dashboard
+    if (error.code === 'charge_already_refunded') {
+      return null;
+    }
+    console.error(`Refunding order ${order.id} failed:`, error.message);
+    return { status: 502, error: "The refund didn't go through, so the order wasn't cancelled. Please try again later." };
+  }
+}

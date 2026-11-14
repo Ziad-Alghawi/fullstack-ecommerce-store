@@ -38,9 +38,11 @@ const AdminPage = lazyPage(() => import('./pages/admin/AdminPage').then((module)
 const AdminOrdersPage = lazyPage(() => import('./pages/admin/AdminOrdersPage').then((module) => module.AdminOrdersPage));
 const ProductPage = lazyPage(() => import('./pages/product/ProductPage').then((module) => module.ProductPage));
 
-// The API answers a request it won't accept (4xx) with the reason. Repeating it can't help
+// The API answers a request it won't accept (4xx) with the reason. Repeating it can't help.
+// It also explains a 502 when Stripe failed, unlike the host's 502 while the server wakes up
 function getRejectionReason(error: unknown) {
-  if (axios.isAxiosError<{ error?: string }>(error) && error.response && error.response.status < 500) {
+  if (axios.isAxiosError<{ error?: string }>(error) && error.response
+    && (error.response.status < 500 || error.response.status === 502)) {
     return error.response.data?.error ?? null;
   }
   return null;

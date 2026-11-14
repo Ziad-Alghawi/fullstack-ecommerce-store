@@ -50,7 +50,7 @@ export function OrderDetailsGrid({ order, loadCart }: OrderDetailsGridProps) {
             </Link>
             <div className={`product-delivery-date${order.status === 'cancelled' ? ' product-delivery-cancelled' : ''}`}
               data-testid="order-product-delivery-date">
-              {describeDelivery(order.status, orderProduct.estimatedDeliveryTimeMs)}
+              {describeDelivery(order, orderProduct.estimatedDeliveryTimeMs)}
             </div>
             <div className="product-quantity">
               Quantity: {orderProduct.quantity}

@@ -73,4 +73,12 @@ describe('TrackingPage component', () => {
     expect(screen.getByTestId('tracking-cancelled')).toHaveTextContent("won't be delivered");
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
   });
+
+  it('says a cancelled card order was refunded', async () => {
+    order = { ...createOrder('cancelled'), paymentMethod: 'card' };
+    renderTrackingPage();
+
+    expect(await screen.findByRole('heading', { name: 'Refunded' })).toBeInTheDocument();
+    expect(screen.getByTestId('tracking-cancelled')).toHaveTextContent('Its payment was refunded.');
+  });
 });
