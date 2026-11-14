@@ -142,7 +142,7 @@
 
 @media (max-width: 640px) {
   .header {
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
       "logo nav"
       "search search";
@@ -152,6 +152,8 @@
   }
 
   .header-nav {
+    flex-wrap: wrap;
+    justify-content: flex-end;
     justify-self: end;
     gap: 0;
   }
@@ -167,5 +169,18 @@
 
   .header-account-email {
     display: none;
+  }
+}
+
+/* An admin's four links don't fit next to the logo, so the links with an icon show only the icon.
+   The words stay for screen readers */
+@media (max-width: 420px) {
+  .header-link-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }

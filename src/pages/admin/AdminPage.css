@@ -369,6 +369,12 @@
   list-style: none;
 }
 
+/* A long product or customer name wraps rather than widening the table past its card */
+.admin-order-items,
+.admin-orders-table td[data-label="Customer"] {
+  overflow-wrap: anywhere;
+}
+
 .admin-order-cell-payment {
   white-space: nowrap;
 }
@@ -461,6 +467,7 @@
 
   .admin-orders-table .admin-order-cell-id {
     grid-column: 1;
+    white-space: normal;
   }
 
   .admin-orders-table .admin-order-cell-status {

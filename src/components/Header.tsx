@@ -64,13 +64,13 @@ export function Header({ cart }: HeaderProps) {
             <UserIcon className="header-link-icon" />
             <span className="header-account">
               <span className="header-account-email">{auth.user.email}</span>
-              Account
+              <span className="header-link-label">Account</span>
             </span>
           </NavLink>
         ) : auth && (
           <NavLink className="header-link" to="/login" data-testid="header-login-link">
             <UserIcon className="header-link-icon" />
-            Log in
+            <span className="header-link-label">Log in</span>
           </NavLink>
         )}
 
@@ -81,7 +81,7 @@ export function Header({ cart }: HeaderProps) {
             <CartIcon />
             {cartQuantity > 0 && <span className="cart-badge">{cartQuantity}</span>}
           </span>
-          Cart
+          <span className="header-link-label">Cart</span>
         </NavLink>
       </nav>
     </header>

@@ -38,3 +38,27 @@ test('a customer who is not an admin cannot open the admin pages', async ({ page
   await page.goto('/admin/orders');
   await expect(page.getByTestId('admin-forbidden-message')).toBeVisible();
 });
+
+test('the admin orders page fits phones and desktops without scrolling sideways', async ({ page, browser }) => {
+  await page.goto('/');
+  await addToCart(page, 'Glass Food Containers With Bamboo Lids - 3 Pieces');
+  await goToCheckout(page);
+  await placeOrder(page);
+
+  for (const width of [320, 375, 1440]) {
+    const isPhone = width < 640;
+    const adminContext = await browser.newContext({ viewport: { width, height: 800 }, isMobile: isPhone, hasTouch: isPhone });
+    const adminPage = await adminContext.newPage();
+    await logIn(adminPage, ADMIN.email);
+    await adminPage.goto('/admin/orders');
+    const badge = adminPage.getByTestId('order-status').first();
+    await expect(badge).toBeVisible();
+
+    expect(await adminPage.evaluate<number>('document.documentElement.scrollWidth'), `${width}px`).toBeLessThanOrEqual(width);
+    // The table's container clips what sticks out, so the badge has to end inside it
+    const container = (await adminPage.locator('.admin-table-container').boundingBox())!;
+    const badgeBox = (await badge.boundingBox())!;
+    expect(badgeBox.x + badgeBox.width, `${width}px`).toBeLessThanOrEqual(container.x + container.width);
+    await adminContext.close();
+  }
+});
