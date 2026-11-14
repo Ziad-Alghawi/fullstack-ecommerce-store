@@ -55,7 +55,7 @@
 .category-chip[aria-current] {
   border-color: var(--color-brand);
   background-color: var(--color-brand-subtle);
-  color: var(--color-brand-active);
+  color: var(--color-brand-text-strong);
 }
 
 .product-toolbar {

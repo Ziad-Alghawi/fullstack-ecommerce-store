@@ -14,3 +14,11 @@ export function writeStorage(key: string, value: string) {
     // Remembered until the page is reloaded
   }
 }
+
+export function removeStorage(key: string) {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Nothing was saved
+  }
+}

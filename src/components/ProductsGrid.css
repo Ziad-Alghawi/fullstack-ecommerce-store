@@ -53,7 +53,7 @@
 }
 
 .product-container .product-link:hover {
-  color: var(--color-brand);
+  color: var(--color-brand-text);
   text-decoration: underline;
 }
 

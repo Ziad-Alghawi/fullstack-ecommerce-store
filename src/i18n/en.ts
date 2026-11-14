@@ -44,7 +44,8 @@ export const en = {
     accountLabel: (email: string | undefined) => `Your account, ${email}`,
     cart: 'Cart',
     cartLabel: (count: number) => `Cart, ${plural(count, 'item', 'items')}`,
-    language: 'Language'
+    language: 'Language',
+    darkMode: 'Dark mode'
   },
   toasts: {
     notifications: 'Notifications',

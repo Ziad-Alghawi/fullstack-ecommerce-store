@@ -56,7 +56,7 @@
 }
 
 .account-link-title {
-  color: var(--color-brand);
+  color: var(--color-brand-text);
   font-weight: var(--font-weight-bold);
 }
 

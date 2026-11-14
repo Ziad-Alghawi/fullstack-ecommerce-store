@@ -13,6 +13,7 @@ import { ActionFailureContext } from './hooks/useAction';
 import { ToastContext, useToasts } from './hooks/useToast';
 import { AuthContext, useAuthUser, useIsAdmin } from './hooks/useAuth';
 import { I18nContext, useI18n, useLanguage } from './hooks/useI18n';
+import { ThemeContext, useTheme } from './hooks/useTheme';
 import { WishlistContext, useWishlistState } from './hooks/useWishlist';
 import { isAuthEnabled, logOut } from './utils/supabase';
 import type { ApiError, CartItem, CartStatus } from './types/store';
@@ -62,6 +63,7 @@ function App() {
   const currentPath = useRef(location.pathname);
   const { toasts, showToast, dismissToast } = useToasts();
   const i18n = useLanguage();
+  const themeSetting = useTheme();
   const { t, apiError } = i18n;
   const user = useAuthUser();
   const isAdmin = useIsAdmin(user?.id);
@@ -139,50 +141,52 @@ function App() {
 
   return (
     <I18nContext value={i18n}>
-      <div className="app-content">
-        <AuthContext value={isAuthEnabled ? { user: user ?? null, isAdmin, logOut } : null}>
-          <WishlistContext value={wishlist}>
-            <ToastContext value={showToast}>
-              <ActionFailureContext value={reportActionFailure}>
-                {owner ? (
-                  <Suspense fallback={<LoadingMessage />}>
-                    <Routes key={`${retryCount}-${owner}`}>
-                      <Route index element={<HomePage cart={cart} loadCart={loadCart} onRetry={retry} />} />
-                      <Route path="products/:productId" element={<ProductPage cart={cart} loadCart={loadCart} onRetry={retry} />} />
-                      <Route path="checkout" element={<CheckoutPage cart={cart} cartStatus={cartStatus} loadCart={loadCart} onRetry={retry} />} />
-                      <Route path="checkout/success" element={<CheckoutSuccessPage cart={cart} loadCart={loadCart} onRetry={retry} />} />
-                      <Route path="orders" element={<OrdersPage cart={cart} loadCart={loadCart} onRetry={retry} />} />
-                      <Route path="tracking/:orderId/:productId" element={<TrackingPage cart={cart} onRetry={retry} />} />
-                      {isAuthEnabled && <Route path="login" element={<LoginPage cart={cart} />} />}
-                      {isAuthEnabled && <Route path="forgot-password" element={<ForgotPasswordPage cart={cart} />} />}
-                      {isAuthEnabled && <Route path="reset-password" element={<ResetPasswordPage cart={cart} />} />}
-                      {isAuthEnabled && <Route path="account" element={<AccountPage cart={cart} />} />}
-                      {isAuthEnabled && <Route path="wishlist" element={<WishlistPage cart={cart} loadCart={loadCart} />} />}
-                      {isAuthEnabled && <Route path="admin" element={<AdminPage cart={cart} onRetry={retry} />} />}
-                      {isAuthEnabled && <Route path="admin/orders" element={<AdminOrdersPage cart={cart} onRetry={retry} />} />}
-                      <Route path="*" element={<NotFoundPage cart={cart} />} />
-                    </Routes>
-                  </Suspense>
-                ) : (
-                  <LoadingMessage />
-                )}
-              </ActionFailureContext>
-            </ToastContext>
-          </WishlistContext>
-        </AuthContext>
-      </div>
-
-      <Toasts toasts={toasts} onDismiss={dismissToast} />
-
-      <footer className="site-footer" data-testid="site-footer">
-        <div className="site-footer-content">
-          <span>{t.app.footerNote}</span>
-          <a className="site-footer-link" href="https://github.com/Ziad-Alghawi/react-ecommerce"
-            target="_blank" rel="noreferrer">
-            {t.app.footerLink}
-          </a>
+      <ThemeContext value={themeSetting}>
+        <div className="app-content">
+          <AuthContext value={isAuthEnabled ? { user: user ?? null, isAdmin, logOut } : null}>
+            <WishlistContext value={wishlist}>
+              <ToastContext value={showToast}>
+                <ActionFailureContext value={reportActionFailure}>
+                  {owner ? (
+                    <Suspense fallback={<LoadingMessage />}>
+                      <Routes key={`${retryCount}-${owner}`}>
+                        <Route index element={<HomePage cart={cart} loadCart={loadCart} onRetry={retry} />} />
+                        <Route path="products/:productId" element={<ProductPage cart={cart} loadCart={loadCart} onRetry={retry} />} />
+                        <Route path="checkout" element={<CheckoutPage cart={cart} cartStatus={cartStatus} loadCart={loadCart} onRetry={retry} />} />
+                        <Route path="checkout/success" element={<CheckoutSuccessPage cart={cart} loadCart={loadCart} onRetry={retry} />} />
+                        <Route path="orders" element={<OrdersPage cart={cart} loadCart={loadCart} onRetry={retry} />} />
+                        <Route path="tracking/:orderId/:productId" element={<TrackingPage cart={cart} onRetry={retry} />} />
+                        {isAuthEnabled && <Route path="login" element={<LoginPage cart={cart} />} />}
+                        {isAuthEnabled && <Route path="forgot-password" element={<ForgotPasswordPage cart={cart} />} />}
+                        {isAuthEnabled && <Route path="reset-password" element={<ResetPasswordPage cart={cart} />} />}
+                        {isAuthEnabled && <Route path="account" element={<AccountPage cart={cart} />} />}
+                        {isAuthEnabled && <Route path="wishlist" element={<WishlistPage cart={cart} loadCart={loadCart} />} />}
+                        {isAuthEnabled && <Route path="admin" element={<AdminPage cart={cart} onRetry={retry} />} />}
+                        {isAuthEnabled && <Route path="admin/orders" element={<AdminOrdersPage cart={cart} onRetry={retry} />} />}
+                        <Route path="*" element={<NotFoundPage cart={cart} />} />
+                      </Routes>
+                    </Suspense>
+                  ) : (
+                    <LoadingMessage />
+                  )}
+                </ActionFailureContext>
+              </ToastContext>
+            </WishlistContext>
+          </AuthContext>
         </div>
-      </footer>
+
+        <Toasts toasts={toasts} onDismiss={dismissToast} />
+
+        <footer className="site-footer" data-testid="site-footer">
+          <div className="site-footer-content">
+            <span>{t.app.footerNote}</span>
+            <a className="site-footer-link" href="https://github.com/Ziad-Alghawi/react-ecommerce"
+              target="_blank" rel="noreferrer">
+              {t.app.footerLink}
+            </a>
+          </div>
+        </footer>
+      </ThemeContext>
     </I18nContext>
   );
 }

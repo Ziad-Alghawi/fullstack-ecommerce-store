@@ -24,7 +24,7 @@
 
 .admin-nav-link.active {
   border-bottom-color: var(--color-brand);
-  color: var(--color-brand-active);
+  color: var(--color-brand-text-strong);
 }
 
 .admin-stats {
@@ -110,7 +110,7 @@
 }
 
 .admin-overview-product:hover {
-  color: var(--color-brand);
+  color: var(--color-brand-text);
   text-decoration: underline;
 }
 

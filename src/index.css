@@ -1,23 +1,31 @@
+/* Each color is light-dark(light, dark). The page follows the system, unless the visitor picked a theme */
 :root {
+  color-scheme: light dark;
+
+  /* Fills behind white text, the same in both themes */
   --color-brand: #198754;
   --color-brand-hover: #146c43;
   --color-brand-active: #0f5132;
   --color-brand-dark: #0b4a2c;
-  --color-brand-subtle: #e8f3ed;
   --color-brand-accent: #b9f2c8;
-  --color-text: #1f2328;
-  --color-text-muted: #59636e;
-  --color-text-inverse: #ffffff;
-  --color-inverse-hover: rgba(255, 255, 255, 0.12);
-  --color-surface: #ffffff;
-  --color-surface-hover: #f3f5f6;
-  --color-background: #f6f7f8;
-  --color-border: #dfe3e6;
-  --color-border-strong: #c3c9ce;
-  --color-focus: #2f80ed;
   --color-error: #b42318;
   --color-error-hover: #912018;
-  --color-error-subtle: #fdecea;
+  --color-text-inverse: #ffffff;
+  --color-inverse-hover: rgba(255, 255, 255, 0.12);
+
+  --color-brand-subtle: light-dark(#e8f3ed, #12301f);
+  --color-brand-text: light-dark(#146c43, #4fd18b);
+  --color-brand-text-strong: light-dark(#0f5132, #86e5ad);
+  --color-text: light-dark(#1f2328, #e6e9ec);
+  --color-text-muted: light-dark(#59636e, #9da7b3);
+  --color-surface: light-dark(#ffffff, #161b22);
+  --color-surface-hover: light-dark(#f3f5f6, #21262d);
+  --color-background: light-dark(#f6f7f8, #0d1117);
+  --color-border: light-dark(#dfe3e6, #30363d);
+  --color-border-strong: light-dark(#c3c9ce, #6e7681);
+  --color-focus: light-dark(#2f80ed, #58a6ff);
+  --color-error-text: light-dark(#b42318, #ff8b80);
+  --color-error-subtle: light-dark(#fdecea, #3b1714);
 
   --font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-size-xs: 0.8125rem;
@@ -43,9 +51,17 @@
   --radius-lg: 12px;
   --radius-full: 999px;
 
-  --shadow-sm: 0 1px 2px rgba(16, 24, 32, 0.06);
-  --shadow-md: 0 4px 16px rgba(16, 24, 32, 0.1);
+  --shadow-sm: 0 1px 2px light-dark(rgba(16, 24, 32, 0.06), rgba(0, 0, 0, 0.4));
+  --shadow-md: 0 4px 16px light-dark(rgba(16, 24, 32, 0.1), rgba(0, 0, 0, 0.5));
   --transition: 150ms ease;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 *,
@@ -204,14 +220,14 @@ button, select {
 
 /* A step darker than the brand green, so links pass contrast on the grey page background too */
 .link-primary {
-  color: var(--color-brand-hover);
+  color: var(--color-brand-text);
   font-weight: var(--font-weight-medium);
   text-decoration: none;
   cursor: pointer;
 }
 
 .link-primary:hover {
-  color: var(--color-brand-active);
+  color: var(--color-brand-text-strong);
   text-decoration: underline;
 }
 
@@ -294,7 +310,7 @@ input:focus-visible {
 .status-badge-active,
 .status-badge-delivered {
   background-color: var(--color-brand-subtle);
-  color: var(--color-brand-active);
+  color: var(--color-brand-text-strong);
 }
 
 .status-badge-featured,
@@ -306,12 +322,12 @@ input:focus-visible {
 .status-badge-expired,
 .status-badge-cancelled {
   background-color: var(--color-error-subtle);
-  color: var(--color-error);
+  color: var(--color-error-text);
 }
 
 .stock-note {
   margin-top: var(--space-2);
-  color: var(--color-error);
+  color: var(--color-error-text);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
 }

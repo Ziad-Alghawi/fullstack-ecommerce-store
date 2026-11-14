@@ -171,6 +171,13 @@
   background-color: var(--color-inverse-hover);
 }
 
+.header-switch-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: 0 auto;
+}
+
 .header-switch-option[aria-pressed="true"] {
   background-color: var(--color-brand-accent);
   color: var(--color-brand-dark);

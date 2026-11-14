@@ -1,5 +1,17 @@
 .rating-stars {
   display: block;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.rating-star-empty {
+  fill: var(--color-surface);
+  stroke: var(--color-text-muted);
+}
+
+.rating-star-filled {
+  fill: var(--color-brand);
+  stroke: var(--color-brand-active);
 }
 
 .product-rating-container {

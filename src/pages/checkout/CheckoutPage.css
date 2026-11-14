@@ -26,7 +26,7 @@
 
 .checkout-page .delivery-date {
   margin: 0 0 var(--space-4);
-  color: var(--color-brand);
+  color: var(--color-brand-text);
   font-size: var(--font-size-lg);
 }
 
@@ -140,7 +140,7 @@
 }
 
 .checkout-page .discount-row {
-  color: var(--color-brand);
+  color: var(--color-brand-text);
   font-weight: var(--font-weight-medium);
 }
 
@@ -171,7 +171,7 @@
 
 .checkout-page .coupon-error {
   margin-top: var(--space-2);
-  color: var(--color-error);
+  color: var(--color-error-text);
 }
 
 .checkout-page .coupon-hint {
@@ -186,7 +186,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  color: var(--color-brand-active);
+  color: var(--color-brand-text-strong);
 }
 
 .checkout-page .place-order-button {

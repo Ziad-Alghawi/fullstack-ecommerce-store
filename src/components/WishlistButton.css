@@ -18,12 +18,12 @@
 }
 
 .wishlist-button:hover {
-  color: var(--color-error);
+  color: var(--color-error-text);
   background-color: var(--color-surface-hover);
 }
 
 .wishlist-button[aria-pressed="true"] {
-  color: var(--color-error);
+  color: var(--color-error-text);
 }
 
 .wishlist-button[aria-pressed="true"] .wishlist-button-icon {

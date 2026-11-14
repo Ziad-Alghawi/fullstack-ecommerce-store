@@ -53,12 +53,12 @@
 }
 
 .orders-page .product-name:hover {
-  color: var(--color-brand);
+  color: var(--color-brand-text);
   text-decoration: underline;
 }
 
 .orders-page .product-delivery-date {
-  color: var(--color-brand);
+  color: var(--color-brand-text);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
 }

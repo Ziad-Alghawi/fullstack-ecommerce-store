@@ -55,7 +55,8 @@ export const de: Messages = {
     accountLabel: (email) => `Dein Konto, ${email}`,
     cart: 'Warenkorb',
     cartLabel: (count) => `Warenkorb, ${plural(count, 'Artikel', 'Artikel')}`,
-    language: 'Sprache'
+    language: 'Sprache',
+    darkMode: 'Dunkler Modus'
   },
   toasts: {
     notifications: 'Benachrichtigungen',

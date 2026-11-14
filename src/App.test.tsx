@@ -98,6 +98,21 @@ describe('App when the API fails', () => {
       .toHaveTextContent('Demo store, data resets regularly');
   });
 
+  it('turns on dark mode from the header and remembers it', async () => {
+    localStorage.clear();
+    renderApp();
+    const toggle = screen.getByRole('button', { name: 'Dark mode' });
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    expect(document.documentElement.dataset.theme).toBe('light');
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(localStorage.getItem('theme')).toBe('dark');
+    localStorage.clear();
+  });
+
   describe('in German', () => {
     beforeEach(() => {
       localStorage.clear();

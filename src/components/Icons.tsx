@@ -56,6 +56,14 @@ export function UserIcon(props: IconProps) {
   );
 }
 
+export function MoonIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
+    </Icon>
+  );
+}
+
 export function HeartIcon(props: IconProps) {
   return (
     <Icon {...props}>

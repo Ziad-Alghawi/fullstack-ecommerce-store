@@ -42,8 +42,7 @@ describe('Product component', () => {
     expect(screen.getByText('$10.90')).toBeInTheDocument();
     expect(screen.getByTestId('product-image'))
       .toHaveAttribute('src', 'images/products/gray-hand-knit-wool-socks.jpg');
-    expect(screen.getByRole('img', { name: '4.5 out of 5 stars' }))
-      .toHaveAttribute('src', 'images/ratings/rating-45.png');
+    expect(screen.getByRole('img', { name: '4.5 out of 5 stars' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Gray Hand Knit Wool Socks' }))
       .toHaveAttribute('href', '/products/e43638ce-6aa0-4b85-b27f-e1d07eb678c6');
     expect(screen.getByText('87')).toBeInTheDocument();

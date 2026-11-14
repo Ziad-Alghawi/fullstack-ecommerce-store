@@ -3,9 +3,10 @@ import { useContext, useState, type ChangeEvent, type FormEvent } from 'react';
 import { getCartQuantity } from '../utils/cart';
 import { AuthContext } from '../hooks/useAuth';
 import { useI18n } from '../hooks/useI18n';
+import { useThemeSetting } from '../hooks/useTheme';
 import { LANGUAGE_CODES, LANGUAGES } from '../i18n/i18n';
 import type { CartItem } from '../types/store';
-import { CartIcon, HeartIcon, SearchIcon, UserIcon } from './Icons';
+import { CartIcon, HeartIcon, MoonIcon, SearchIcon, UserIcon } from './Icons';
 import { Logo } from './Logo';
 import './Header.css';
 
@@ -21,6 +22,21 @@ function LanguageSwitch() {
           {code.toUpperCase()}
         </button>
       ))}
+    </div>
+  );
+}
+
+function DarkModeToggle() {
+  const { t } = useI18n();
+  const { theme, setTheme } = useThemeSetting();
+  const isDark = theme === 'dark';
+
+  return (
+    <div className="header-switch">
+      <button className="header-switch-option" type="button" aria-label={t.header.darkMode} aria-pressed={isDark}
+        onClick={() => setTheme(isDark ? 'light' : 'dark')} data-testid="dark-mode-toggle">
+        <MoonIcon className="header-switch-icon" />
+      </button>
     </div>
   );
 }
@@ -113,6 +129,7 @@ export function Header({ cart }: HeaderProps) {
 
       <div className="header-settings">
         <LanguageSwitch />
+        <DarkModeToggle />
       </div>
     </header>
   );
