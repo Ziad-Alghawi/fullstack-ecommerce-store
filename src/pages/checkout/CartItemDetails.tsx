@@ -1,9 +1,9 @@
 import { useState, type ChangeEvent, type KeyboardEvent } from 'react';
 import axios from 'axios';
-import { formatMoney } from '../../utils/money';
 import { ButtonSpinner } from '../../components/PageStatus';
 import { useAction } from '../../hooks/useAction';
 import { useToast } from '../../hooks/useToast';
+import { useI18n } from '../../hooks/useI18n';
 import { describeStock } from '../../utils/stock';
 import type { CartItem, LoadCart } from '../../types/store';
 
@@ -17,6 +17,7 @@ export function CartItemDetails({ cartItem, deleteCartItem, loadCart }: CartItem
   const [isUpdatingQuantity, setIsUpdatingQuantity] = useState(false);
   const [quantity, setQuantity] = useState(String(cartItem.quantity));
   const showToast = useToast();
+  const { t, formatMoney } = useI18n();
 
   const [saveQuantity, isSavingQuantity] = useAction(async () => {
     await axios.put(`/api/cart-items/${cartItem.productId}`, {
@@ -24,7 +25,7 @@ export function CartItemDetails({ cartItem, deleteCartItem, loadCart }: CartItem
     });
     await loadCart();
     setIsUpdatingQuantity(false);
-    showToast('Quantity updated');
+    showToast(t.checkout.quantityUpdated);
   });
   const [removeCartItem, isDeleting] = useAction(deleteCartItem);
   // Don't let the user change an item while it's being saved or deleted
@@ -80,14 +81,14 @@ export function CartItemDetails({ cartItem, deleteCartItem, loadCart }: CartItem
         </div>
         {cartItem.quantity > cartItem.product.stock && (
           <div className="stock-note" data-testid="cart-item-stock-warning">
-            {describeStock(cartItem.product.stock)}
+            {describeStock(cartItem.product.stock, t)}
           </div>
         )}
         <div className="product-quantity">
           <span data-testid="cart-item-quantity">
-            Quantity: {isUpdatingQuantity
+            {t.common.quantity} {isUpdatingQuantity
               ? <input type="text" className="quantity-textbox" value={quantity}
-                aria-label="New quantity" inputMode="numeric"
+                aria-label={t.checkout.newQuantity} inputMode="numeric"
                 onChange={updateQuantityInput}
                 onKeyDown={handleQuantityKeyDown} />
               : <span className="quantity-label">{cartItem.quantity}</span>
@@ -99,7 +100,7 @@ export function CartItemDetails({ cartItem, deleteCartItem, loadCart }: CartItem
             aria-busy={isSavingQuantity}
             onClick={updateQuantity}>
             {isSavingQuantity && <ButtonSpinner />}
-            Update
+            {t.checkout.update}
           </button>
           <button className="delete-quantity-link link-primary link-button"
             data-testid="cart-item-delete-quantity-link"
@@ -107,7 +108,7 @@ export function CartItemDetails({ cartItem, deleteCartItem, loadCart }: CartItem
             aria-busy={isDeleting}
             onClick={removeCartItem}>
             {isDeleting && <ButtonSpinner />}
-            Delete
+            {t.common.delete}
           </button>
         </div>
       </div>

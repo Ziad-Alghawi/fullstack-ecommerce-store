@@ -1,12 +1,11 @@
 import axios from 'axios';
-import dayjs from 'dayjs';
 import { useRef, useState, type ReactNode } from 'react';
 import { OrderStatusBadge } from '../../components/OrderStatusBadge';
 import { ButtonSpinner } from '../../components/PageStatus';
 import { useAction } from '../../hooks/useAction';
 import { useToast } from '../../hooks/useToast';
-import { formatMoney } from '../../utils/money';
-import { getStatusLabel, PAYMENT_METHOD_LABELS } from '../../utils/orderStatus';
+import { useI18n } from '../../hooks/useI18n';
+import { getStatusLabel } from '../../utils/orderStatus';
 import type { AdminOrder, OrderStatus } from '../../types/store';
 
 // Enough of the ID to tell orders apart on the page and in a toast
@@ -25,10 +24,11 @@ interface StatusButtonProps {
 
 function StatusButton({ order, status, label, className = 'button-secondary', onChanged, children }: StatusButtonProps) {
   const showToast = useToast();
+  const { t } = useI18n();
   const [changeStatus, isChanging] = useAction(async () => {
     const response = await axios.patch<AdminOrder>(`/api/admin/orders/${order.id}`, { status });
     onChanged(response.data);
-    showToast(`Order ${shortId(order)} is now ${getStatusLabel(response.data).toLowerCase()}`);
+    showToast(t.admin.orderList.changed(shortId(order), getStatusLabel(response.data, t)));
   });
 
   // aria-disabled rather than disabled, which would take keyboard focus off the button. useAction ignores clicks meanwhile
@@ -46,15 +46,18 @@ interface AdminOrderRowProps {
   onChanged: (order: AdminOrder) => void;
 }
 
-// The button for moving an order forward. Cancelling has a button of its own, as it asks first
-const ADVANCE_LABELS: Partial<Record<OrderStatus, string>> = { shipped: 'Mark shipped', delivered: 'Mark delivered' };
-
 export function AdminOrderRow({ order, onChanged }: AdminOrderRowProps) {
   const [isConfirmingCancel, setIsConfirmingCancel] = useState(false);
+  const { t, formatMoney, formatDateTime } = useI18n();
+  // The button for moving an order forward. Cancelling has a button of its own, as it asks first
+  const advanceLabels: Partial<Record<OrderStatus, string>> = {
+    shipped: t.admin.orderList.markShipped,
+    delivered: t.admin.orderList.markDelivered
+  };
   const statusCell = useRef<HTMLTableCellElement>(null);
   const id = shortId(order);
   const canCancel = order.nextStatuses.includes('cancelled');
-  const nextStatus = order.nextStatuses.find((status) => ADVANCE_LABELS[status]);
+  const nextStatus = order.nextStatuses.find((status) => advanceLabels[status]);
 
   // The button that was clicked goes away when nothing more can be done, so keyboard focus goes to the new status
   const showChange = (changedOrder: AdminOrder) => {
@@ -67,48 +70,48 @@ export function AdminOrderRow({ order, onChanged }: AdminOrderRowProps) {
   return (
     <tr data-testid="admin-order-row">
       <td className="admin-order-cell-id">
-        <div className="admin-cell-name">{dayjs(order.orderTimeMs).format('MMM D, YYYY h:mm A')}</div>
+        <div className="admin-cell-name">{formatDateTime(order.orderTimeMs)}</div>
         <div className="admin-order-id">#{id}</div>
       </td>
-      <td data-label="Customer">{order.customerName}</td>
+      <td data-label={t.admin.orderList.customer}>{order.customerName}</td>
       <td>
         <ul className="admin-order-items">
           {order.items.map(({ name, quantity }) => <li key={name}>{quantity} × {name}</li>)}
         </ul>
       </td>
-      <td className="admin-cell-price" data-label="Total">{formatMoney(order.totalCostCents)}</td>
-      <td className="admin-order-cell-payment" data-label="Payment">{PAYMENT_METHOD_LABELS[order.paymentMethod]}</td>
+      <td className="admin-cell-price" data-label={t.admin.orderList.total}>{formatMoney(order.totalCostCents)}</td>
+      <td className="admin-order-cell-payment" data-label={t.admin.orderList.payment}>{t.paymentMethods[order.paymentMethod]}</td>
       <td className="admin-order-cell-status" ref={statusCell} tabIndex={-1}>
         <OrderStatusBadge order={order} />
       </td>
       <td className="admin-cell-actions">
         {/* The keys swap in new buttons, so a double click on Cancel can't also confirm it */}
         {isConfirmingCancel && canCancel ? (
-          <div key="confirm" className="admin-actions" role="group" aria-label={`Cancel order ${id}?`}>
+          <div key="confirm" className="admin-actions" role="group" aria-label={t.admin.orderList.cancelGroup(id)}>
             <span className="admin-confirm-text">
-              {order.paymentMethod === 'card' ? 'Refund and restock?' : 'Cancel and restock?'}
+              {order.paymentMethod === 'card' ? t.admin.orderList.refundQuestion : t.admin.orderList.cancelQuestion}
             </span>
-            <StatusButton order={order} status="cancelled" label={`Cancel order ${id}`} className="button-danger"
+            <StatusButton order={order} status="cancelled" label={t.admin.orderList.cancelLabel(id)} className="button-danger"
               onChanged={showChange}>
-              Cancel order
+              {t.orders.cancelOrder}
             </StatusButton>
             <button className="button-secondary" type="button" autoFocus onClick={() => setIsConfirmingCancel(false)}>
-              Keep
+              {t.common.keep}
             </button>
           </div>
         ) : (
           <div key="actions" className="admin-actions">
             {/* One button for shipping and then delivering, so it keeps keyboard focus */}
             {nextStatus && (
-              <StatusButton order={order} status={nextStatus} label={`Mark order ${id} ${nextStatus}`}
+              <StatusButton order={order} status={nextStatus} label={t.admin.orderList.markLabel(id, nextStatus)}
                 onChanged={showChange}>
-                {ADVANCE_LABELS[nextStatus]}
+                {advanceLabels[nextStatus]}
               </StatusButton>
             )}
             {canCancel && (
               <button className="button-secondary" type="button" onClick={() => setIsConfirmingCancel(true)}
-                aria-label={`Cancel order ${id}`} data-testid="admin-order-cancel-button">
-                Cancel
+                aria-label={t.admin.orderList.cancelLabel(id)} data-testid="admin-order-cancel-button">
+                {t.common.cancel}
               </button>
             )}
           </div>

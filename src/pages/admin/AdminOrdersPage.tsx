@@ -4,18 +4,14 @@ import { useSearchParams } from 'react-router';
 import { Header } from '../../components/Header';
 import { PageTitle } from '../../components/PageTitle';
 import { AuthContext } from '../../hooks/useAuth';
-import { ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from '../../utils/orderStatus';
+import { useI18n } from '../../hooks/useI18n';
+import { ORDER_STATUSES, PAYMENT_METHODS } from '../../utils/orderStatus';
 import { AdminNav } from './AdminNav';
 import { AdminOrderRow } from './AdminOrderRow';
 import { AdminPageStatus } from './AdminPageStatus';
 import { getLoadFailure, type AdminLoadStatus } from './adminLoadStatus';
 import type { AdminOrder, AdminOrderList, CartItem } from '../../types/store';
 import './AdminPage.css';
-
-function describeCount(shown: number, total: number) {
-  const orders = `${total} ${total === 1 ? 'order' : 'orders'}`;
-  return shown < total ? `The newest ${shown} of ${orders}` : orders;
-}
 
 interface AdminOrdersPageProps {
   cart: CartItem[];
@@ -30,6 +26,8 @@ export function AdminOrdersPage({ cart, onRetry }: AdminOrdersPageProps) {
   const paymentMethod = searchParams.get('paymentMethod') ?? '';
   const [orderList, setOrderList] = useState<AdminOrderList>({ orders: [], total: 0 });
   const [loadStatus, setLoadStatus] = useState<AdminLoadStatus>('loading');
+  const { t } = useI18n();
+  const list = t.admin.orderList;
 
   useEffect(() => {
     if (!userId) {
@@ -87,27 +85,27 @@ export function AdminOrdersPage({ cart, onRetry }: AdminOrdersPageProps) {
         <AdminNav />
 
         <div className="admin-heading">
-          <h1 className="page-title">Orders</h1>
+          <h1 className="page-title">{t.admin.orders}</h1>
         </div>
 
-        <div className="admin-filters" role="group" aria-label="Filter orders">
+        <div className="admin-filters" role="group" aria-label={list.filters}>
           <label className="form-field">
-            Status
+            {list.status}
             <select value={status} onChange={(event) => setFilter('status', event.target.value)}
               data-testid="admin-order-status-filter">
-              <option value="">All statuses</option>
-              {Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
+              <option value="">{list.allStatuses}</option>
+              {ORDER_STATUSES.map((value) => (
+                <option key={value} value={value}>{t.orderStatus[value]}</option>
               ))}
             </select>
           </label>
           <label className="form-field">
-            Payment
+            {list.payment}
             <select value={paymentMethod} onChange={(event) => setFilter('paymentMethod', event.target.value)}
               data-testid="admin-order-payment-filter">
-              <option value="">All payments</option>
-              {Object.entries(PAYMENT_METHOD_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
+              <option value="">{list.allPayments}</option>
+              {PAYMENT_METHODS.map((value) => (
+                <option key={value} value={value}>{t.paymentMethods[value]}</option>
               ))}
             </select>
           </label>
@@ -115,16 +113,16 @@ export function AdminOrdersPage({ cart, onRetry }: AdminOrdersPageProps) {
 
         <div className="admin-table-container card">
           <table className="admin-table admin-orders-table">
-            <caption className="admin-caption" aria-live="polite">{describeCount(orders.length, total)}</caption>
+            <caption className="admin-caption" aria-live="polite">{list.count(orders.length, total)}</caption>
             <thead>
               <tr>
-                <th scope="col">Order</th>
-                <th scope="col">Customer</th>
-                <th scope="col">Items</th>
-                <th scope="col">Total</th>
-                <th scope="col">Payment</th>
-                <th scope="col">Status</th>
-                <th scope="col"><span className="visually-hidden">Actions</span></th>
+                <th scope="col">{list.order}</th>
+                <th scope="col">{list.customer}</th>
+                <th scope="col">{list.items}</th>
+                <th scope="col">{list.total}</th>
+                <th scope="col">{list.payment}</th>
+                <th scope="col">{list.status}</th>
+                <th scope="col"><span className="visually-hidden">{t.admin.products.actions}</span></th>
               </tr>
             </thead>
             <tbody>
@@ -135,7 +133,7 @@ export function AdminOrdersPage({ cart, onRetry }: AdminOrdersPageProps) {
           </table>
           {orders.length === 0 && (
             <p className="admin-empty" data-testid="admin-no-orders">
-              {status || paymentMethod ? 'No orders match these filters' : 'No orders yet'}
+              {status || paymentMethod ? list.noMatch : list.none}
             </p>
           )}
         </div>
@@ -145,7 +143,7 @@ export function AdminOrdersPage({ cart, onRetry }: AdminOrdersPageProps) {
 
   return (
     <>
-      <PageTitle title="Orders" />
+      <PageTitle title={t.admin.orders} />
 
       <Header cart={cart} />
 

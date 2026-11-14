@@ -464,7 +464,10 @@ for (const [kind, createVisitor] of [
     await addToCart(visitor);
     const response = await placeOrder();
     assert.equal(response.status, 409);
-    assert.match((await response.json()).error, /up to 2 orders/);
+    const refusal = await response.json();
+    assert.match(refusal.error, /up to 2 orders/);
+    assert.equal(refusal.code, 'orderLimit');
+    assert.deepEqual(refusal.params, { max: 2 });
     // The cart is kept, so nothing is lost
     assert.equal((await getCart(visitor)).length, 1);
   });
@@ -779,7 +782,12 @@ test('the cart holds no more of a product than is in stock', async () => {
   assert.equal((await addProduct(visitorId, product.id, 2)).status, 201);
   const tooMany = await addProduct(visitorId, product.id, 2);
   assert.equal(tooMany.status, 409);
-  assert.equal((await tooMany.json()).error, 'Only 3 of Plaid Wool Scarf left in stock. You already have 2 in your cart.');
+  // The code and values let the store say it in the visitor's language
+  assert.deepEqual(await tooMany.json(), {
+    error: 'Only 3 of Plaid Wool Scarf left in stock. You already have 2 in your cart.',
+    code: 'lowStock',
+    params: { product: 'Plaid Wool Scarf', stock: 3, inCart: 2 }
+  });
   assert.equal((await getCart(visitorId))[0].quantity, 2);
 
   const updatePath = `/api/cart-items/${product.id}`;
@@ -789,7 +797,11 @@ test('the cart holds no more of a product than is in stock', async () => {
   await setStock(product, 0);
   const soldOut = await addProduct(randomUUID(), product.id);
   assert.equal(soldOut.status, 409);
-  assert.equal((await soldOut.json()).error, 'Plaid Wool Scarf is out of stock.');
+  assert.deepEqual(await soldOut.json(), {
+    error: 'Plaid Wool Scarf is out of stock.',
+    code: 'outOfStock',
+    params: { product: 'Plaid Wool Scarf', inCart: 0 }
+  });
   // Lowering the quantity always works
   await setStock(product, 1);
   assert.equal((await api(updatePath, { visitorId, method: 'PUT', body: { quantity: 1 } })).status, 200);
@@ -807,7 +819,11 @@ test('placing an order takes its items out of stock, all or none', async () => {
   await setStock(hat, 0);
   const refused = await placeOrder(visitorId);
   assert.equal(refused.status, 409);
-  assert.equal((await refused.json()).error, 'Wool Hat is out of stock. Remove it from your cart to continue.');
+  assert.deepEqual(await refused.json(), {
+    error: 'Wool Hat is out of stock. Remove it from your cart to continue.',
+    code: 'outOfStockInOrder',
+    params: { product: 'Wool Hat' }
+  });
   assert.equal(await getStock(scarf.id), 5);
   assert.deepEqual(await getOrders(visitorId), []);
   assert.equal((await getCart(visitorId)).length, 2);
@@ -855,7 +871,7 @@ test('a customer cancels an order paid on delivery before it ships, which gives 
 
   const again = await cancelOrder(visitorId, order.id);
   assert.equal(again.status, 409);
-  assert.equal((await again.json()).error, 'This order is already cancelled.');
+  assert.deepEqual(await again.json(), { error: 'This order is already cancelled.', code: 'orderFinal', params: { status: 'cancelled' } });
   assert.equal(await getStock(product.id), 5);
   await deleteProduct(product);
 });
@@ -1547,14 +1563,14 @@ test('refuses a coupon that does not exist, is turned off or has expired', async
   const visitorId = randomUUID();
   await createSocksCart(visitorId);
 
-  for (const [code, error] of [
-    ['nope', "NOPE isn't a valid coupon code."],
-    ['paused', "PAUSED isn't a valid coupon code."],
-    ['oldsale', 'The coupon OLDSALE has expired.']
+  for (const [code, refusal] of [
+    ['nope', { error: "NOPE isn't a valid coupon code.", code: 'invalidCoupon', params: { code: 'NOPE' } }],
+    ['paused', { error: "PAUSED isn't a valid coupon code.", code: 'invalidCoupon', params: { code: 'PAUSED' } }],
+    ['oldsale', { error: 'The coupon OLDSALE has expired.', code: 'expiredCoupon', params: { code: 'OLDSALE' } }]
   ]) {
     const summary = await api(`/api/payment-summary?couponCode=${code}`, { visitorId });
     assert.equal(summary.status, 400, code);
-    assert.equal((await summary.json()).error, error);
+    assert.deepEqual(await summary.json(), refusal);
 
     const order = await api('/api/orders', { visitorId, method: 'POST', body: { couponCode: code } });
     assert.equal(order.status, 400, code);
@@ -1875,7 +1891,7 @@ test('limits how often one address can guess coupons, place orders, write review
   assert.equal((await api('/api/orders', { visitorId, method: 'POST', body: { couponCode: 'GUESSB' } })).status, 400);
   const limited = await api('/api/coupons/WELCOME10');
   assert.equal(limited.status, 429);
-  assert.equal((await limited.json()).error, 'Too many requests. Please wait a few minutes and try again.');
+  assert.deepEqual(await limited.json(), { error: 'Too many requests. Please wait a few minutes and try again.', code: 'tooManyRequests' });
   assert.ok(limited.headers.get('ratelimit-policy'));
   // Without a code, checkout isn't slowed down
   assert.equal((await api('/api/payment-summary', { visitorId })).status, 200);

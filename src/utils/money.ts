@@ -1,4 +1,4 @@
-export function formatMoney(amountCents: number) {
-  const sign = amountCents < 0 ? '-' : '';
-  return `${sign}$${(Math.abs(amountCents) / 100).toFixed(2)}`;
+// Prices are always in US dollars. Only how they're written follows the language
+export function formatMoney(amountCents: number, locale: string) {
+  return new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(amountCents / 100);
 }

@@ -3,6 +3,7 @@ import { CartIcon } from '../../components/Icons';
 import { ButtonSpinner } from '../../components/PageStatus';
 import { useAction } from '../../hooks/useAction';
 import { useAddToCart } from '../../hooks/useAddToCart';
+import { useI18n } from '../../hooks/useI18n';
 import { describeDelivery } from '../../utils/orderStatus';
 import type { LoadCart, Order, OrderProduct } from '../../types/store';
 
@@ -15,6 +16,7 @@ interface BuyAgainButtonProps {
 function BuyAgainButton({ orderProduct, loadCart }: BuyAgainButtonProps) {
   const addToCart = useAddToCart(loadCart);
   const [buyAgain, isAdding] = useAction(() => addToCart(orderProduct.product, 1));
+  const { t } = useI18n();
 
   return (
     <button className="buy-again-button button-primary"
@@ -26,7 +28,7 @@ function BuyAgainButton({ orderProduct, loadCart }: BuyAgainButtonProps) {
       {isAdding
         ? <ButtonSpinner />
         : <CartIcon className="buy-again-icon" />}
-      <span className="buy-again-message">Add to Cart</span>
+      <span className="buy-again-message">{t.common.addToCart}</span>
     </button>
   );
 }
@@ -37,6 +39,9 @@ interface OrderDetailsGridProps {
 }
 
 export function OrderDetailsGrid({ order, loadCart }: OrderDetailsGridProps) {
+  const i18n = useI18n();
+  const { t } = i18n;
+
   return (
     <div>
       {order.products.map((orderProduct) => (
@@ -50,15 +55,15 @@ export function OrderDetailsGrid({ order, loadCart }: OrderDetailsGridProps) {
             </Link>
             <div className={`product-delivery-date${order.status === 'cancelled' ? ' product-delivery-cancelled' : ''}`}
               data-testid="order-product-delivery-date">
-              {describeDelivery(order, orderProduct.estimatedDeliveryTimeMs)}
+              {describeDelivery(order, orderProduct.estimatedDeliveryTimeMs, i18n)}
             </div>
             <div className="product-quantity">
-              Quantity: {orderProduct.quantity}
+              {t.common.quantity} {orderProduct.quantity}
             </div>
 
             {orderProduct.product.deletedAt || orderProduct.product.stock === 0 ? (
               <div className="product-unavailable" data-testid="product-unavailable">
-                {orderProduct.product.deletedAt ? 'No longer available' : 'Out of stock'}
+                {orderProduct.product.deletedAt ? t.common.noLongerAvailable : t.stock.outOfStock}
               </div>
             ) : (
               <BuyAgainButton orderProduct={orderProduct} loadCart={loadCart} />
@@ -67,7 +72,7 @@ export function OrderDetailsGrid({ order, loadCart }: OrderDetailsGridProps) {
 
           <Link className="track-package-button button-secondary"
             to={`/tracking/${order.id}/${orderProduct.product.id}`}>
-            Track package
+            {t.orders.trackPackage}
           </Link>
         </div>
       ))}

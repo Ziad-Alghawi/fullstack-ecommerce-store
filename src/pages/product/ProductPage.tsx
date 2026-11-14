@@ -7,7 +7,7 @@ import { ErrorMessage, LoadingMessage } from '../../components/PageStatus';
 import { AddToCart } from '../../components/AddToCart';
 import { ProductRating } from '../../components/Rating';
 import { Reviews } from './Reviews';
-import { formatMoney } from '../../utils/money';
+import { useI18n } from '../../hooks/useI18n';
 import type { CartItem, LoadCart, Product } from '../../types/store';
 import './ProductPage.css';
 
@@ -30,6 +30,7 @@ export function ProductPage({ cart, loadCart, onRetry }: ProductPageProps) {
   const [product, setProduct] = useState<Product | null>(null);
   const [isNotFound, setIsNotFound] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const { t, formatMoney, categoryName } = useI18n();
 
   useEffect(() => {
     fetchProduct(productId).then(setProduct, (error) => {
@@ -58,7 +59,7 @@ export function ProductPage({ cart, loadCart, onRetry }: ProductPageProps) {
               <Link className="product-details-category link-primary"
                 to={`/?${new URLSearchParams({ category: product.category })}`}
                 data-testid="product-category-link">
-                {product.category}
+                {categoryName(product.category)}
               </Link>
             )}
             <h1 className="page-title">{product.name}</h1>
@@ -69,7 +70,7 @@ export function ProductPage({ cart, loadCart, onRetry }: ProductPageProps) {
 
             {product.deletedAt ? (
               <div className="product-details-unavailable" data-testid="product-unavailable">
-                No longer available
+                {t.common.noLongerAvailable}
               </div>
             ) : (
               <AddToCart product={product} loadCart={loadCart} />
@@ -85,15 +86,15 @@ export function ProductPage({ cart, loadCart, onRetry }: ProductPageProps) {
   } else if (isNotFound) {
     pageContent = (
       <div className="page-status" data-testid="product-not-found">
-        <div>We couldn't find this product</div>
-        <Link className="page-status-link link-primary" to="/">Browse products</Link>
+        <div>{t.product.notFound}</div>
+        <Link className="page-status-link link-primary" to="/">{t.common.browseProducts}</Link>
       </div>
     );
   }
 
   return (
     <>
-      <PageTitle title={product?.name ?? 'Product'} />
+      <PageTitle title={product?.name ?? t.product.title} />
 
       <Header cart={cart} />
 

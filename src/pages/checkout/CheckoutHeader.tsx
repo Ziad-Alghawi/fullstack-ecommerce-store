@@ -3,6 +3,7 @@ import { getCartQuantity } from '../../utils/cart';
 import type { CartItem } from '../../types/store';
 import { LockIcon } from '../../components/Icons';
 import { Logo } from '../../components/Logo';
+import { useI18n } from '../../hooks/useI18n';
 import './CheckoutHeader.css';
 
 interface CheckoutHeaderProps {
@@ -11,6 +12,7 @@ interface CheckoutHeaderProps {
 
 export function CheckoutHeader({ cart }: CheckoutHeaderProps) {
   const cartQuantity = getCartQuantity(cart);
+  const { t } = useI18n();
 
   return (
     <header className="checkout-header">
@@ -20,14 +22,14 @@ export function CheckoutHeader({ cart }: CheckoutHeaderProps) {
         </Link>
 
         <div className="checkout-header-title">
-          Checkout (<Link className="link-primary" to="/">
-            {cartQuantity} {cartQuantity === 1 ? 'item' : 'items'}
+          {t.checkout.title} (<Link className="link-primary" to="/">
+            {t.checkout.itemCount(cartQuantity)}
           </Link>)
         </div>
 
         <div className="checkout-header-secure">
           <LockIcon />
-          <span className="checkout-header-secure-text">Secure checkout</span>
+          <span className="checkout-header-secure-text">{t.checkout.secure}</span>
         </div>
       </div>
     </header>

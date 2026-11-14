@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ButtonSpinner } from '../../components/PageStatus';
 import { useAction } from '../../hooks/useAction';
 import { useToast } from '../../hooks/useToast';
+import { useI18n } from '../../hooks/useI18n';
 import type { Order } from '../../types/store';
 
 interface CancelOrderButtonProps {
@@ -13,13 +14,14 @@ interface CancelOrderButtonProps {
 export function CancelOrderButton({ order, onCancelled }: CancelOrderButtonProps) {
   const [isConfirming, setIsConfirming] = useState(false);
   const showToast = useToast();
+  const { t } = useI18n();
   const isCard = order.paymentMethod === 'card';
-  const question = isCard ? 'Cancel this order and refund your payment?' : 'Cancel this order?';
+  const question = isCard ? t.orders.cancelAndRefundQuestion : t.orders.cancelQuestion;
 
   const [cancelOrder, isCancelling] = useAction(async () => {
     const response = await axios.post<Order>(`/api/orders/${order.id}/cancel`);
     onCancelled(response.data);
-    showToast(isCard ? 'Order cancelled and your payment refunded' : 'Order cancelled. Its items are back in stock');
+    showToast(isCard ? t.orders.cancelledAndRefunded : t.orders.cancelled);
   });
 
   // The keys swap in new buttons, so a double click on Cancel order can't also confirm it
@@ -29,19 +31,19 @@ export function CancelOrderButton({ order, onCancelled }: CancelOrderButtonProps
       <button className="button-danger" type="button" disabled={isCancelling} onClick={cancelOrder}
         data-testid="confirm-cancel-order-button">
         {isCancelling && <ButtonSpinner />}
-        Cancel order
+        {t.orders.cancelOrder}
       </button>
       <button className="button-secondary" type="button" disabled={isCancelling} autoFocus
         onClick={() => setIsConfirming(false)}>
-        Keep order
+        {t.orders.keepOrder}
       </button>
     </div>
   ) : (
     <div key="actions" className="order-actions">
-      <span className="order-hint">You can cancel until it ships</span>
+      <span className="order-hint">{t.orders.cancelHint}</span>
       <button className="button-secondary" type="button" onClick={() => setIsConfirming(true)}
         data-testid="cancel-order-button">
-        Cancel order
+        {t.orders.cancelOrder}
       </button>
     </div>
   );

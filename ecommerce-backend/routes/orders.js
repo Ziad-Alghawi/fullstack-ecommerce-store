@@ -8,6 +8,7 @@ import { calculatePaymentSummary } from './paymentSummary.js';
 import { readCoupon } from '../middleware/coupon.js';
 import { rejectInvalidId } from '../utils/isUuid.js';
 import { getStockShortage, giveBackStock, takeStock } from '../utils/stock.js';
+import { refusal, sendRefusal } from '../utils/refusal.js';
 import { changeStatus } from '../utils/orderStatus.js';
 import { maskEmail } from '../utils/maskEmail.js';
 import { checkoutLimit } from '../middleware/rateLimits.js';
@@ -44,30 +45,30 @@ router.get('/', asyncHandler(async (req, res) => {
 // Why the visitor can't order their cart, or null when they can
 export async function getOrderRefusal(visitorId, cartItems) {
   if (cartItems.length === 0) {
-    return { status: 400, error: 'Cart is empty' };
+    return { status: 400, ...refusal('emptyCart', 'Cart is empty') };
   }
   if (await Order.count({ where: { visitorId } }) >= MAX_ORDERS) {
     return {
       status: 409,
-      error: `This demo store keeps up to ${MAX_ORDERS} orders per visitor, and you've reached the limit.`
+      ...refusal('orderLimit', `This demo store keeps up to ${MAX_ORDERS} orders per visitor, and you've reached the limit.`, { max: MAX_ORDERS })
     };
   }
   const shortage = await getStockShortage(cartItems);
-  return shortage && { status: 409, error: shortage };
+  return shortage && { status: 409, ...shortage };
 }
 
 router.post('/', checkoutLimit, readCoupon, asyncHandler(async (req, res) => {
   const cartItems = await CartItem.findAll({ where: { visitorId: req.visitorId } });
 
-  const refusal = await getOrderRefusal(req.visitorId, cartItems);
-  if (refusal) {
-    return res.status(refusal.status).json({ error: refusal.error });
+  const orderRefusal = await getOrderRefusal(req.visitorId, cartItems);
+  if (orderRefusal) {
+    return sendRefusal(res, orderRefusal);
   }
 
   const { totalCostCents } = await calculatePaymentSummary(cartItems, req.coupon);
   // Another order may have taken the last ones since the check above
   if (!await takeStock(cartItems)) {
-    return res.status(409).json({ error: await getStockShortage(cartItems) });
+    return res.status(409).json(await getStockShortage(cartItems));
   }
 
   let order;
@@ -133,9 +134,9 @@ router.post('/:orderId/cancel', checkoutLimit, asyncHandler(async (req, res) => 
     return res.status(404).json({ error: 'Order not found' });
   }
 
-  const refusal = await changeStatus(order, 'cancelled');
-  if (refusal) {
-    return res.status(refusal.status).json({ error: refusal.error });
+  const statusRefusal = await changeStatus(order, 'cancelled');
+  if (statusRefusal) {
+    return sendRefusal(res, statusRefusal);
   }
 
   res.json(order);

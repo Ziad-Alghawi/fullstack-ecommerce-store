@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
-import { formatMoney } from '../../utils/money';
 import { AddToCart } from '../../components/AddToCart';
 import { ProductRating } from '../../components/Rating';
+import { useI18n } from '../../hooks/useI18n';
 import type { LoadCart, Product as ProductType } from '../../types/store';
 
 interface ProductProps {
@@ -12,6 +12,7 @@ interface ProductProps {
 
 export function Product({ product, loadCart, lazyLoadImage = false }: ProductProps) {
   const productPath = `/products/${product.id}`;
+  const { formatMoney } = useI18n();
 
   return (
     <div className="product-container card"

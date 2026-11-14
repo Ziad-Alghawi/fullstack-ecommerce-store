@@ -4,8 +4,8 @@
   z-index: 1000;
 
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas: "logo search nav";
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: "logo search nav settings";
   align-items: center;
   column-gap: var(--space-5);
   padding: var(--space-3) var(--space-5);
@@ -140,12 +140,48 @@
   text-align: center;
 }
 
+.header-settings {
+  grid-area: settings;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.header-switch {
+  display: flex;
+  padding: 2px;
+  border: 1px solid var(--color-inverse-hover);
+  border-radius: var(--radius-md);
+}
+
+.header-switch-option {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0 var(--space-1);
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--color-text-inverse);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  transition: background-color var(--transition);
+}
+
+.header-switch-option:hover {
+  background-color: var(--color-inverse-hover);
+}
+
+.header-switch-option[aria-pressed="true"] {
+  background-color: var(--color-brand-accent);
+  color: var(--color-brand-dark);
+}
+
 @media (max-width: 640px) {
   .header {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
-      "logo nav"
-      "search search";
+      "logo nav nav"
+      "search search settings";
     column-gap: var(--space-3);
     row-gap: var(--space-2);
     padding: var(--space-2) var(--space-4) var(--space-3);

@@ -9,6 +9,7 @@ import { MAX_REVIEW_TEXT_LENGTH, Review } from '../models/Review.js';
 import { isUuid } from '../utils/isUuid.js';
 import { reviewLimit } from '../middleware/rateLimits.js';
 import { maskEmail } from '../utils/maskEmail.js';
+import { refusal } from '../utils/refusal.js';
 
 // Mounted under /api/products/:productId, so it needs the parent's productId
 const router = express.Router({ mergeParams: true });
@@ -88,11 +89,11 @@ router.post('/', reviewLimit, requireUser, asyncHandler(async (req, res) => {
   const { user, product } = req;
 
   if (!await hasOrdered(user.id, product.id)) {
-    return res.status(403).json({ error: 'Only customers who ordered this product can review it.' });
+    return res.status(403).json(refusal('reviewNotAllowed', 'Only customers who ordered this product can review it.'));
   }
 
   if (await Review.findOne({ where: { productId: product.id, userId: user.id } })) {
-    return res.status(409).json({ error: "You've already reviewed this product. Edit your review instead." });
+    return res.status(409).json(refusal('alreadyReviewed', "You've already reviewed this product. Edit your review instead."));
   }
 
   const { error, fields } = readReviewFields(req.body);

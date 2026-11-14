@@ -127,5 +127,23 @@ export interface AdminStats {
   topProducts: (Pick<Product, 'id' | 'name' | 'image'> & { unitsSold: number })[];
 }
 
+// The values a refusal's message is made from, so the store can say it in the visitor's language
+export interface ApiErrorParams {
+  product?: string;
+  stock?: number;
+  inCart?: number;
+  code?: string;
+  max?: number;
+  status?: OrderStatus;
+  nextStatus?: OrderStatus;
+}
+
+// What the API answers a request it refuses with
+export interface ApiError {
+  error?: string;
+  code?: string;
+  params?: ApiErrorParams;
+}
+
 export type LoadCart = () => Promise<void>;
 export type CartStatus = 'loading' | 'ready' | 'failed';

@@ -3,7 +3,8 @@ import { useId, useState, type FormEvent } from 'react';
 import { ButtonSpinner } from '../../components/PageStatus';
 import { useAction } from '../../hooks/useAction';
 import { useToast } from '../../hooks/useToast';
-import type { AppliedCoupon } from '../../types/store';
+import { useI18n } from '../../hooks/useI18n';
+import type { ApiError, AppliedCoupon } from '../../types/store';
 
 interface CouponFormProps {
   appliedCoupon: AppliedCoupon | null;
@@ -16,6 +17,7 @@ export function CouponForm({ appliedCoupon, featuredCoupon, onApply, onRemove }:
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const showToast = useToast();
+  const { t, apiError } = useI18n();
   const inputId = useId();
   const hintId = useId();
 
@@ -25,13 +27,13 @@ export function CouponForm({ appliedCoupon, featuredCoupon, onApply, onRemove }:
       const response = await axios.get<AppliedCoupon>(`/api/coupons/${encodeURIComponent(code.trim())}`);
       onApply(response.data.code);
       setCode('');
-      showToast(`Coupon ${response.data.code} applied`);
+      showToast(t.coupon.applied(response.data.code));
     } catch (error) {
       // The API says why a code doesn't work. Anything else is worth another try
-      const reason = axios.isAxiosError<{ error?: string }>(error) && error.response?.status === 404
-        ? error.response.data?.error
+      const reason = axios.isAxiosError<ApiError>(error) && error.response?.status === 404
+        ? apiError(error.response.data)
         : null;
-      setError(reason ?? "We couldn't check this code. Please try again.");
+      setError(reason ?? t.coupon.checkFailed);
     }
   });
 
@@ -46,15 +48,15 @@ export function CouponForm({ appliedCoupon, featuredCoupon, onApply, onRemove }:
     return (
       <div className="coupon-applied" data-testid="coupon-applied">
         <span>
-          <strong>{appliedCoupon.code}</strong> applied: {appliedCoupon.percentOff}% off your items
+          <strong>{appliedCoupon.code}</strong>{t.coupon.appliedRest(appliedCoupon.percentOff)}
         </span>
         <button className="link-primary link-button" type="button"
           onClick={() => {
             onRemove();
-            showToast('Coupon removed');
+            showToast(t.coupon.removed);
           }}
-          aria-label={`Remove coupon ${appliedCoupon.code}`} data-testid="coupon-remove-button">
-          Remove
+          aria-label={t.coupon.removeLabel(appliedCoupon.code)} data-testid="coupon-remove-button">
+          {t.common.remove}
         </button>
       </div>
     );
@@ -62,7 +64,7 @@ export function CouponForm({ appliedCoupon, featuredCoupon, onApply, onRemove }:
 
   return (
     <form className="coupon-form" onSubmit={submitCode}>
-      <label className="coupon-label" htmlFor={inputId}>Coupon code</label>
+      <label className="coupon-label" htmlFor={inputId}>{t.coupon.label}</label>
       <div className="coupon-row">
         <input id={inputId} type="text" value={code} autoComplete="off" autoCapitalize="characters"
           spellCheck={false} aria-describedby={featuredCoupon ? hintId : undefined} aria-invalid={Boolean(error)}
@@ -70,13 +72,13 @@ export function CouponForm({ appliedCoupon, featuredCoupon, onApply, onRemove }:
         <button className="button-secondary" type="submit" disabled={isChecking} aria-busy={isChecking}
           data-testid="coupon-apply-button">
           {isChecking && <ButtonSpinner />}
-          Apply
+          {t.common.apply}
         </button>
       </div>
       {error && <div className="coupon-error" role="alert" data-testid="coupon-error">{error}</div>}
       {featuredCoupon && (
         <p id={hintId} className="coupon-hint" data-testid="coupon-hint">
-          Use <strong>{featuredCoupon.code}</strong> for {featuredCoupon.percentOff}% off your items.
+          {t.coupon.hintStart}<strong>{featuredCoupon.code}</strong>{t.coupon.hintRest(featuredCoupon.percentOff)}
         </p>
       )}
     </form>

@@ -98,6 +98,68 @@ describe('App when the API fails', () => {
       .toHaveTextContent('Demo store, data resets regularly');
   });
 
+  describe('in German', () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    afterEach(() => {
+      localStorage.clear();
+      vi.restoreAllMocks();
+    });
+
+    it('switches from the header, and remembers it for the next visit', async () => {
+      const { unmount } = renderApp();
+      expect(await screen.findByTestId('product-container')).toHaveTextContent('$10.90');
+
+      await user.click(screen.getByRole('button', { name: 'Deutsch' }));
+
+      expect(screen.getByRole('button', { name: 'Deutsch' })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByTestId('header-orders-link')).toHaveTextContent('Bestellungen');
+      expect(screen.getByTestId('product-container')).toHaveTextContent('10,90 $');
+      expect(screen.getByTestId('site-footer')).toHaveTextContent('Demo-Shop');
+      expect(document.documentElement.lang).toBe('de');
+      unmount();
+
+      renderApp('/page-that-does-not-exist');
+      expect(screen.getByRole('heading', { level: 1, name: 'Seite nicht gefunden' })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'English' }));
+      expect(screen.getByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument();
+      expect(document.documentElement.lang).toBe('en');
+    });
+
+    it("starts in the browser's language", async () => {
+      vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['de-DE', 'en']);
+      renderApp('/checkout');
+
+      expect(await screen.findByRole('heading', { level: 1, name: 'Bestellung prüfen' })).toBeInTheDocument();
+      expect(screen.getByTestId('payment-summary-total')).toHaveTextContent('11,99 $');
+    });
+
+    it("translates the API's reason for refusing an order", async () => {
+      localStorage.setItem('language', 'de');
+      api['/api/orders'] = {
+        status: 409,
+        data: { error: "This demo store keeps up to 50 orders per visitor, and you've reached the limit.", code: 'orderLimit', params: { max: 50 } }
+      };
+      renderApp('/checkout');
+      await user.click(await screen.findByTestId('place-order-button'));
+
+      expect(await screen.findByTestId('toast')).toHaveTextContent('bis zu 50 Bestellungen pro Besucher');
+    });
+
+    it("offers to try a failed change again in German", async () => {
+      localStorage.setItem('language', 'de');
+      renderApp();
+      await user.click(await screen.findByTestId('add-to-cart-button'));
+
+      const toast = await within(screen.getByRole('alert', { name: 'Fehler' })).findByTestId('toast');
+      expect(toast).toHaveTextContent('Deine Änderung wurde nicht gespeichert');
+      expect(within(toast).getByTestId('toast-action')).toHaveTextContent('Erneut versuchen');
+    });
+  });
+
   it('shows a loading message until the products arrive', async () => {
     renderApp();
 

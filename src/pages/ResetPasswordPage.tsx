@@ -6,6 +6,7 @@ import { ButtonSpinner } from '../components/PageStatus';
 import { AuthContext } from '../hooks/useAuth';
 import { useAuthRequest } from '../hooks/useAuthRequest';
 import { useToast } from '../hooks/useToast';
+import { useI18n } from '../hooks/useI18n';
 import type { CartItem } from '../types/store';
 import './LoginPage.css';
 
@@ -21,14 +22,15 @@ export function ResetPasswordPage({ cart }: ResetPasswordPageProps) {
   const showToast = useToast();
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
+  const { t } = useI18n();
 
   const { submitForm, isPending, error } = useAuthRequest(async (supabase) => {
     if (password !== confirmation) {
-      return { error: { message: "The passwords don't match." } };
+      return { error: { message: t.resetPassword.mismatch } };
     }
     const { error } = await supabase.auth.updateUser({ password });
     if (!error) {
-      showToast('Your password is changed');
+      showToast(t.resetPassword.changed);
       navigate('/account');
     }
     return { error };
@@ -36,27 +38,27 @@ export function ResetPasswordPage({ cart }: ResetPasswordPageProps) {
 
   return (
     <>
-      <PageTitle title="Choose a new password" />
+      <PageTitle title={t.resetPassword.title} />
 
       <Header cart={cart} />
 
       <main className="login-page page">
         {auth?.user ? (
           <form className="login-card card" onSubmit={submitForm}>
-            <h1 className="page-title">Choose a new password</h1>
+            <h1 className="page-title">{t.resetPassword.title}</h1>
             <p className="login-text">
-              For <strong>{auth.user.email}</strong>. You stay logged in on this device.
+              {t.resetPassword.forStart}<strong>{auth.user.email}</strong>{t.resetPassword.forRest}
             </p>
 
             <label className="form-field">
-              New password
+              {t.resetPassword.newPassword}
               <input type="password" required minLength={6} autoComplete="new-password" value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 data-testid="reset-password-input" />
             </label>
 
             <label className="form-field">
-              Repeat the new password
+              {t.resetPassword.repeat}
               <input type="password" required minLength={6} autoComplete="new-password" value={confirmation}
                 onChange={(event) => setConfirmation(event.target.value)}
                 data-testid="reset-confirmation-input" />
@@ -67,18 +69,17 @@ export function ResetPasswordPage({ cart }: ResetPasswordPageProps) {
             <button className="login-submit button-primary" type="submit" disabled={isPending}
               data-testid="reset-submit-button">
               {isPending && <ButtonSpinner />}
-              Save password
+              {t.resetPassword.save}
             </button>
           </form>
         ) : (
           // Without a session the link was already used, has expired or was copied wrong
           <div className="login-card card" data-testid="reset-link-invalid">
-            <h1 className="page-title">This link has expired</h1>
+            <h1 className="page-title">{t.resetPassword.expiredTitle}</h1>
             <p className="login-text">
-              A link to reset your password works once and expires after an hour. Ask for a new one and use
-              it in this browser.
+              {t.resetPassword.expiredText}
             </p>
-            <Link className="login-submit button-primary" to="/forgot-password">Send a new link</Link>
+            <Link className="login-submit button-primary" to="/forgot-password">{t.resetPassword.sendNew}</Link>
           </div>
         )}
       </main>

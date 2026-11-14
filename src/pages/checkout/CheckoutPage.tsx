@@ -7,8 +7,9 @@ import { OrderSummary } from './OrderSummary';
 import { PaymentSummary } from './PaymentSummary';
 import { ErrorMessage, LoadingMessage } from '../../components/PageStatus';
 import { useToast } from '../../hooks/useToast';
+import { useI18n } from '../../hooks/useI18n';
 import type {
-  AppliedCoupon, CartItem, CartStatus, DeliveryOption, LoadCart, PaymentSummary as PaymentSummaryType
+  ApiError, AppliedCoupon, CartItem, CartStatus, DeliveryOption, LoadCart, PaymentSummary as PaymentSummaryType
 } from '../../types/store';
 import './CheckoutPage.css';
 
@@ -27,6 +28,7 @@ export function CheckoutPage({ cart, cartStatus, loadCart, onRetry }: CheckoutPa
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [featuredCoupon, setFeaturedCoupon] = useState<AppliedCoupon | null>(null);
   const showToast = useToast();
+  const { t, apiError } = useI18n();
 
   useEffect(() => {
     const fetchDeliveryOptions = async () => {
@@ -63,9 +65,9 @@ export function CheckoutPage({ cart, cartStatus, loadCart, onRetry }: CheckoutPa
           return;
         }
         // The coupon stopped working since it was applied, for example it expired. Carry on without it
-        if (couponCode && axios.isAxiosError<{ error?: string }>(error) && error.response?.status === 400) {
+        if (couponCode && axios.isAxiosError<ApiError>(error) && error.response?.status === 400) {
           setCouponCode(null);
-          showToast(error.response.data?.error ?? `The coupon ${couponCode} can no longer be used.`, { isError: true });
+          showToast(apiError(error.response.data) ?? t.checkout.couponExpired(couponCode), { isError: true });
         } else {
           setHasError(true);
         }
@@ -76,7 +78,7 @@ export function CheckoutPage({ cart, cartStatus, loadCart, onRetry }: CheckoutPa
     return () => {
       isLatestRequest = false;
     };
-  }, [cart, couponCode, showToast]);
+  }, [cart, couponCode, showToast, t, apiError]);
 
   useEffect(() => {
     axios.get<AppliedCoupon | null>('/api/featured-coupon')
@@ -103,20 +105,20 @@ export function CheckoutPage({ cart, cartStatus, loadCart, onRetry }: CheckoutPa
   } else if (cart.length === 0) {
     pageContent = (
       <div className="page-status" data-testid="empty-cart-message">
-        <div>Your cart is empty</div>
-        <Link className="page-status-link link-primary" to="/">Browse products</Link>
+        <div>{t.checkout.empty}</div>
+        <Link className="page-status-link link-primary" to="/">{t.common.browseProducts}</Link>
       </div>
     );
   }
 
   return (
     <>
-      <PageTitle title="Checkout" />
+      <PageTitle title={t.checkout.title} />
 
       <CheckoutHeader cart={cart} />
 
       <main className="checkout-page page">
-        <h1 className="page-title">Review your order</h1>
+        <h1 className="page-title">{t.checkout.heading}</h1>
 
         {pageContent}
       </main>

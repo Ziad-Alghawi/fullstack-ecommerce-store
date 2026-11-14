@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { CouponEditor } from './CouponEditor';
-import { formatDate } from '../../utils/date';
+import { useI18n } from '../../hooks/useI18n';
 import type { Coupon } from '../../types/store';
 
 function getCouponStatus(coupon: Coupon) {
   if (!coupon.active) {
-    return 'Off';
+    return 'off';
   }
-  return coupon.expiresAt && new Date(coupon.expiresAt) <= new Date() ? 'Expired' : 'Active';
+  return coupon.expiresAt && new Date(coupon.expiresAt) <= new Date() ? 'expired' : 'active';
 }
 
 interface AdminCouponsProps {
@@ -17,6 +17,7 @@ interface AdminCouponsProps {
 
 export function AdminCoupons({ coupons, loadCoupons }: AdminCouponsProps) {
   const [editing, setEditing] = useState<Coupon | 'new' | null>(null);
+  const { t, formatDate } = useI18n();
 
   const closeEditorAfterSaving = async () => {
     await loadCoupons();
@@ -26,11 +27,11 @@ export function AdminCoupons({ coupons, loadCoupons }: AdminCouponsProps) {
   return (
     <section className="admin-section" aria-labelledby="admin-coupons-title">
       <div className="admin-heading">
-        <h2 id="admin-coupons-title" className="admin-section-title">Coupons</h2>
+        <h2 id="admin-coupons-title" className="admin-section-title">{t.admin.coupons.title}</h2>
         {!editing && (
           <button className="button-primary" type="button" onClick={() => setEditing('new')}
             data-testid="admin-add-coupon-button">
-            Add coupon
+            {t.admin.coupons.add}
           </button>
         )}
       </div>
@@ -43,15 +44,15 @@ export function AdminCoupons({ coupons, loadCoupons }: AdminCouponsProps) {
       <div className="admin-table-container card">
         <table className="admin-table admin-coupons-table">
           <caption className="admin-caption">
-            {coupons.length} {coupons.length === 1 ? 'coupon' : 'coupons'}. Customers type the code at checkout
+            {t.admin.coupons.caption(coupons.length)}
           </caption>
           <thead>
             <tr>
-              <th scope="col">Code</th>
-              <th scope="col">Discount</th>
-              <th scope="col">Expires</th>
-              <th scope="col">Status</th>
-              <th scope="col"><span className="visually-hidden">Actions</span></th>
+              <th scope="col">{t.admin.coupons.code}</th>
+              <th scope="col">{t.admin.coupons.discount}</th>
+              <th scope="col">{t.admin.coupons.expires}</th>
+              <th scope="col">{t.admin.coupons.status}</th>
+              <th scope="col"><span className="visually-hidden">{t.admin.products.actions}</span></th>
             </tr>
           </thead>
           <tbody>
@@ -60,19 +61,19 @@ export function AdminCoupons({ coupons, loadCoupons }: AdminCouponsProps) {
               return (
                 <tr key={coupon.id} data-testid="admin-coupon-row">
                   <td className="admin-cell-name">{coupon.code}</td>
-                  <td>{coupon.percentOff}% off</td>
-                  <td>{coupon.expiresAt ? formatDate(coupon.expiresAt) : 'Never'}</td>
+                  <td>{t.admin.coupons.percentOff(coupon.percentOff)}</td>
+                  <td>{coupon.expiresAt ? formatDate(coupon.expiresAt) : t.admin.coupons.never}</td>
                   <td>
                     <span className="admin-statuses">
-                      <span className={`status-badge status-badge-${status.toLowerCase()}`}>{status}</span>
-                      {coupon.featured && <span className="status-badge status-badge-featured">Featured</span>}
+                      <span className={`status-badge status-badge-${status}`}>{t.admin.coupons[status]}</span>
+                      {coupon.featured && <span className="status-badge status-badge-featured">{t.admin.coupons.featured}</span>}
                     </span>
                   </td>
                   <td className="admin-cell-actions">
                     <div className="admin-actions">
                       <button className="button-secondary" type="button" onClick={() => setEditing(coupon)}
-                        aria-label={`Edit ${coupon.code}`}>
-                        Edit
+                        aria-label={t.admin.coupons.editLabel(coupon.code)}>
+                        {t.common.edit}
                       </button>
                     </div>
                   </td>

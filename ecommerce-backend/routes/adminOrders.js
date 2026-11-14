@@ -5,6 +5,7 @@ import { ORDER_STATUSES, Order } from '../models/Order.js';
 import { Product } from '../models/Product.js';
 import { rejectInvalidId } from '../utils/isUuid.js';
 import { changeStatus, getNextStatuses } from '../utils/orderStatus.js';
+import { sendRefusal } from '../utils/refusal.js';
 
 const router = express.Router();
 
@@ -72,9 +73,9 @@ router.patch('/:orderId', asyncHandler(async (req, res) => {
     return res.status(400).json({ error: STATUS_ERROR });
   }
 
-  const refusal = await changeStatus(order, status);
-  if (refusal) {
-    return res.status(refusal.status).json({ error: refusal.error });
+  const statusRefusal = await changeStatus(order, status);
+  if (statusRefusal) {
+    return sendRefusal(res, statusRefusal);
   }
 
   const [adminOrder] = await toAdminOrders([order]);

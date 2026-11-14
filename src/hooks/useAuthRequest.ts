@@ -1,13 +1,15 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { useAction } from './useAction';
+import { useI18n } from './useI18n';
 import { loadSupabase } from '../utils/supabase';
 
-type AuthRequest = (supabase: SupabaseClient) => Promise<{ error: { message: string } | null }>;
+type AuthRequest = (supabase: SupabaseClient) => Promise<{ error: { message: string; code?: string } | null }>;
 
 // Submits a login, sign up or password form to Supabase, and keeps the error to show with the form
 export function useAuthRequest(request: AuthRequest) {
   const [error, setError] = useState<string | null>(null);
+  const { t, authError } = useI18n();
 
   // Start downloading Supabase while the user types
   useEffect(() => {
@@ -18,11 +20,11 @@ export function useAuthRequest(request: AuthRequest) {
     setError(null);
     const supabase = await loadSupabase().catch(() => null);
     if (!supabase) {
-      setError("We couldn't reach the login service. Check your connection and try again.");
+      setError(t.login.unreachable);
       return;
     }
     const { error } = await request(supabase);
-    setError(error?.message ?? null);
+    setError(error && authError(error));
   });
 
   const submitForm = (event: FormEvent<HTMLFormElement>) => {

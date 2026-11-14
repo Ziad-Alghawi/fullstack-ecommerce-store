@@ -1,15 +1,13 @@
-export const SORT_OPTIONS = [
-  { value: '', label: 'Featured' },
-  { value: 'price-asc', label: 'Price: low to high' },
-  { value: 'price-desc', label: 'Price: high to low' },
-  { value: 'rating', label: 'Customer rating' },
-  { value: 'newest', label: 'Newest' }
-];
+import type { Messages } from '../i18n/en';
+
+// The sorts the API knows. An empty sort keeps the store's own order
+export type Sort = keyof Messages['home']['sorts'];
+export const SORTS: Sort[] = ['', 'price-asc', 'price-desc', 'rating', 'newest'];
 
 export interface Filters {
   search: string;
   category: string;
-  sort: string;
+  sort: Sort;
   // In dollars, as typed. Empty for no limit
   minPrice: string;
   maxPrice: string;
@@ -28,7 +26,7 @@ export function readProductFilters(params: URLSearchParams): Filters {
   return {
     search: params.get('search') ?? '',
     category: params.get('category') ?? '',
-    sort: SORT_OPTIONS.some(({ value }) => value === sort) ? sort : '',
+    sort: SORTS.find((known) => known === sort) ?? '',
     minPrice: readPrice('minPrice'),
     maxPrice: readPrice('maxPrice')
   };

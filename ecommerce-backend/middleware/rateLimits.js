@@ -1,4 +1,5 @@
 import { rateLimit } from 'express-rate-limit';
+import { refusal } from '../utils/refusal.js';
 
 const WINDOW_MS = 15 * 60 * 1000;
 // RATE_LIMIT_SCALE multiplies every limit, for example so the API tests can make many requests
@@ -11,7 +12,7 @@ export function limitTo(limit, options = {}) {
     limit: limit * scale,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
-    message: { error: 'Too many requests. Please wait a few minutes and try again.' },
+    message: refusal('tooManyRequests', 'Too many requests. Please wait a few minutes and try again.'),
     ...options
   });
 }

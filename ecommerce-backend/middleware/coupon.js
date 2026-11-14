@@ -1,6 +1,7 @@
 import { Coupon } from '../models/Coupon.js';
 import { asyncHandler } from './asyncHandler.js';
 import { limitTo } from './rateLimits.js';
+import { refusal } from '../utils/refusal.js';
 
 export function normalizeCouponCode(code) {
   return typeof code === 'string' ? code.trim().toUpperCase() : '';
@@ -15,10 +16,10 @@ export async function findValidCoupon(code) {
   const normalizedCode = normalizeCouponCode(code);
   const coupon = normalizedCode && await Coupon.findOne({ where: { code: normalizedCode } });
   if (!coupon || !coupon.active) {
-    return { error: `${normalizedCode || 'This'} isn't a valid coupon code.` };
+    return { couponRefusal: refusal('invalidCoupon', `${normalizedCode || 'This'} isn't a valid coupon code.`, { code: normalizedCode }) };
   }
   if (isExpired(coupon)) {
-    return { error: `The coupon ${normalizedCode} has expired.` };
+    return { couponRefusal: refusal('expiredCoupon', `The coupon ${normalizedCode} has expired.`, { code: normalizedCode }) };
   }
   return { coupon };
 }
@@ -39,9 +40,9 @@ export const readCoupon = [couponLimit, asyncHandler(async (req, res, next) => {
     return next();
   }
 
-  const { coupon, error } = await findValidCoupon(code);
-  if (error) {
-    return res.status(400).json({ error });
+  const { coupon, couponRefusal } = await findValidCoupon(code);
+  if (couponRefusal) {
+    return res.status(400).json(couponRefusal);
   }
   req.coupon = coupon;
   next();

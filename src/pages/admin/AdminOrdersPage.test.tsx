@@ -95,7 +95,7 @@ describe('AdminOrdersPage component', () => {
 
     const rows = await screen.findAllByTestId('admin-order-row');
     expect(rows).toHaveLength(2);
-    expect(rows[0]).toHaveTextContent('Nov 12, 2026 2:30 PM');
+    expect(rows[0]).toHaveTextContent('Nov 12, 2026, 2:30 PM');
     expect(rows[0]).toHaveTextContent('#27cba69d');
     expect(rows[0]).toHaveTextContent('ma***');
     expect(within(rows[0]).getAllByRole('listitem').map((item) => item.textContent))

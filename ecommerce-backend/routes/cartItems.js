@@ -4,17 +4,21 @@ import { CartItem } from '../models/CartItem.js';
 import { Product } from '../models/Product.js';
 import { DeliveryOption } from '../models/DeliveryOption.js';
 import { isUuid, rejectInvalidId } from '../utils/isUuid.js';
+import { refusal } from '../utils/refusal.js';
 
 const router = express.Router();
 
 router.param('productId', rejectInvalidId('Cart item not found'));
 
-// Why the cart can't hold this many of the product, or null when it can
-function getStockError(product, quantity) {
-  if (quantity <= product.stock) {
+// Why the cart can't hold this many of the product, or null when it can. Mentions how many are in the cart already
+function getStockError({ name, stock }, quantity, inCart = 0) {
+  if (quantity <= stock) {
     return null;
   }
-  return product.stock === 0 ? `${product.name} is out of stock.` : `Only ${product.stock} of ${product.name} left in stock.`;
+  const note = inCart ? ` You already have ${inCart} in your cart.` : '';
+  return stock === 0
+    ? refusal('outOfStock', `${name} is out of stock.${note}`, { product: name, inCart })
+    : refusal('lowStock', `Only ${stock} of ${name} left in stock.${note}`, { product: name, stock, inCart });
 }
 
 router.get('/', asyncHandler(async (req, res) => {
@@ -47,9 +51,9 @@ router.post('/', asyncHandler(async (req, res) => {
   }
 
   let cartItem = await CartItem.findOne({ where: { productId, visitorId: req.visitorId } });
-  const stockError = getStockError(product, (cartItem?.quantity ?? 0) + quantity);
+  const stockError = getStockError(product, (cartItem?.quantity ?? 0) + quantity, cartItem?.quantity);
   if (stockError) {
-    return res.status(409).json({ error: cartItem ? `${stockError} You already have ${cartItem.quantity} in your cart.` : stockError });
+    return res.status(409).json(stockError);
   }
 
   if (cartItem) {
@@ -77,7 +81,7 @@ router.put('/:productId', asyncHandler(async (req, res) => {
     }
     const stockError = getStockError(await Product.findByPk(productId, { paranoid: false }), quantity);
     if (stockError) {
-      return res.status(409).json({ error: stockError });
+      return res.status(409).json(stockError);
     }
     cartItem.quantity = quantity;
   }

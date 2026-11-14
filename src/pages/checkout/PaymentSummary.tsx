@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { formatMoney } from '../../utils/money';
 import { ButtonSpinner } from '../../components/PageStatus';
 import { useAction } from '../../hooks/useAction';
 import { useToast } from '../../hooks/useToast';
+import { useI18n } from '../../hooks/useI18n';
 import { CouponForm } from './CouponForm';
 import type { AppliedCoupon, LoadCart, PaymentSummary as PaymentSummaryType } from '../../types/store';
 
@@ -22,11 +22,12 @@ export function PaymentSummary({
 }: PaymentSummaryProps) {
   const navigate = useNavigate();
   const showToast = useToast();
+  const { t, formatMoney } = useI18n();
 
   const [createOrder, isPlacingOrder] = useAction(async () => {
     await axios.post('/api/orders', { couponCode });
     await loadCart();
-    showToast('Order placed. Thank you!');
+    showToast(t.checkout.orderPlaced);
     navigate('/orders');
   });
 
@@ -55,14 +56,14 @@ export function PaymentSummary({
   return (
     <div className="payment-summary card">
       <h2 className="payment-summary-title">
-        Payment Summary
+        {t.checkout.paymentSummary}
       </h2>
 
       {paymentSummary && (
         <>
           <div className="payment-summary-row"
             data-testid="payment-summary-product-cost">
-            <div>Items ({paymentSummary.totalItems}):</div>
+            <div>{t.checkout.items(paymentSummary.totalItems)}</div>
             <div className="payment-summary-money">
               {formatMoney(paymentSummary.productCostCents)}
             </div>
@@ -71,7 +72,7 @@ export function PaymentSummary({
           {paymentSummary.discountCents > 0 && (
             <div className="payment-summary-row discount-row"
               data-testid="payment-summary-discount">
-              <div>Discount ({paymentSummary.coupon?.code}):</div>
+              <div>{t.checkout.discount(paymentSummary.coupon?.code)}</div>
               <div className="payment-summary-money">
                 {formatMoney(-paymentSummary.discountCents)}
               </div>
@@ -80,7 +81,7 @@ export function PaymentSummary({
 
           <div className="payment-summary-row"
             data-testid="payment-summary-shipping-cost">
-            <div>Shipping &amp; handling:</div>
+            <div>{t.checkout.shippingHandling}</div>
             <div className="payment-summary-money">
               {formatMoney(paymentSummary.shippingCostCents)}
             </div>
@@ -88,7 +89,7 @@ export function PaymentSummary({
 
           <div className="payment-summary-row subtotal-row"
             data-testid="payment-summary-total-before-tax">
-            <div>Total before tax:</div>
+            <div>{t.checkout.totalBeforeTax}</div>
             <div className="payment-summary-money">
               {formatMoney(paymentSummary.totalCostBeforeTaxCents)}
             </div>
@@ -96,7 +97,7 @@ export function PaymentSummary({
 
           <div className="payment-summary-row"
             data-testid="payment-summary-tax">
-            <div>Estimated tax (10%):</div>
+            <div>{t.checkout.tax}</div>
             <div className="payment-summary-money">
               {formatMoney(paymentSummary.taxCents)}
             </div>
@@ -104,7 +105,7 @@ export function PaymentSummary({
 
           <div className="payment-summary-row total-row"
             data-testid="payment-summary-total">
-            <div>Order total:</div>
+            <div>{t.checkout.orderTotal}</div>
             <div className="payment-summary-money">
               {formatMoney(paymentSummary.totalCostCents)}
             </div>
@@ -121,11 +122,10 @@ export function PaymentSummary({
                 aria-busy={isRedirecting}
                 onClick={payWithCard}>
                 {isRedirecting && <ButtonSpinner />}
-                Pay with card
+                {t.checkout.payWithCard}
               </button>
               <p className="card-test-note" data-testid="card-test-note">
-                <strong>Test mode:</strong> use card 4242 4242 4242 4242 with any future date and any CVC.
-                No real payment is made.
+                <strong>{t.checkout.testMode}</strong> {t.checkout.testCard}
               </p>
             </>
           )}
@@ -136,7 +136,7 @@ export function PaymentSummary({
             aria-busy={isPlacingOrder}
             onClick={createOrder}>
             {isPlacingOrder && <ButtonSpinner />}
-            {isCardPaymentOn ? 'Pay on delivery' : 'Place your order'}
+            {isCardPaymentOn ? t.checkout.payOnDelivery : t.checkout.placeOrder}
           </button>
         </>
       )}

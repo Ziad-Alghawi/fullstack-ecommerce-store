@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { refusal } from './refusal.js';
 
 const secretKey = process.env.STRIPE_SECRET_KEY;
 // This is a demo store, so only a test key turns card payment on. A live key would take real money
@@ -28,7 +29,7 @@ export async function refundCardOrder(order) {
   try {
     const session = await stripe.checkout.sessions.retrieve(order.stripeSessionId);
     if (session.metadata?.app !== APP_TAG || !session.payment_intent) {
-      return { status: 409, error: "This order's payment can't be refunded by the store." };
+      return { status: 409, ...refusal('refundNotAllowed', "This order's payment can't be refunded by the store.") };
     }
     await stripe.refunds.create(
       { payment_intent: session.payment_intent, metadata: { app: APP_TAG, orderId: order.id } },
@@ -41,6 +42,6 @@ export async function refundCardOrder(order) {
       return null;
     }
     console.error(`Refunding order ${order.id} failed:`, error.message);
-    return { status: 502, error: "The refund didn't go through, so the order wasn't cancelled. Please try again later." };
+    return { status: 502, ...refusal('refundFailed', "The refund didn't go through, so the order wasn't cancelled. Please try again later.") };
   }
 }

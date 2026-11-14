@@ -1,5 +1,6 @@
 import { AlertIcon, CheckIcon, CloseIcon } from './Icons';
 import type { Toast } from '../hooks/useToast';
+import { useI18n } from '../hooks/useI18n';
 import './Toasts.css';
 
 interface ToastsProps {
@@ -10,6 +11,8 @@ interface ToastsProps {
 // Both live regions are always on the page, so screen readers announce what's added to them.
 // Confirmations wait their turn, errors are read out straight away
 export function Toasts({ toasts, onDismiss }: ToastsProps) {
+  const { t } = useI18n();
+
   const renderToast = ({ id, message, isError, action }: Toast) => (
     <div key={id} className={`toast${isError ? ' toast-error' : ''}`} data-testid="toast">
       {isError ? <AlertIcon className="toast-icon" /> : <CheckIcon className="toast-icon" />}
@@ -23,7 +26,7 @@ export function Toasts({ toasts, onDismiss }: ToastsProps) {
           {action.label}
         </button>
       )}
-      <button className="toast-close" type="button" aria-label="Close" onClick={() => onDismiss(id)}>
+      <button className="toast-close" type="button" aria-label={t.common.close} onClick={() => onDismiss(id)}>
         <CloseIcon />
       </button>
     </div>
@@ -31,10 +34,10 @@ export function Toasts({ toasts, onDismiss }: ToastsProps) {
 
   return (
     <div className="toasts">
-      <div className="toast-region" role="status" aria-label="Notifications">
+      <div className="toast-region" role="status" aria-label={t.toasts.notifications}>
         {toasts.filter((toast) => !toast.isError).map(renderToast)}
       </div>
-      <div className="toast-region" role="alert" aria-label="Errors">
+      <div className="toast-region" role="alert" aria-label={t.toasts.errors}>
         {toasts.filter((toast) => toast.isError).map(renderToast)}
       </div>
     </div>

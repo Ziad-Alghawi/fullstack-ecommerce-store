@@ -12,12 +12,14 @@ import { Toasts } from './components/Toasts';
 import { ActionFailureContext } from './hooks/useAction';
 import { ToastContext, useToasts } from './hooks/useToast';
 import { AuthContext, useAuthUser, useIsAdmin } from './hooks/useAuth';
+import { I18nContext, useI18n, useLanguage } from './hooks/useI18n';
 import { isAuthEnabled, logOut } from './utils/supabase';
-import type { CartItem, CartStatus } from './types/store';
+import type { ApiError, CartItem, CartStatus } from './types/store';
 import './App.css';
 
 function PageLoadError() {
-  return <ErrorMessage detail="Check your connection and try again." onButtonClick={() => window.location.reload()} />;
+  const { t } = useI18n();
+  return <ErrorMessage detail={t.app.pageLoadFailed} onButtonClick={() => window.location.reload()} />;
 }
 
 // Only people who open the page download it. If that fails, for example offline
@@ -40,10 +42,10 @@ const ProductPage = lazyPage(() => import('./pages/product/ProductPage').then((m
 
 // The API answers a request it won't accept (4xx) with the reason. Repeating it can't help.
 // It also explains a 502 when Stripe failed, unlike the host's 502 while the server wakes up
-function getRejectionReason(error: unknown) {
-  if (axios.isAxiosError<{ error?: string }>(error) && error.response
+function getRejection(error: unknown) {
+  if (axios.isAxiosError<ApiError>(error) && error.response
     && (error.response.status < 500 || error.response.status === 502)) {
-    return error.response.data?.error ?? null;
+    return error.response.data;
   }
   return null;
 }
@@ -57,6 +59,8 @@ function App() {
   const location = useLocation();
   const currentPath = useRef(location.pathname);
   const { toasts, showToast, dismissToast } = useToasts();
+  const i18n = useLanguage();
+  const { t, apiError } = i18n;
   const user = useAuthUser();
   const isAdmin = useIsAdmin(user?.id);
   // Whose cart and orders are shown. Pages load them again when it changes
@@ -108,17 +112,17 @@ function App() {
       if (error.config?.method !== 'get') {
         // Cleared here and set again by useAction, if that's where the request came from
         failedAction.current = null;
-        const reason = getRejectionReason(error);
-        showToast(reason ?? "Your change wasn't saved. The demo server may be waking up, so please try again.", {
+        const reason = apiError(getRejection(error));
+        showToast(reason ?? t.app.changeNotSaved, {
           isError: true,
-          action: reason ? undefined : { label: 'Try again', onClick: retryFailedAction }
+          action: reason ? undefined : { label: t.common.tryAgain, onClick: retryFailedAction }
         });
       }
       return Promise.reject(error);
     });
 
     return () => axios.interceptors.response.eject(interceptor);
-  }, [showToast]);
+  }, [showToast, t, apiError]);
 
   const reportActionFailure = (error: unknown, retry: () => Promise<void>) => {
     // Only repeat a change that wasn't saved. If it saved and only reloading
@@ -129,7 +133,7 @@ function App() {
   };
 
   return (
-    <>
+    <I18nContext value={i18n}>
       <div className="app-content">
         <AuthContext value={isAuthEnabled ? { user: user ?? null, isAdmin, logOut } : null}>
           <ToastContext value={showToast}>
@@ -164,14 +168,14 @@ function App() {
 
       <footer className="site-footer" data-testid="site-footer">
         <div className="site-footer-content">
-          <span>Demo store, data resets regularly. No real orders or payments.</span>
+          <span>{t.app.footerNote}</span>
           <a className="site-footer-link" href="https://github.com/Ziad-Alghawi/react-ecommerce"
             target="_blank" rel="noreferrer">
-            View the code on GitHub
+            {t.app.footerLink}
           </a>
         </div>
       </footer>
-    </>
+    </I18nContext>
   );
 }
 

@@ -3,6 +3,7 @@ import { asyncHandler } from '../middleware/asyncHandler.js';
 import { normalizeCouponCode } from '../middleware/coupon.js';
 import { Coupon } from '../models/Coupon.js';
 import { rejectInvalidId } from '../utils/isUuid.js';
+import { refusal } from '../utils/refusal.js';
 
 const router = express.Router();
 
@@ -40,6 +41,10 @@ async function isCodeTaken(code, exceptId = null) {
   return Boolean(coupon) && coupon.id !== exceptId;
 }
 
+function codeTaken(code) {
+  return refusal('couponTaken', `There's already a coupon with the code ${code}`, { code });
+}
+
 router.get('/', asyncHandler(async (req, res) => {
   res.json(await Coupon.findAll());
 }));
@@ -50,7 +55,7 @@ router.post('/', asyncHandler(async (req, res) => {
     return res.status(400).json({ error });
   }
   if (await isCodeTaken(fields.code)) {
-    return res.status(409).json({ error: `There's already a coupon with the code ${fields.code}` });
+    return res.status(409).json(codeTaken(fields.code));
   }
 
   res.status(201).json(await Coupon.create(fields));
@@ -67,7 +72,7 @@ router.put('/:couponId', asyncHandler(async (req, res) => {
     return res.status(400).json({ error });
   }
   if (await isCodeTaken(fields.code, coupon.id)) {
-    return res.status(409).json({ error: `There's already a coupon with the code ${fields.code}` });
+    return res.status(409).json(codeTaken(fields.code));
   }
 
   res.json(await coupon.update(fields));

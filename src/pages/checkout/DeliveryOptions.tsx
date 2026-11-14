@@ -1,6 +1,5 @@
 import axios from 'axios';
-import { formatMoney } from '../../utils/money';
-import { formatDeliveryDate } from '../../utils/date';
+import { useI18n } from '../../hooks/useI18n';
 import type { CartItem, DeliveryOption, LoadCart } from '../../types/store';
 
 interface DeliveryOptionsProps {
@@ -10,16 +9,18 @@ interface DeliveryOptionsProps {
 }
 
 export function DeliveryOptions({ cartItem, deliveryOptions, loadCart }: DeliveryOptionsProps) {
+  const { t, formatMoney, formatDeliveryDate } = useI18n();
+
   return (
     <fieldset className="delivery-options">
       <legend className="delivery-options-title">
-        Choose a delivery option:
+        {t.checkout.chooseDelivery}
       </legend>
 
       {deliveryOptions.map((deliveryOption) => {
         const priceString = deliveryOption.priceCents > 0
-          ? `${formatMoney(deliveryOption.priceCents)} - Shipping`
-          : 'FREE Shipping';
+          ? t.checkout.shipping(formatMoney(deliveryOption.priceCents))
+          : t.checkout.freeShipping;
 
         const updateDeliveryOption = async () => {
           await axios.put(`/api/cart-items/${cartItem.productId}`, {

@@ -1,6 +1,7 @@
 import { Order } from '../models/Order.js';
 import { giveBackStock } from './stock.js';
 import { refundCardOrder, stripe } from './stripe.js';
+import { refusal } from './refusal.js';
 
 // Where an order can go from each status. Delivered and cancelled orders stay as they are
 const NEXT_STATUSES = {
@@ -14,11 +15,11 @@ const NEXT_STATUSES = {
 function getStatusChangeRefusal(order, status) {
   if (!NEXT_STATUSES[order.status].includes(status)) {
     return NEXT_STATUSES[order.status].length === 0
-      ? `This order is already ${order.status}.`
-      : `A ${order.status} order can't be marked ${status}.`;
+      ? refusal('orderFinal', `This order is already ${order.status}.`, { status: order.status })
+      : refusal('statusNotAllowed', `A ${order.status} order can't be marked ${status}.`, { status: order.status, nextStatus: status });
   }
   if (status === 'cancelled' && order.paymentMethod === 'card' && !stripe) {
-    return "Card payments can't be refunded right now, so this order can't be cancelled.";
+    return refusal('refundUnavailable', "Card payments can't be refunded right now, so this order can't be cancelled.");
   }
   return null;
 }
@@ -32,9 +33,9 @@ export function getNextStatuses(order) {
 // and changes it, so two requests at once can't both cancel the order and give its stock back twice.
 // A card order is only cancelled once its payment is refunded
 export async function changeStatus(order, status) {
-  const refusal = getStatusChangeRefusal(order, status);
-  if (refusal) {
-    return { status: 409, error: refusal };
+  const statusRefusal = getStatusChangeRefusal(order, status);
+  if (statusRefusal) {
+    return { status: 409, ...statusRefusal };
   }
   const isRefund = status === 'cancelled' && order.paymentMethod === 'card';
   if (isRefund) {
@@ -49,7 +50,7 @@ export async function changeStatus(order, status) {
     if (isRefund && order.status !== 'cancelled') {
       console.error(`Order ${order.id} was refunded, but it was marked ${order.status} meanwhile.`);
     }
-    return { status: 409, error: 'This order was changed meanwhile. Reload the page to see it.' };
+    return { status: 409, ...refusal('orderChanged', 'This order was changed meanwhile. Reload the page to see it.') };
   }
   if (status === 'cancelled') {
     await giveBackStock(order.products);

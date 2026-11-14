@@ -1,4 +1,4 @@
-import { formatDeliveryDate } from '../../utils/date';
+import { useI18n } from '../../hooks/useI18n';
 import type { CartItem, DeliveryOption } from '../../types/store';
 
 interface DeliveryDateProps {
@@ -7,6 +7,7 @@ interface DeliveryDateProps {
 }
 
 export function DeliveryDate({ cartItem, deliveryOptions }: DeliveryDateProps) {
+  const { t, formatDeliveryDate } = useI18n();
   const selectedDeliveryOption = deliveryOptions.find((deliveryOption) => {
     return deliveryOption.id === cartItem.deliveryOptionId;
   });
@@ -17,7 +18,7 @@ export function DeliveryDate({ cartItem, deliveryOptions }: DeliveryDateProps) {
 
   return (
     <h2 className="delivery-date">
-      Delivery date: {formatDeliveryDate(selectedDeliveryOption.estimatedDeliveryTimeMs)}
+      {t.checkout.deliveryDate(formatDeliveryDate(selectedDeliveryOption.estimatedDeliveryTimeMs))}
     </h2>
   );
 }

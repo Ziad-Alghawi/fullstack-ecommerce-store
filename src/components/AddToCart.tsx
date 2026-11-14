@@ -2,6 +2,7 @@ import { useState, type ChangeEvent } from 'react';
 import { ButtonSpinner } from './PageStatus';
 import { useAction } from '../hooks/useAction';
 import { useAddToCart } from '../hooks/useAddToCart';
+import { useI18n } from '../hooks/useI18n';
 import { describeStock, LOW_STOCK } from '../utils/stock';
 import type { LoadCart, Product } from '../types/store';
 import './AddToCart.css';
@@ -16,6 +17,7 @@ interface AddToCartProps {
 
 export function AddToCart({ product, loadCart }: AddToCartProps) {
   const [quantity, setQuantity] = useState(1);
+  const { t } = useI18n();
   const isOutOfStock = product.stock === 0;
   const quantityChoices = Array.from({ length: Math.min(MAX_QUANTITY, product.stock) || 1 }, (_, index) => index + 1);
 
@@ -30,13 +32,13 @@ export function AddToCart({ product, loadCart }: AddToCartProps) {
     <>
       {product.stock <= LOW_STOCK && (
         <div className={`stock-note${isOutOfStock ? ' stock-note-out' : ''}`} data-testid="stock-note">
-          {describeStock(product.stock)}
+          {describeStock(product.stock, t)}
         </div>
       )}
 
       <div className="product-actions">
         <select value={quantity} onChange={selectQuantity} disabled={isOutOfStock}
-          aria-label={`Quantity of ${product.name}`}
+          aria-label={t.addToCart.quantityLabel(product.name)}
           data-testid="quantity-select-selector">
           {quantityChoices.map((choice) => (
             <option key={choice} value={choice}>{choice}</option>
@@ -49,7 +51,7 @@ export function AddToCart({ product, loadCart }: AddToCartProps) {
           aria-busy={isAdding}
           onClick={addToCart}>
           {isAdding && <ButtonSpinner />}
-          Add to Cart
+          {t.common.addToCart}
         </button>
       </div>
     </>

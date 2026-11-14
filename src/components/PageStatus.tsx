@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useI18n } from '../hooks/useI18n';
 import './PageStatus.css';
 
 // How long to wait before explaining why loading is taking a while
@@ -6,6 +7,7 @@ const SLOW_LOADING_MS = 4000;
 
 export function LoadingMessage() {
   const [isSlow, setIsSlow] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsSlow(true), SLOW_LOADING_MS);
@@ -15,10 +17,10 @@ export function LoadingMessage() {
   return (
     <div className="page-status page-status-loading" role="status" data-testid="loading-message">
       <div className="page-status-spinner"></div>
-      <div>Loading...</div>
+      <div>{t.pageStatus.loading}</div>
       {isSlow && (
         <div className="page-status-detail" data-testid="slow-loading-message">
-          The demo server is waking up. This can take up to a minute.
+          {t.pageStatus.slow}
         </div>
       )}
     </div>
@@ -37,19 +39,16 @@ interface ErrorMessageProps {
   onButtonClick: () => void;
 }
 
-export function ErrorMessage({
-  title = "We couldn't load this page",
-  detail = 'The demo server may be waking up. Please try again in a moment.',
-  buttonText = 'Try again',
-  onButtonClick
-}: ErrorMessageProps) {
+export function ErrorMessage({ title, detail, buttonText, onButtonClick }: ErrorMessageProps) {
+  const { t } = useI18n();
+
   return (
     <div className="page-status" role="alert" data-testid="error-message">
-      <div>{title}</div>
-      <div className="page-status-detail">{detail}</div>
+      <div>{title ?? t.pageStatus.errorTitle}</div>
+      <div className="page-status-detail">{detail ?? t.pageStatus.errorDetail}</div>
       <button className="page-status-button button-primary" onClick={onButtonClick}
         data-testid="error-message-button">
-        {buttonText}
+        {buttonText ?? t.common.tryAgain}
       </button>
     </div>
   );

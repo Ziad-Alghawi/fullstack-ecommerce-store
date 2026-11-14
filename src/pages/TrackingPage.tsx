@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { Header } from '../components/Header';
 import { PageTitle } from '../components/PageTitle';
 import { ErrorMessage, LoadingMessage } from '../components/PageStatus';
-import { describeDelivery, ORDER_STATUS_LABELS } from '../utils/orderStatus';
+import { useI18n } from '../hooks/useI18n';
+import { describeDelivery } from '../utils/orderStatus';
 import type { CartItem, Order, OrderProduct, OrderStatus } from '../types/store';
 import './TrackingPage.css';
 
@@ -22,15 +23,17 @@ const PROGRESS_STEPS: { status: OrderStatus; percent: number }[] = [
 
 function PackageTracking({ order, orderProduct }: PackageTrackingProps) {
   const currentStep = PROGRESS_STEPS.find((step) => step.status === order.status);
+  const i18n = useI18n();
+  const { t } = i18n;
 
   return (
     <div className="order-tracking card">
       <Link className="back-to-orders-link link-primary" to="/orders">
-        View all orders
+        {t.common.viewAllOrders}
       </Link>
 
       <h1 className="delivery-date">
-        {describeDelivery(order, orderProduct.estimatedDeliveryTimeMs)}
+        {describeDelivery(order, orderProduct.estimatedDeliveryTimeMs, i18n)}
       </h1>
 
       <div className="tracking-product">
@@ -38,7 +41,7 @@ function PackageTracking({ order, orderProduct }: PackageTrackingProps) {
           alt={orderProduct.product.name} width="480" height="480" />
         <div>
           <div className="product-name">{orderProduct.product.name}</div>
-          <div className="product-quantity">Quantity: {orderProduct.quantity}</div>
+          <div className="product-quantity">{t.common.quantity} {orderProduct.quantity}</div>
         </div>
       </div>
 
@@ -48,14 +51,14 @@ function PackageTracking({ order, orderProduct }: PackageTrackingProps) {
             {PROGRESS_STEPS.map(({ status }) => (
               <li key={status} className={status === order.status ? 'current-status' : undefined}
                 aria-current={status === order.status ? 'step' : undefined}>
-                {ORDER_STATUS_LABELS[status]}
+                {t.orderStatus[status]}
               </li>
             ))}
           </ol>
 
           <div className="progress-bar-container" role="progressbar"
-            aria-label="Delivery progress" aria-valuenow={currentStep.percent}
-            aria-valuetext={ORDER_STATUS_LABELS[order.status]}
+            aria-label={t.tracking.progress} aria-valuenow={currentStep.percent}
+            aria-valuetext={t.orderStatus[order.status]}
             aria-valuemin={0} aria-valuemax={100}>
             <div className="progress-bar"
               style={{ width: `${currentStep.percent}%` }}></div>
@@ -63,8 +66,8 @@ function PackageTracking({ order, orderProduct }: PackageTrackingProps) {
         </>
       ) : (
         <p className="tracking-cancelled" data-testid="tracking-cancelled">
-          This order was cancelled before it shipped, so this package won't be delivered.
-          {order.paymentMethod === 'card' && ' Its payment was refunded.'}
+          {t.tracking.cancelled}
+          {order.paymentMethod === 'card' && t.tracking.refunded}
         </p>
       )}
     </div>
@@ -82,6 +85,7 @@ export function TrackingPage({ cart, onRetry }: TrackingPageProps) {
   const [order, setOrder] = useState<Order | null>(null);
   const [isNotFound, setIsNotFound] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -116,15 +120,15 @@ export function TrackingPage({ cart, onRetry }: TrackingPageProps) {
   } else if (isNotFound || order) {
     pageContent = (
       <div className="page-status" data-testid="package-not-found">
-        <div>We couldn't find this package</div>
-        <Link className="page-status-link link-primary" to="/orders">View all orders</Link>
+        <div>{t.tracking.notFound}</div>
+        <Link className="page-status-link link-primary" to="/orders">{t.common.viewAllOrders}</Link>
       </div>
     );
   }
 
   return (
     <>
-      <PageTitle title="Track your package" />
+      <PageTitle title={t.tracking.title} />
 
       <Header cart={cart} />
 

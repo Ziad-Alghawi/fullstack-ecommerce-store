@@ -6,6 +6,7 @@ import { PageTitle } from '../../components/PageTitle';
 import { ErrorMessage, LoadingMessage } from '../../components/PageStatus';
 import { ProductsGrid } from './ProductsGrid';
 import { ProductFilters } from './ProductFilters';
+import { useI18n } from '../../hooks/useI18n';
 import { getProductsUrl, readProductFilters } from '../../utils/productFilters';
 import type { CartItem, LoadCart, Product } from '../../types/store';
 import './HomePage.css';
@@ -23,6 +24,7 @@ export function HomePage({ cart, loadCart, onRetry }: HomePageProps) {
   const [hasLoaded, setHasLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [searchParams] = useSearchParams();
+  const { t, categoryName } = useI18n();
   const filters = readProductFilters(searchParams);
   const { search, category } = filters;
   const productsUrl = getProductsUrl(filters);
@@ -63,7 +65,7 @@ export function HomePage({ cart, loadCart, onRetry }: HomePageProps) {
     };
   }, [productsUrl]);
 
-  const title = search ? `Results for "${search}"` : category || undefined;
+  const title = search ? t.home.resultsFor(search) : category ? categoryName(category) : undefined;
   let pageContent = <ProductsGrid products={products} loadCart={loadCart} />;
 
   if (hasError) {
@@ -74,7 +76,7 @@ export function HomePage({ cart, loadCart, onRetry }: HomePageProps) {
     const hasFilters = Boolean(category || filters.minPrice || filters.maxPrice);
     pageContent = (
       <div className="page-status" data-testid="no-products-message">
-        {search ? `No products found for "${search}"` : hasFilters ? 'No products match these filters' : 'No products available'}
+        {search ? t.home.noResults(search) : hasFilters ? t.home.noMatch : t.home.noProducts}
       </div>
     );
   }
@@ -88,11 +90,11 @@ export function HomePage({ cart, loadCart, onRetry }: HomePageProps) {
       <main className="home-page page">
         <div className="home-intro">
           <h1 className="page-title">
-            {title ?? 'Everyday essentials, delivered'}
+            {title ?? t.home.title}
           </h1>
           {!title && (
             <p className="home-intro-text">
-              Home, kitchen and wardrobe basics, with a free delivery option on every order.
+              {t.home.intro}
             </p>
           )}
         </div>

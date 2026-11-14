@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 import { ButtonSpinner } from '../../components/PageStatus';
 import { useAction } from '../../hooks/useAction';
 import { useToast } from '../../hooks/useToast';
+import { useI18n } from '../../hooks/useI18n';
 import type { Product } from '../../types/store';
 
 // "images/products/2-slot-toaster-white.jpg" becomes "2 slot toaster white"
@@ -27,6 +28,8 @@ export function ProductForm({ product, images, categories, onSaved, onCancel }: 
   const [category, setCategory] = useState(product?.category ?? '');
   const [stock, setStock] = useState(product ? String(product.stock) : '');
   const showToast = useToast();
+  const { t, categoryName } = useI18n();
+  const text = t.admin.products;
 
   const [save, isSaving] = useAction(async () => {
     const fields = {
@@ -43,7 +46,7 @@ export function ProductForm({ product, images, categories, onSaved, onCancel }: 
       await axios.post('/api/admin/products', fields);
     }
     await onSaved();
-    showToast(product ? `${name.trim()} saved` : `${name.trim()} added to the store`);
+    showToast(product ? text.saved(name.trim()) : text.added(name.trim()));
   });
 
   const submitForm = (event: FormEvent<HTMLFormElement>) => {
@@ -51,7 +54,7 @@ export function ProductForm({ product, images, categories, onSaved, onCancel }: 
     save();
   };
 
-  const title = product ? 'Edit product' : 'Add a product';
+  const title = product ? text.editTitle : text.addTitle;
 
   return (
     <form className="admin-form card" onSubmit={submitForm} aria-label={title} data-testid="admin-product-form">
@@ -59,7 +62,7 @@ export function ProductForm({ product, images, categories, onSaved, onCancel }: 
 
       <div className="admin-form-row">
         <label className="form-field">
-          Name
+          {text.name}
           {/* Opening the form scrolls to it */}
           <input type="text" required maxLength={100} autoFocus value={name}
             onChange={(event) => setName(event.target.value)}
@@ -67,14 +70,14 @@ export function ProductForm({ product, images, categories, onSaved, onCancel }: 
         </label>
 
         <label className="form-field">
-          Price ($)
+          {text.priceInDollars}
           <input type="number" required min="0.01" max="10000" step="0.01" inputMode="decimal" value={price}
             onChange={(event) => setPrice(event.target.value)}
             data-testid="admin-price-input" />
         </label>
 
         <label className="form-field">
-          Stock
+          {text.stock}
           <input type="number" required min="0" max="100000" step="1" inputMode="numeric" value={stock}
             onChange={(event) => setStock(event.target.value)}
             data-testid="admin-stock-input" />
@@ -82,28 +85,28 @@ export function ProductForm({ product, images, categories, onSaved, onCancel }: 
       </div>
 
       <label className="form-field">
-        Category
+        {text.category}
         <select required value={category} onChange={(event) => setCategory(event.target.value)}
           data-testid="admin-category-select">
-          <option value="" disabled>Choose a category</option>
+          <option value="" disabled>{text.chooseCategory}</option>
           {categories.map((option) => (
-            <option key={option} value={option}>{option}</option>
+            <option key={option} value={option}>{categoryName(option)}</option>
           ))}
         </select>
       </label>
 
       <label className="form-field">
-        Keywords
+        {text.keywords}
         <input type="text" value={keywords} aria-describedby="admin-keywords-hint"
           onChange={(event) => setKeywords(event.target.value)}
           data-testid="admin-keywords-input" />
         <span id="admin-keywords-hint" className="admin-hint">
-          Separated by commas, up to 10. Search finds products by these words.
+          {text.keywordsHint}
         </span>
       </label>
 
       <fieldset className="admin-image-field">
-        <legend>Image</legend>
+        <legend>{text.image}</legend>
         <div className="admin-image-picker">
           {images.map((option) => (
             <label key={option} className="admin-image-option">
@@ -119,10 +122,10 @@ export function ProductForm({ product, images, categories, onSaved, onCancel }: 
         <button className="button-primary" type="submit" disabled={isSaving}
           data-testid="admin-save-button">
           {isSaving && <ButtonSpinner />}
-          {product ? 'Save changes' : 'Add product'}
+          {product ? t.common.saveChanges : text.add}
         </button>
         <button className="button-secondary" type="button" onClick={onCancel}>
-          Cancel
+          {t.common.cancel}
         </button>
       </div>
     </form>

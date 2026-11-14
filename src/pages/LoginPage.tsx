@@ -5,6 +5,7 @@ import { PageTitle } from '../components/PageTitle';
 import { ButtonSpinner } from '../components/PageStatus';
 import { AuthContext } from '../hooks/useAuth';
 import { useAuthRequest } from '../hooks/useAuthRequest';
+import { useI18n } from '../hooks/useI18n';
 import type { CartItem } from '../types/store';
 import './LoginPage.css';
 
@@ -18,6 +19,7 @@ export function LoginPage({ cart }: LoginPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isAwaitingConfirmation, setIsAwaitingConfirmation] = useState(false);
+  const { t } = useI18n();
 
   const { submitForm, isPending, error, clearError } = useAuthRequest(async (supabase) => {
     const credentials = { email, password };
@@ -41,7 +43,7 @@ export function LoginPage({ cart }: LoginPageProps) {
     return <Navigate to="/" replace />;
   }
 
-  const title = isSignUp ? 'Create your account' : 'Log in';
+  const title = isSignUp ? t.login.signUpTitle : t.common.logIn;
 
   return (
     <>
@@ -52,27 +54,27 @@ export function LoginPage({ cart }: LoginPageProps) {
       <main className="login-page page">
         {isAwaitingConfirmation ? (
           <div className="login-card card" role="status" data-testid="login-confirmation">
-            <h1 className="page-title">Check your email</h1>
+            <h1 className="page-title">{t.login.checkEmail}</h1>
             <p className="login-text">
-              We sent a link to <strong>{email}</strong>. Open it to confirm your account and log in.
+              {t.login.confirmationStart}<strong>{email}</strong>{t.login.confirmationRest}
             </p>
           </div>
         ) : (
           <form className="login-card card" onSubmit={submitForm}>
             <h1 className="page-title">{title}</h1>
             <p className="login-text">
-              Your cart and orders are saved to your account, so they follow you to any device.
+              {t.login.intro}
             </p>
 
             <label className="form-field">
-              Email
+              {t.common.email}
               <input type="email" required autoComplete="email" value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 data-testid="login-email-input" />
             </label>
 
             <label className="form-field">
-              Password
+              {t.common.password}
               <input type="password" required minLength={6}
                 autoComplete={isSignUp ? 'new-password' : 'current-password'} value={password}
                 onChange={(event) => setPassword(event.target.value)}
@@ -81,7 +83,7 @@ export function LoginPage({ cart }: LoginPageProps) {
 
             {!isSignUp && (
               <Link className="login-forgot link-primary" to="/forgot-password" data-testid="login-forgot-link">
-                Forgot password?
+                {t.login.forgot}
               </Link>
             )}
 
@@ -90,14 +92,14 @@ export function LoginPage({ cart }: LoginPageProps) {
             <button className="login-submit button-primary" type="submit" disabled={isPending}
               data-testid="login-submit-button">
               {isPending && <ButtonSpinner />}
-              {isSignUp ? 'Sign up' : 'Log in'}
+              {isSignUp ? t.login.signUp : t.common.logIn}
             </button>
 
             <div className="login-switch">
-              {isSignUp ? 'Already have an account?' : 'New here?'}{' '}
+              {isSignUp ? t.login.haveAccount : t.login.newHere}{' '}
               <button className="link-primary link-button" type="button" onClick={switchMode}
                 data-testid="login-switch-button">
-                {isSignUp ? 'Log in' : 'Create an account'}
+                {isSignUp ? t.common.logIn : t.login.createAccount}
               </button>
             </div>
           </form>

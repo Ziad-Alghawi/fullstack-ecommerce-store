@@ -10,6 +10,7 @@ import { corsOrigins } from '../utils/corsOrigins.js';
 import { APP_TAG, stripe } from '../utils/stripe.js';
 import { takePaidStock } from '../utils/stock.js';
 import { readCoupon } from '../middleware/coupon.js';
+import { sendRefusal } from '../utils/refusal.js';
 import { checkoutLimit } from '../middleware/rateLimits.js';
 
 const router = express.Router();
@@ -89,9 +90,9 @@ router.post('/checkout-sessions', checkoutLimit, requireVisitor, readCoupon, asy
   }
 
   const cartItems = await CartItem.findAll({ where: { visitorId: req.visitorId } });
-  const refusal = await getOrderRefusal(req.visitorId, cartItems);
-  if (refusal) {
-    return res.status(refusal.status).json({ error: refusal.error });
+  const orderRefusal = await getOrderRefusal(req.visitorId, cartItems);
+  if (orderRefusal) {
+    return sendRefusal(res, orderRefusal);
   }
 
   // Each line comes from the database, and together they add up to the payment summary's total

@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { ErrorMessage, LoadingMessage } from '../../components/PageStatus';
+import { useI18n } from '../../hooks/useI18n';
 import type { AdminLoadStatus } from './adminLoadStatus';
 
 interface AdminPageStatusProps {
@@ -10,19 +11,21 @@ interface AdminPageStatusProps {
 
 // What an admin page shows until its data has loaded
 export function AdminPageStatus({ isLoggedIn, status, onRetry }: AdminPageStatusProps) {
+  const { t } = useI18n();
+
   if (!isLoggedIn) {
     return (
       <div className="page-status" data-testid="admin-login-message">
-        <div>Log in with an admin account to manage the store</div>
-        <Link className="page-status-link link-primary" to="/login">Log in</Link>
+        <div>{t.admin.logInPrompt}</div>
+        <Link className="page-status-link link-primary" to="/login">{t.common.logIn}</Link>
       </div>
     );
   }
   if (status === 'forbidden') {
     return (
       <div className="page-status" data-testid="admin-forbidden-message">
-        <div>This page is only for admins</div>
-        <Link className="page-status-link link-primary" to="/">Browse products</Link>
+        <div>{t.admin.forbidden}</div>
+        <Link className="page-status-link link-primary" to="/">{t.common.browseProducts}</Link>
       </div>
     );
   }

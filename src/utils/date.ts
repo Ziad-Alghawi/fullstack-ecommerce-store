@@ -1,10 +1,15 @@
-import dayjs from 'dayjs';
-
-export function formatDeliveryDate(timeMs: number) {
-  return dayjs(timeMs).format('dddd, MMMM D');
+function formatWith(options: Intl.DateTimeFormatOptions) {
+  return (date: number | string, locale: string) => new Intl.DateTimeFormat(locale, options).format(new Date(date));
 }
 
-export function formatDate(date: string) {
-  return dayjs(date).format('MMMM D, YYYY');
-}
+// Sunday, May 18
+export const formatDeliveryDate = formatWith({ weekday: 'long', month: 'long', day: 'numeric' });
 
+// May 18, 2025
+export const formatDate = formatWith({ dateStyle: 'long' });
+
+// May 18
+export const formatDayAndMonth = formatWith({ month: 'long', day: 'numeric' });
+
+// May 18, 2025, 9:30 AM
+export const formatDateTime = formatWith({ dateStyle: 'medium', timeStyle: 'short' });

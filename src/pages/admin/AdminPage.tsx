@@ -3,6 +3,7 @@ import { useContext, useEffect, useState } from 'react';
 import { Header } from '../../components/Header';
 import { PageTitle } from '../../components/PageTitle';
 import { AuthContext } from '../../hooks/useAuth';
+import { useI18n } from '../../hooks/useI18n';
 import { AdminNav } from './AdminNav';
 import { AdminPageStatus } from './AdminPageStatus';
 import { getLoadFailure, type AdminLoadStatus } from './adminLoadStatus';
@@ -27,6 +28,8 @@ export function AdminPage({ cart, onRetry }: AdminPageProps) {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [status, setStatus] = useState<AdminLoadStatus>('loading');
   const [editing, setEditing] = useState<Product | 'new' | null>(null);
+  const { t } = useI18n();
+  const text = t.admin.products;
 
   const loadProducts = async () => {
     const response = await axios.get<Product[]>('/api/products');
@@ -95,11 +98,11 @@ export function AdminPage({ cart, onRetry }: AdminPageProps) {
         <AdminOverview stats={stats} />
 
         <div className="admin-heading admin-section">
-          <h2 className="admin-section-title">Products</h2>
+          <h2 className="admin-section-title">{text.title}</h2>
           {!editing && (
             <button className="button-primary" type="button" onClick={() => setEditing('new')}
               data-testid="admin-add-button">
-              Add product
+              {text.add}
             </button>
           )}
         </div>
@@ -112,16 +115,16 @@ export function AdminPage({ cart, onRetry }: AdminPageProps) {
 
         <div className="admin-table-container card">
           <table className="admin-table">
-            <caption className="admin-caption">{products.length} products in the store</caption>
+            <caption className="admin-caption">{text.caption(products.length)}</caption>
             <thead>
               <tr>
-                <th scope="col"><span className="visually-hidden">Image</span></th>
-                <th scope="col">Name</th>
-                <th scope="col">Price</th>
-                <th scope="col">Stock</th>
-                <th scope="col">Category</th>
-                <th scope="col">Keywords</th>
-                <th scope="col"><span className="visually-hidden">Actions</span></th>
+                <th scope="col"><span className="visually-hidden">{text.image}</span></th>
+                <th scope="col">{text.name}</th>
+                <th scope="col">{text.price}</th>
+                <th scope="col">{text.stock}</th>
+                <th scope="col">{text.category}</th>
+                <th scope="col">{text.keywords}</th>
+                <th scope="col"><span className="visually-hidden">{text.actions}</span></th>
               </tr>
             </thead>
             <tbody>
@@ -140,7 +143,7 @@ export function AdminPage({ cart, onRetry }: AdminPageProps) {
 
   return (
     <>
-      <PageTitle title="Admin" />
+      <PageTitle title={t.admin.title} />
 
       <Header cart={cart} />
 

@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../models/index.js';
 import { Product } from '../models/Product.js';
+import { refusal } from './refusal.js';
 
 const stockColumn = sequelize.getQueryInterface().quoteIdentifier('stock');
 
@@ -49,11 +50,11 @@ export async function takePaidStock(items) {
 // Why the items can't be ordered as they are, or null when there's enough of each
 export async function getStockShortage(items) {
   for (const { productId, quantity } of items) {
-    const product = await Product.findByPk(productId, { paranoid: false });
-    if (product.stock < quantity) {
-      return product.stock === 0
-        ? `${product.name} is out of stock. Remove it from your cart to continue.`
-        : `Only ${product.stock} of ${product.name} left in stock. Lower the quantity in your cart to continue.`;
+    const { name, stock } = await Product.findByPk(productId, { paranoid: false });
+    if (stock < quantity) {
+      return stock === 0
+        ? refusal('outOfStockInOrder', `${name} is out of stock. Remove it from your cart to continue.`, { product: name })
+        : refusal('lowStockInOrder', `Only ${stock} of ${name} left in stock. Lower the quantity in your cart to continue.`, { product: name, stock });
     }
   }
   return null;

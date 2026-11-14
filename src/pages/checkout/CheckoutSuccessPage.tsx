@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router';
 import { PageTitle } from '../../components/PageTitle';
 import { CheckoutHeader } from './CheckoutHeader';
 import { ErrorMessage, LoadingMessage } from '../../components/PageStatus';
+import { useI18n } from '../../hooks/useI18n';
 import type { CartItem, LoadCart, Order } from '../../types/store';
 import './CheckoutPage.css';
 
@@ -20,6 +21,7 @@ export function CheckoutSuccessPage({ cart, loadCart, onRetry }: CheckoutSuccess
   const navigate = useNavigate();
   const [problem, setProblem] = useState<'unpaid' | 'failed' | null>(null);
   const sessionId = searchParams.get('session_id');
+  const { t } = useI18n();
 
   useEffect(() => {
     const confirmPayment = async () => {
@@ -37,25 +39,23 @@ export function CheckoutSuccessPage({ cart, loadCart, onRetry }: CheckoutSuccess
   let pageContent = <LoadingMessage />;
   if (problem === 'unpaid') {
     pageContent = (
-      <ErrorMessage title="Your payment didn't go through"
-        detail="Your cart is unchanged, so you can try again."
-        buttonText="Back to checkout" onButtonClick={() => navigate('/checkout')} />
+      <ErrorMessage title={t.checkoutSuccess.unpaidTitle} detail={t.checkoutSuccess.unpaidDetail}
+        buttonText={t.checkoutSuccess.backToCheckout} onButtonClick={() => navigate('/checkout')} />
     );
   } else if (problem === 'failed') {
     pageContent = (
-      <ErrorMessage title="We couldn't confirm your payment"
-        detail="If you paid, your order will appear in your orders shortly." onButtonClick={onRetry} />
+      <ErrorMessage title={t.checkoutSuccess.failedTitle} detail={t.checkoutSuccess.failedDetail} onButtonClick={onRetry} />
     );
   }
 
   return (
     <>
-      <PageTitle title="Confirming payment" />
+      <PageTitle title={t.checkoutSuccess.title} />
 
       <CheckoutHeader cart={cart} />
 
       <main className="checkout-page page" data-testid="checkout-success-page">
-        <h1 className="page-title">Confirming your payment</h1>
+        <h1 className="page-title">{t.checkoutSuccess.heading}</h1>
 
         {pageContent}
       </main>
