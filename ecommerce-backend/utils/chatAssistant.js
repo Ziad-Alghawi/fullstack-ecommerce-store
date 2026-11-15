@@ -7,7 +7,8 @@ export const LANGUAGE_NAMES = { en: 'English', de: 'German' };
 // Each answer may take a few rounds of tools, then it has to be said
 const MAX_TOOL_ROUNDS = 4;
 const MAX_CARDS = 4;
-const MAX_OUTPUT_TOKENS = 1024;
+// Room for the model's thinking too, which counts toward the limit
+const MAX_OUTPUT_TOKENS = 2048;
 const TIMEOUT_MS = Number(process.env.CHAT_TIMEOUT_MS) || 25_000;
 
 const formatEuros = (cents) => (cents === 0 ? 'free' : `€${(cents / 100).toFixed(2)}`);
@@ -61,7 +62,6 @@ export async function answerChat(messages, language) {
     const response = await anthropic.messages.create({
       model: CHAT_MODEL,
       max_tokens: MAX_OUTPUT_TOKENS,
-      output_config: { effort: 'low' },
       system,
       tools: chatTools,
       // In the last round the model has to answer with what it found

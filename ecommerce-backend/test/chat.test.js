@@ -152,7 +152,10 @@ test('answers from what the search tool finds in the database, and returns those
   const [first, second] = anthropicRequests.map(({ body }) => body);
   assert.equal(anthropicRequests[0].url, '/v1/messages');
   assert.equal(first.model, 'claude-haiku-5-5');
-  assert.ok(first.max_tokens <= 1024);
+  assert.ok(first.max_tokens <= 2048);
+  // The model's own default effort, so any CHAT_MODEL works
+  assert.equal(first.output_config, undefined);
+  assert.equal(first.model, 'claude-haiku-5-5');
   // Only the two read-only tools
   assert.deepEqual(first.tools.map(({ name }) => name), ['search_products', 'get_product_details']);
   assert.deepEqual(first.messages, [{ role: 'user', content: 'Do you have wool socks under 15 euros?' }]);

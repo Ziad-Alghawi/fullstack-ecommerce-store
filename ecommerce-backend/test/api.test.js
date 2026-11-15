@@ -1114,7 +1114,31 @@ test('the admin overview lists the products that are running low, fewest first',
   await deleteProduct(enough);
 });
 
-test('orders from before statuses are delivered once all their packages have arrived', { skip: Boolean(process.env.TEST_DATABASE_URL) && 'needs the SQLite file' }, async () => {
+// Turns the database back into one from before statuses: the arrived order's package has arrived, and
+// Orders has no status column. The file is rewritten on SQLite, and Postgres is asked, as production is
+async function makeDatabaseFromBeforeStatuses(order, products) {
+  const productsJson = JSON.stringify(products);
+  if (process.env.TEST_DATABASE_URL) {
+    const { default: pg } = await import('pg');
+    const client = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL });
+    await client.connect();
+    await client.query('UPDATE "Orders" SET products = $1 WHERE id = $2', [productsJson, order.id]);
+    await client.query('ALTER TABLE "Orders" DROP COLUMN status');
+    await client.end();
+    return;
+  }
+
+  const { default: initSqlJs } = await import('sql.js');
+  const SQL = await initSqlJs();
+  const databaseFile = path.join(workDir, 'database.sqlite');
+  const database = new SQL.Database(fs.readFileSync(databaseFile));
+  database.run('UPDATE Orders SET products = ? WHERE id = ?', [productsJson, order.id]);
+  database.run('ALTER TABLE Orders DROP COLUMN status');
+  fs.writeFileSync(databaseFile, database.export());
+  database.close();
+}
+
+test('orders from before statuses are delivered once all their packages have arrived', async () => {
   const [arrived, onTheWay] = [randomUUID(), randomUUID()];
   for (const visitorId of [arrived, onTheWay]) {
     await addToCart(visitorId);
@@ -1122,17 +1146,8 @@ test('orders from before statuses are delivered once all their packages have arr
   }
   const arrivedOrder = (await getOrders(arrived))[0];
 
-  // Turn the database back into one from before statuses, with one order already delivered
   await stopServer();
-  const { default: initSqlJs } = await import('sql.js');
-  const SQL = await initSqlJs();
-  const databaseFile = path.join(workDir, 'database.sqlite');
-  const database = new SQL.Database(fs.readFileSync(databaseFile));
-  const products = [{ ...arrivedOrder.products[0], estimatedDeliveryTimeMs: Date.now() - 1000 }];
-  database.run('UPDATE Orders SET products = ? WHERE id = ?', [JSON.stringify(products), arrivedOrder.id]);
-  database.run('ALTER TABLE Orders DROP COLUMN status');
-  fs.writeFileSync(databaseFile, database.export());
-  database.close();
+  await makeDatabaseFromBeforeStatuses(arrivedOrder, [{ ...arrivedOrder.products[0], estimatedDeliveryTimeMs: Date.now() - 1000 }]);
   await startServer();
 
   assert.equal((await getOrders(arrived))[0].status, 'delivered');
