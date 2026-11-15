@@ -1,6 +1,5 @@
 import { DeliveryOption } from '../models/DeliveryOption.js';
-import { Coupon } from '../models/Coupon.js';
-import { isExpired } from '../middleware/coupon.js';
+import { findFeaturedCoupon } from '../middleware/coupon.js';
 import { anthropic, CHAT_MODEL } from './anthropic.js';
 import { chatTools, runChatTool } from './chatTools.js';
 
@@ -16,8 +15,7 @@ const formatEuros = (cents) => (cents === 0 ? 'free' : `€${(cents / 100).toFix
 // The store's own facts, read from the database so they stay true when an admin changes them
 async function describeStore() {
   const deliveryOptions = await DeliveryOption.findAll();
-  const featuredCoupons = await Coupon.unscoped().findAll({ where: { active: true, featured: true }, order: [['createdAt', 'DESC']] });
-  const featured = featuredCoupons.find((coupon) => !isExpired(coupon));
+  const featured = await findFeaturedCoupon();
 
   return [
     `- Shipping: ${deliveryOptions.map(({ deliveryDays, priceCents }) => (

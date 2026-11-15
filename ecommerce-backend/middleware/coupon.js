@@ -11,6 +11,15 @@ export function isExpired(coupon) {
   return coupon.expiresAt !== null && coupon.expiresAt <= new Date();
 }
 
+// The coupon the store promotes now: the newest active featured one that hasn't expired
+export async function findFeaturedCoupon() {
+  const coupons = await Coupon.unscoped().findAll({
+    where: { active: true, featured: true },
+    order: [['createdAt', 'DESC']]
+  });
+  return coupons.find((featured) => !isExpired(featured)) ?? null;
+}
+
 // The coupon a customer can use now, or why they can't
 export async function findValidCoupon(code) {
   const normalizedCode = normalizeCouponCode(code);

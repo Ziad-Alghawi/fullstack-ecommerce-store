@@ -1,6 +1,6 @@
 # React E-Commerce Store
 
-A full-stack online store built with React, TypeScript and an Express API: product search and filters, a cart, coupons, two ways to pay, order tracking with real statuses, customer accounts with a wishlist, an admin area to run the store, English and German, and a dark mode.
+A full-stack online store built with React, TypeScript and an Express API: product search and filters, a cart, coupons, two ways to pay, order tracking with real statuses, customer accounts with a wishlist, an AI shopping assistant, an admin area to run the store, prices in euros, English and German, and a dark mode.
 
 **Live demo:** https://shop.ziadalghawi.com
 
@@ -15,6 +15,7 @@ A full-stack online store built with React, TypeScript and an Express API: produ
 - **Cancel an order** from your orders page before it ships. Its items go back in stock, and a card payment is refunded in full.
 - **Sold out products:** the Straw Wide Brim Sun Hat can't be added to the cart, and the Woven Straw Tote Bag has only 2 left.
 - **Create an account** to keep your cart, orders and wishlist on every device. What you added as a guest moves to the account when you log in.
+- **Ask the shopping assistant** (the chat button in the corner) for products under a price, or about shipping and coupons. It only answers about this store, and shows the products it found as cards you can add to the cart. It needs `ANTHROPIC_API_KEY` on the server.
 - **Switch to German** with DE in the header, or **turn on dark mode** with the moon next to it. Both are remembered, and until you choose, the store follows your browser's language and your system's theme.
 
 The admin area needs an account listed in `ADMIN_USER_IDS`, so the screenshots below show it.
@@ -46,6 +47,16 @@ The admin area needs an account listed in `ADMIN_USER_IDS`, so the screenshots b
 - Coupons with a percentage, an optional last day, and whether checkout suggests them
 - Removing any review
 
+**Shopping assistant**
+- A chat button opens an assistant that answers in the store's language, about this store only. It uses the Anthropic Messages API with tool use: it can search the products (text, category, highest price, in stock) and get one product, read-only and straight from the database, so it never invents a product or a price. Shipping, payment, cancelling and coupons come from the delivery options and coupon in the database
+- Products it finds show as the shop's own cards, with Add to Cart and a link to the product page
+- It declines anything else politely. What visitors write only reaches the model as a message, and the model has no tools beyond those two, so a prompt injection has nothing to unlock
+- Limits on cost: per visitor, per address and per day for the whole store, short messages, only the last 6 sent on, a cap on the answer's length and a timeout. Without `ANTHROPIC_API_KEY`, the button is hidden. Tests use a stand-in for the API, never the real one
+
+**Prices and domain**
+- Everything is sold in euros, kept as whole cents. One formatter writes them for the language: "€20.67" in English, "20,67 €" in German. Stripe Checkout, its coupons and refunds use euros too
+- The store has one public address, `PUBLIC_SITE_URL`, used for link previews, the canonical link, Stripe's return pages, the password-reset email and CORS. Render's own address redirects there with a 301
+
 **Payments**
 - Pay on delivery, or by card with Stripe Checkout in test mode
 - The API builds every Stripe payment from the cart in the database, so nothing the browser sends sets a price, and a coupon becomes a one-time Stripe discount
@@ -56,7 +67,7 @@ The admin area needs an account listed in `ADMIN_USER_IDS`, so the screenshots b
 - Unit, API and end-to-end tests, run by GitHub Actions on every push
 - Security headers, a content security policy, rate limits, body size limits and admin checks on every admin route
 - Keyboard and screen reader friendly: labelled controls, visible focus, focus kept in place after changes, and an automated accessibility check in the end-to-end tests
-- Lighthouse 100 for performance, accessibility, best practices and SEO on the home, product and checkout pages (local production build, mobile settings)
+- Lighthouse (mobile): 97 / 100 / 96 / 100 for performance, accessibility, best practices and SEO
 
 ## Screenshots
 
@@ -65,6 +76,8 @@ The admin area needs an account listed in `ADMIN_USER_IDS`, so the screenshots b
 | ![A product page with its photo, rating, price and reviews](docs/screenshots/product.png) | ![Checkout with delivery options, the payment summary and a coupon field](docs/screenshots/checkout.png) |
 | **Admin overview and products** | **Admin orders** |
 | ![The admin overview with order counts, revenue, low stock and top products, above the product table](docs/screenshots/admin-products.png) | ![The admin orders table with filters, statuses and buttons to ship or cancel](docs/screenshots/admin-orders.png) |
+| **Shopping assistant** | **Assistant on a phone, in dark mode** |
+| ![The shopping assistant open over the shop, answering with a product card and an Add to Cart button](docs/screenshots/chat.png) | ![The shopping assistant on a 375 px wide phone in dark mode](docs/screenshots/chat-mobile.png) |
 | **Wishlist in dark mode** | **Product page in German** |
 | ![A wishlist with four saved products, shown in dark mode](docs/screenshots/wishlist-dark.png) | ![A product page in German with its reviews and four suggested products from the same category](docs/screenshots/product-german.png) |
 
@@ -201,7 +214,7 @@ Supabase's built-in email service only sends to the project's team and a few ema
 
 ### Card Payment
 
-In the Stripe Dashboard in test mode, copy the secret key from **Developers > API keys** into `STRIPE_SECRET_KEY`. For the deployed store, add a webhook endpoint at `https://<your-store>/api/stripe/webhook` for the event `checkout.session.completed` and copy its signing secret into `STRIPE_WEBHOOK_SECRET`. Locally the webhook is optional, as the page Stripe returns to confirms the payment too. Only a test key turns card payment on.
+In the Stripe Dashboard in test mode, copy the secret key from **Developers > API keys** into `STRIPE_SECRET_KEY`. For the deployed store, add a webhook endpoint at `<PUBLIC_SITE_URL>/api/stripe/webhook` for the event `checkout.session.completed` and copy its signing secret into `STRIPE_WEBHOOK_SECRET`. Locally the webhook is optional, as the page Stripe returns to confirms the payment too. Only a test key turns card payment on.
 
 The Stripe sandbox is shared with another app, so every session is tagged with `app: "react-ecommerce"` and the webhook ignores events without the tag.
 
@@ -218,7 +231,7 @@ The Stripe sandbox is shared with another app, so every session is tagged with `
 │   ├── models/           # Sequelize models
 │   ├── routes/           # API routes
 │   ├── test/             # API tests
-│   ├── utils/            # Stock, order status, demo restock and other helpers
+│   ├── utils/            # Stock, order status, demo restock, the shopping assistant and other helpers
 │   ├── documentation.md  # API reference
 │   └── server.js         # Server entry point
 ├── public/               # Favicon, link preview image and product photos

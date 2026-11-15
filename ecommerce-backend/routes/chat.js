@@ -8,7 +8,7 @@ import { refusal, sendRefusal } from '../utils/refusal.js';
 
 const router = express.Router();
 
-export const MAX_MESSAGE_LENGTH = 500;
+const MAX_MESSAGE_LENGTH = 500;
 // Only the last few messages are sent on, which is all a shopping question needs
 const MAX_HISTORY = 6;
 // Messages the assistant answers in a day, for the whole store, so a flood can't run up the bill

@@ -161,6 +161,7 @@ test('answers from what the search tool finds in the database, and returns those
   // The store's facts come from the database
   assert.match(first.system, /1 day for €9.99/);
   assert.match(first.system, /7 days for free/);
+  assert.match(first.system, /WELCOME10 takes 10% off/);
 
   const toolResult = second.messages.at(-1).content[0];
   assert.equal(toolResult.type, 'tool_result');
