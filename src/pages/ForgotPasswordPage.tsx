@@ -5,6 +5,7 @@ import { PageTitle } from '../components/PageTitle';
 import { ButtonSpinner } from '../components/PageStatus';
 import { useAuthRequest } from '../hooks/useAuthRequest';
 import { useI18n } from '../hooks/useI18n';
+import { getSiteUrl } from '../utils/siteUrl';
 import type { CartItem } from '../types/store';
 import './LoginPage.css';
 
@@ -20,7 +21,7 @@ export function ForgotPasswordPage({ cart }: ForgotPasswordPageProps) {
   const { submitForm, isPending, error } = useAuthRequest(async (supabase) => {
     // The link in the email logs the user in on this site, to the page where they choose a new password
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`
+      redirectTo: `${getSiteUrl()}/reset-password`
     });
     setIsSent(!error);
     return { error };

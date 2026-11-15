@@ -12,5 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Load the products
+        env:
+          # The store's public address, set under Settings > Secrets and variables > Actions > Variables
+          SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
         # The free Render service sleeps when idle and can take a minute to wake up
-        run: curl --fail --silent --show-error --max-time 120 --retry 3 --retry-delay 30 --retry-all-errors --output /dev/null https://react-ecommerce-8359.onrender.com/api/products
+        run: |
+          test -n "$SITE_URL" || { echo "::error::Set the repository variable PUBLIC_SITE_URL"; exit 1; }
+          curl --fail --silent --show-error --max-time 120 --retry 3 --retry-delay 30 --retry-all-errors --output /dev/null "$SITE_URL/api/products"

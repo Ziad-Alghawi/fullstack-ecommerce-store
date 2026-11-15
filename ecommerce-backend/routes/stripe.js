@@ -7,6 +7,7 @@ import { Product } from '../models/Product.js';
 import { calculatePaymentSummary } from './paymentSummary.js';
 import { createOrder, getCustomerName, getOrderRefusal } from './orders.js';
 import { corsOrigins } from '../utils/corsOrigins.js';
+import { publicSiteUrl } from '../utils/publicSiteUrl.js';
 import { APP_TAG, stripe } from '../utils/stripe.js';
 import { takePaidStock } from '../utils/stock.js';
 import { readCoupon } from '../middleware/coupon.js';
@@ -84,10 +85,11 @@ router.get('/config', (req, res) => {
 router.use(requireStripe);
 
 router.post('/checkout-sessions', checkoutLimit, requireVisitor, readCoupon, asyncHandler(async (req, res) => {
-  const origin = req.get('Origin');
-  if (!isStoreOrigin(req, origin)) {
+  const requestOrigin = req.get('Origin');
+  if (!isStoreOrigin(req, requestOrigin)) {
     return res.status(400).json({ error: 'Card payment only works from the store' });
   }
+  const origin = publicSiteUrl || requestOrigin;
 
   const cartItems = await CartItem.findAll({ where: { visitorId: req.visitorId } });
   const orderRefusal = await getOrderRefusal(req.visitorId, cartItems);

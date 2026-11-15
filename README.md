@@ -2,7 +2,7 @@
 
 A full-stack online store built with React, TypeScript and an Express API: product search and filters, a cart, coupons, two ways to pay, order tracking with real statuses, customer accounts with a wishlist, an admin area to run the store, English and German, and a dark mode.
 
-**Live demo:** https://react-ecommerce-8359.onrender.com
+**Live demo:** https://shop.ziadalghawi.com
 
 > The demo runs on a free server that sleeps when idle, so the first visit may take about a minute to load.
 
@@ -131,12 +131,12 @@ The frontend reads `.env.local` when it's built, and the backend reads `ecommerc
 | `VITE_SUPABASE_URL` | Frontend | Supabase project URL. With the key below, turns on login |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Frontend | Supabase publishable key (`sb_publishable_...`), safe to ship to the browser |
 | `VITE_API_URL` | Frontend | The API's URL, only when it's hosted apart from the frontend |
-| `VITE_SITE_URL` | Frontend | The store's address for link preview images. Defaults to the live demo |
 | `DATABASE_URL` | Backend | Postgres connection string. Without it, a local SQLite file is used |
 | `SUPABASE_URL` | Backend | The same project URL, to verify login tokens and allow Supabase in the content security policy |
 | `ADMIN_USER_IDS` | Backend | Comma-separated Supabase user IDs of the admins |
 | `STRIPE_SECRET_KEY` | Backend | Stripe test key (`sk_test_...`). Without it, card payment is hidden |
 | `STRIPE_WEBHOOK_SECRET` | Backend | Signing secret of the Stripe webhook (`whsec_...`) |
+| `PUBLIC_SITE_URL` | Backend | The store's one public address, like `https://shop.example.com`. Used for link previews, the canonical link, where Stripe and the password-reset email send people back, and CORS. On Render, the service's own address redirects here. Leave empty locally |
 | `CORS_ORIGIN` | Backend | Other origins allowed to call the API. Defaults to the Vite dev server, and to none in production |
 | `DEMO_RESTOCK` | Backend | `false` turns off the daily restock of demo products |
 | `PORT` | Backend | Server port, 3000 by default. Render sets it |
@@ -167,12 +167,14 @@ GitHub Actions runs the checks on every push, runs the API tests a second time o
 - Rate limits per IP address: 1000 API requests per 15 minutes, and lower limits for checking coupon codes, placing and cancelling orders, writing reviews and checking login tokens. Every request that sends a coupon code shares one limit, so codes can't be guessed through another route. Logging in itself goes to Supabase, which limits it
 - JSON bodies are limited to 10 kB
 - Every `/api/admin` path checks for an admin's verified token before any route runs, and who is an admin is only decided from the token
-- In production, CORS allows no other origins unless `CORS_ORIGIN` lists them
+- In production, CORS allows only the public address, plus any origins `CORS_ORIGIN` lists
 - Reviews and orders save a masked name instead of the customer's email
 
 ## Deployment
 
 [render.yaml](render.yaml) describes the Render service: it builds the frontend, installs the backend and starts it. Set the variables marked `sync: false` in the Render dashboard, and redeploy after changing a `VITE_` one, as they're read by the build.
+
+The store is public at one address, set in `PUBLIC_SITE_URL`. Render also serves the service on its own `onrender.com` address, and with `PUBLIC_SITE_URL` set, every request there is redirected (301, same path and query) to the public address. Only Stripe's `POST /api/stripe/webhook` is left out, as Stripe doesn't follow redirects, so point the webhook at the public address. The keep-alive workflow pings the address in the `PUBLIC_SITE_URL` repository variable.
 
 ### Database
 

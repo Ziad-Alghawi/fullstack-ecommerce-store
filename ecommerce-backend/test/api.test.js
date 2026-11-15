@@ -1863,6 +1863,77 @@ test('only allows the configured origins to call the API from another site', asy
   await startServer();
 });
 
+// A request to the server with another Host header, which fetch doesn't let a script set
+function requestWithHost(host, urlPath, method = 'GET') {
+  return new Promise((resolve, reject) => {
+    const request = http.request(`${baseUrl}${urlPath}`, { method, headers: { Host: host } }, (response) => {
+      response.resume();
+      response.on('end', () => resolve({ status: response.statusCode, location: response.headers.location }));
+    });
+    request.on('error', reject);
+    request.end();
+  });
+}
+
+test('redirects the Render address to the public one, except for the Stripe webhook', async () => {
+  const publicSite = 'https://shop.example.com';
+  const renderHost = 'old-shop.example.com';
+  const startWith = async (settings) => {
+    await stopServer();
+    await startServer(settings);
+  };
+
+  await startWith({ PUBLIC_SITE_URL: `${publicSite}/`, RENDER_EXTERNAL_HOSTNAME: renderHost });
+  const moved = await requestWithHost(renderHost, '/products/abc?search=socks&sort=price');
+  assert.deepEqual(moved, { status: 301, location: `${publicSite}/products/abc?search=socks&sort=price` });
+  assert.deepEqual(await requestWithHost(renderHost, '/'), { status: 301, location: `${publicSite}/` });
+  assert.equal((await requestWithHost(renderHost, '/api/cart-items', 'POST')).status, 301);
+
+  // Stripe doesn't follow redirects, so the webhook is handled where it is asked
+  assert.equal((await requestWithHost(renderHost, '/api/stripe/webhook', 'POST')).status, 400);
+  // Other addresses are served as they are, like localhost and the public address itself
+  assert.equal((await requestWithHost('localhost', '/api/products')).status, 200);
+  assert.equal((await requestWithHost('shop.example.com', '/api/products')).status, 200);
+
+  await startWith({ RENDER_EXTERNAL_HOSTNAME: renderHost });
+  assert.equal((await requestWithHost(renderHost, '/api/products')).status, 200);
+
+  // Never in a loop, even when Render's address is the public one
+  await startWith({ PUBLIC_SITE_URL: `https://${renderHost}`, RENDER_EXTERNAL_HOSTNAME: renderHost });
+  assert.equal((await requestWithHost(renderHost, '/api/products')).status, 200);
+
+  await startWith({ PUBLIC_SITE_URL: publicSite });
+  assert.equal((await requestWithHost(renderHost, '/api/products')).status, 200);
+
+  await startWith({});
+});
+
+test('refuses to start with a PUBLIC_SITE_URL that is not a web address', async () => {
+  await stopServer();
+  await assert.rejects(startServer({ PUBLIC_SITE_URL: 'shop.example.com' }), /exited with code 1/);
+  await startServer();
+});
+
+test('the public address is allowed by CORS and where Stripe sends the customer back', async () => {
+  const publicSite = 'https://shop.example.com';
+  await stopServer();
+  await startServer({ NODE_ENV: 'production', PUBLIC_SITE_URL: publicSite });
+  const response = await api('/api/products', { headers: { Origin: publicSite } });
+  assert.equal(response.headers.get('access-control-allow-origin'), publicSite);
+
+  const visitorId = randomUUID();
+  await addProduct(visitorId, (await createProduct()).id, 1);
+  assert.equal((await checkout(visitorId, publicSite)).status, 201);
+  const session = [...stripeSessions.values()].at(-1);
+  assert.equal(session.success_url, `${publicSite}/checkout/success?session_id={CHECKOUT_SESSION_ID}`);
+  assert.equal(session.cancel_url, `${publicSite}/checkout`);
+
+  // From another site, it is still refused
+  assert.equal((await checkout(visitorId, 'https://example.com')).status, 400);
+  await stopServer();
+  await startServer();
+});
+
 test('refuses a request body over 10 kB', async () => {
   const response = await api('/api/cart-items', {
     visitorId: randomUUID(), method: 'POST', body: { productId, quantity: 1, note: 'x'.repeat(11 * 1024) }

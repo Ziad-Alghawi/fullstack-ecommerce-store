@@ -1,14 +1,8 @@
 // @vitest-environment node
 import { it, expect, describe } from 'vitest';
 import fs from 'node:fs';
-import { siteUrl } from './vite.config';
 
 const html = fs.readFileSync('index.html', 'utf8');
-
-function transform(url?: string) {
-  const { transformIndexHtml } = siteUrl(url);
-  return (transformIndexHtml as (html: string) => string)(html);
-}
 
 function readMeta(page: string, name: string) {
   return page.match(new RegExp(`<meta (?:name|property)="${name}"\\s+content="([^"]*)"`))?.[1];
@@ -30,10 +24,11 @@ describe('link previews', () => {
     expect(readMeta(html, 'twitter:card')).toBe('summary_large_image');
   });
 
-  it('point to the preview image with a full URL, the live store by default', () => {
-    expect(readMeta(transform(), 'og:image')).toBe('https://react-ecommerce-8359.onrender.com/og-image.jpg');
-    expect(readMeta(transform('https://shop.example.com/'), 'og:image')).toBe('https://shop.example.com/og-image.jpg');
-    expect(transform()).not.toContain('%SITE_URL%');
+  it('point to the preview image and the page itself with the address the server fills in', () => {
+    expect(readMeta(html, 'og:image')).toBe('%SITE_URL%/og-image.jpg');
+    expect(readMeta(html, 'og:url')).toBe('%SITE_URL%%PATH%');
+    expect(html).toContain('<link rel="canonical" href="%SITE_URL%%PATH%" />');
+    expect(readMeta(html, 'public-site-url')).toBe('%SITE_URL%');
   });
 
   it('use an image of the size LinkedIn and X show in full, under their 5 MB limit', () => {

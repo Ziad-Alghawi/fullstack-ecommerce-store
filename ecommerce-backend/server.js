@@ -23,6 +23,9 @@ import meRoutes from './routes/me.js';
 import wishlistRoutes from './routes/wishlist.js';
 import stripeRoutes, { handleWebhook } from './routes/stripe.js';
 import { corsOrigins } from './utils/corsOrigins.js';
+import { publicSiteUrl } from './utils/publicSiteUrl.js';
+import { renderIndexHtml } from './utils/indexHtml.js';
+import { redirectToPublicSite } from './middleware/redirectToPublicSite.js';
 import { loadVisitors, requireVisitor } from './middleware/visitor.js';
 import { requireAdmin } from './middleware/admin.js';
 import { apiLimit } from './middleware/rateLimits.js';
@@ -42,6 +45,8 @@ const __dirname = path.dirname(__filename);
 
 // Render runs the app behind one proxy, which gives the client's IP address that rate limits count by
 app.set('trust proxy', 1);
+
+app.use(redirectToPublicSite);
 
 app.use(helmet({
   contentSecurityPolicy: {
@@ -84,17 +89,21 @@ app.use('/api', (req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
 
-// The built frontend, including the product images from its public folder
-app.use(express.static(path.join(__dirname, 'dist')));
+// The built frontend, including the product images from its public folder. The home page is
+// served below like the other pages, as it gets the store's address filled in
+app.use(express.static(path.join(__dirname, 'dist'), { index: false }));
 
 // Let React Router handle every other path
+const indexPath = path.join(__dirname, 'dist', 'index.html');
+let indexHtml;
 app.get('*', (req, res) => {
-  const indexPath = path.join(__dirname, 'dist', 'index.html');
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    res.status(404).send('index.html not found');
+  if (!indexHtml && fs.existsSync(indexPath)) {
+    indexHtml = fs.readFileSync(indexPath, 'utf8');
   }
+  if (!indexHtml) {
+    return res.status(404).send('index.html not found');
+  }
+  res.type('html').send(renderIndexHtml(indexHtml, publicSiteUrl, req.path));
 });
 
 // Express only treats a handler with four arguments as an error handler, so next has to stay

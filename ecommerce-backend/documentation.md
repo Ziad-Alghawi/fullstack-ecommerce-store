@@ -501,7 +501,7 @@ Tells the frontend whether to offer card payment. Works for everyone.
 ## POST /api/stripe/checkout-sessions
 Starts paying for the current cart by card. Creates a Stripe Checkout Session with a line per cart item, priced from the database, plus shipping and tax from [GET /api/payment-summary](#get-apipayment-summary), so it charges exactly the summary's total. The session's metadata has `app: "react-ecommerce"` and the visitor or user ID. The cart stays as it is until the payment is confirmed.
 
-Takes an optional `{ "couponCode": "string" }`. The discount is given to Stripe as a coupon made for this one payment, so the customer sees it on Stripe's page and the charge matches the summary. The `Origin` header must be the store's own address or one of `CORS_ORIGIN`, because Stripe sends the customer back there: to `/checkout/success?session_id=...` after paying, or to `/checkout` on cancel.
+Takes an optional `{ "couponCode": "string" }`. The discount is given to Stripe as a coupon made for this one payment, so the customer sees it on Stripe's page and the charge matches the summary. The `Origin` header must be the store's own address or one of `CORS_ORIGIN`, because Stripe sends the customer back there, to `/checkout/success?session_id=...` after paying or to `/checkout` on cancel. When `PUBLIC_SITE_URL` is set, that is the address used, so the customer always returns to the public store.
 
 **Response:**
 ```js
@@ -527,7 +527,7 @@ Returns the order a paid Checkout Session made, and creates it first if the webh
 - Status 409 if the session isn't paid
 
 ## POST /api/stripe/webhook
-Receives events from Stripe. The body must be exactly what Stripe sent, with its `Stripe-Signature` header, which is checked against `STRIPE_WEBHOOK_SECRET`. For a paid `checkout.session.completed` from this store, it creates the order like [GET /api/stripe/checkout-sessions/:sessionId/order](#get-apistripecheckout-sessionssessionidorder), at most once per session. Other events, and sessions without `app: "react-ecommerce"` in their metadata, are acknowledged and ignored.
+Receives events from Stripe. The body must be exactly what Stripe sent, with its `Stripe-Signature` header, which is checked against `STRIPE_WEBHOOK_SECRET`. For a paid `checkout.session.completed` from this store, it creates the order like [GET /api/stripe/checkout-sessions/:sessionId/order](#get-apistripecheckout-sessionssessionidorder), at most once per session. Other events, and sessions without `app: "react-ecommerce"` in their metadata, are acknowledged and ignored. It is the one request that the redirect from Render's own address to `PUBLIC_SITE_URL` leaves alone, as Stripe doesn't follow redirects.
 
 **Response:**
 - Status 200 with `{ "received": true }`

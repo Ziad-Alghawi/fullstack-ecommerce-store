@@ -58,6 +58,20 @@ describe('password pages', () => {
       expect(await screen.findByTestId('reset-email-sent')).toHaveTextContent('ziad@example.com');
     });
 
+    it('sends the link to the public address of the store', async () => {
+      document.head.insertAdjacentHTML('beforeend', '<meta name="public-site-url" content="https://shop.example.com">');
+      resetPasswordForEmail.mockResolvedValue({ data: {}, error: null });
+      renderPage(<ForgotPasswordPage cart={[]} />);
+
+      await user.type(screen.getByTestId('forgot-email-input'), 'ziad@example.com');
+      await user.click(screen.getByTestId('forgot-submit-button'));
+
+      expect(resetPasswordForEmail).toHaveBeenCalledWith('ziad@example.com', {
+        redirectTo: 'https://shop.example.com/reset-password'
+      });
+      document.head.querySelector('meta[name="public-site-url"]')?.remove();
+    });
+
     it('shows why the email could not be sent', async () => {
       resetPasswordForEmail.mockResolvedValue({ data: null, error: { message: 'Email rate limit exceeded' } });
       renderPage(<ForgotPasswordPage cart={[]} />);
