@@ -563,7 +563,7 @@ Adds a product. It starts with a rating of 0 stars from 0 reviews.
 {
   // Required, up to 100 characters. Spaces around it are removed
   "name": "string",
-  // A whole number from 1 to 1000000 ($10,000)
+  // A whole number from 1 to 1000000 (€10,000)
   "priceCents": "number",
   // One of GET /api/admin/images
   "image": "string",

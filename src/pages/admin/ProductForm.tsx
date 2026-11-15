@@ -70,7 +70,7 @@ export function ProductForm({ product, images, categories, onSaved, onCancel }: 
         </label>
 
         <label className="form-field">
-          {text.priceInDollars}
+          {text.priceInEuros}
           <input type="number" required min="0.01" max="10000" step="0.01" inputMode="decimal" value={price}
             onChange={(event) => setPrice(event.target.value)}
             data-testid="admin-price-input" />

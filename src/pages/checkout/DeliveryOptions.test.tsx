@@ -61,13 +61,13 @@ describe('DeliveryOptions component', () => {
     ).toBe(false);
 
     expect(deliveryOptionElems[1]).toHaveTextContent('Wednesday, May 14');
-    expect(deliveryOptionElems[1]).toHaveTextContent('$4.99 - Shipping');
+    expect(deliveryOptionElems[1]).toHaveTextContent('€4.99 - Shipping');
     expect(
       within(deliveryOptionElems[1]).getByTestId('delivery-option-input').checked
     ).toBe(true);
 
     expect(deliveryOptionElems[2]).toHaveTextContent('Monday, May 12');
-    expect(deliveryOptionElems[2]).toHaveTextContent('$9.99 - Shipping');
+    expect(deliveryOptionElems[2]).toHaveTextContent('€9.99 - Shipping');
     expect(
       within(deliveryOptionElems[2]).getByTestId('delivery-option-input').checked
     ).toBe(false);

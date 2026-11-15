@@ -39,7 +39,7 @@ describe('Product component', () => {
     renderProduct();
 
     expect(screen.getByText('Gray Hand Knit Wool Socks')).toBeInTheDocument();
-    expect(screen.getByText('$10.90')).toBeInTheDocument();
+    expect(screen.getByText('€10.90')).toBeInTheDocument();
     expect(screen.getByTestId('product-image'))
       .toHaveAttribute('src', 'images/products/gray-hand-knit-wool-socks.jpg');
     expect(screen.getByRole('img', { name: '4.5 out of 5 stars' })).toBeInTheDocument();

@@ -128,7 +128,7 @@ describe('AdminPage component', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Store overview' })).toBeInTheDocument();
     expect(screen.getByTestId('admin-stat-orders-day')).toHaveTextContent('3');
     expect(screen.getByTestId('admin-stat-orders-week')).toHaveTextContent('12');
-    expect(screen.getByTestId('admin-stat-revenue')).toHaveTextContent('$456.78');
+    expect(screen.getByTestId('admin-stat-revenue')).toHaveTextContent('€456.78');
     expect(within(screen.getByTestId('admin-low-stock')).getByRole('listitem'))
       .toHaveTextContent('Intermediate Size BasketballOnly 2 left');
     expect(within(screen.getByTestId('admin-top-products')).getAllByRole('listitem').map((item) => item.textContent))
@@ -157,7 +157,7 @@ describe('AdminPage component', () => {
     const rows = await screen.findAllByTestId('admin-product-row');
     expect(rows).toHaveLength(2);
     expect(rows[0]).toHaveTextContent('Gray Hand Knit Wool Socks');
-    expect(rows[0]).toHaveTextContent('$10.90');
+    expect(rows[0]).toHaveTextContent('€10.90');
     expect(rows[0]).toHaveTextContent('Clothing');
     expect(rows[0]).toHaveTextContent('20 in stock');
     expect(rows[1]).toHaveTextContent('Only 2 left');

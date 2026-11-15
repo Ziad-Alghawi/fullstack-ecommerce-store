@@ -125,13 +125,13 @@ describe('App when the API fails', () => {
 
     it('switches from the header, and remembers it for the next visit', async () => {
       const { unmount } = renderApp();
-      expect(await screen.findByTestId('product-container')).toHaveTextContent('$10.90');
+      expect(await screen.findByTestId('product-container')).toHaveTextContent('€10.90');
 
       await user.click(screen.getByRole('button', { name: 'Deutsch' }));
 
       expect(screen.getByRole('button', { name: 'Deutsch' })).toHaveAttribute('aria-pressed', 'true');
       expect(screen.getByTestId('header-orders-link')).toHaveTextContent('Bestellungen');
-      expect(screen.getByTestId('product-container')).toHaveTextContent('10,90 $');
+      expect(screen.getByTestId('product-container')).toHaveTextContent('10,90 €');
       expect(screen.getByTestId('site-footer')).toHaveTextContent('Demo-Shop');
       expect(document.documentElement.lang).toBe('de');
       unmount();
@@ -149,7 +149,7 @@ describe('App when the API fails', () => {
       renderApp('/checkout');
 
       expect(await screen.findByRole('heading', { level: 1, name: 'Bestellung prüfen' })).toBeInTheDocument();
-      expect(screen.getByTestId('payment-summary-total')).toHaveTextContent('11,99 $');
+      expect(screen.getByTestId('payment-summary-total')).toHaveTextContent('11,99 €');
     });
 
     it("translates the API's reason for refusing an order", async () => {

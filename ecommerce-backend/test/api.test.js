@@ -116,7 +116,7 @@ async function startStripe() {
         description: price.product_data.name,
         quantity: Number(quantity),
         amount_total: Number(price.unit_amount) * Number(quantity),
-        price: { unit_amount: Number(price.unit_amount), product: { metadata: price.product_data.metadata ?? {} } }
+        price: { currency: price.currency, unit_amount: Number(price.unit_amount), product: { metadata: price.product_data.metadata ?? {} } }
       }));
       const session = {
         id: `cs_test_${randomUUID().replaceAll('-', '')}`,
@@ -380,7 +380,7 @@ test('filters products by category and price, together with search', async () =>
   const affordable = await getProducts('?minPriceCents=1000&maxPriceCents=2000');
   assert.ok(affordable.length > 0);
   assert.ok(affordable.every(({ priceCents }) => priceCents >= 1000 && priceCents <= 2000));
-  // Socks cost $10.90
+  // Socks cost €10.90
   assert.deepEqual((await getProducts('?minPriceCents=1090&maxPriceCents=1090')).map(({ id }) => id), [productId]);
   assert.ok((await getProducts('?minPriceCents=5000')).every(({ priceCents }) => priceCents >= 5000));
 
@@ -427,7 +427,7 @@ test('an order costs what the payment summary showed', async () => {
   });
 
   const summary = await (await api('/api/payment-summary', { visitorId })).json();
-  // 2 socks at $10.90, $4.99 shipping, 10% tax
+  // 2 socks at €10.90, €4.99 shipping, 10% tax
   assert.equal(summary.totalItems, 2);
   assert.equal(summary.productCostCents, 2180);
   assert.equal(summary.shippingCostCents, 499);
@@ -740,9 +740,9 @@ test('refuses product fields that are missing or invalid', async () => {
     'without a price': { priceCents: undefined },
     'with a price of 0': { priceCents: 0 },
     'with a negative price': { priceCents: -100 },
-    'with a price in dollars': { priceCents: 15.99 },
+    'with a price in euros, not cents': { priceCents: 15.99 },
     'with a price as text': { priceCents: '1599' },
-    'with a price over $10,000': { priceCents: 1000001 },
+    'with a price over €10,000': { priceCents: 1000001 },
     'without an image': { image: undefined },
     'with an image from another site': { image: 'https://example.com/hat.jpg' },
     'without keywords': { keywords: undefined },
@@ -1434,6 +1434,8 @@ test('pays by card through a Checkout Session priced from the database', async (
     ['Shipping & handling', 1, 499],
     ['Estimated tax (10%)', 1, 268]
   ]);
+  // Euros are the only currency
+  assert.deepEqual(new Set(stripeLineItems.get(session.id).map(({ price }) => price.currency)), new Set(['eur']));
   assert.deepEqual(session.metadata, { app: 'react-ecommerce', visitorId });
   assert.equal(session.success_url, `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`);
   // Cancelling goes back to checkout, where the cart is unchanged
@@ -1527,7 +1529,7 @@ async function createCoupon(fields) {
   return response.json();
 }
 
-// 2 socks at $10.90 with $4.99 shipping
+// 2 socks at €10.90 with €4.99 shipping
 async function createSocksCart(who) {
   await addProduct(who, productId, 2);
   await api(`/api/cart-items/${productId}`, { ...identify(who), method: 'PUT', body: { deliveryOptionId: '2' } });
@@ -1609,6 +1611,7 @@ test('card payment charges the discounted total, through a Stripe coupon for thi
 
   assert.equal(session.amount_total, summary.totalCostCents);
   assert.equal(coupon.amount_off, 218);
+  assert.equal(coupon.currency, 'eur');
   assert.equal(coupon.duration, 'once');
   assert.equal(coupon.name, 'WELCOME10 (10% off)');
   assert.deepEqual(coupon.metadata, { app: 'react-ecommerce' });

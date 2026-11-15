@@ -91,7 +91,7 @@ describe('OrderSummary component', () => {
     ).toHaveTextContent('Gray Hand Knit Wool Socks');
     expect(
       within(cartItemContainers[0]).getByTestId('cart-item-price')
-    ).toHaveTextContent('$10.90');
+    ).toHaveTextContent('€10.90');
     expect(
       within(cartItemContainers[0]).getByTestId('cart-item-quantity')
     ).toHaveTextContent('Quantity: 2');
@@ -111,7 +111,7 @@ describe('OrderSummary component', () => {
     ).toHaveTextContent('Intermediate Size Basketball');
     expect(
       within(cartItemContainers[1]).getByTestId('cart-item-price')
-    ).toHaveTextContent('$20.95');
+    ).toHaveTextContent('€20.95');
     expect(
       within(cartItemContainers[1]).getByTestId('cart-item-quantity')
     ).toHaveTextContent('Quantity: 1');

@@ -96,7 +96,7 @@ describe('ProductPage component', () => {
     expect(screen.getByRole('img', { name: product.name })).toHaveAttribute('src', product.image);
     expect(screen.getByRole('img', { name: '4.5 out of 5 stars' })).toBeInTheDocument();
     expect(screen.getByText('89')).toBeInTheDocument();
-    expect(screen.getByTestId('product-price')).toHaveTextContent('$10.90');
+    expect(screen.getByTestId('product-price')).toHaveTextContent('€10.90');
     expect(screen.getByTestId('product-category-link')).toHaveAttribute('href', '/?category=Home+%26+Kitchen');
 
     await user.selectOptions(screen.getByTestId('quantity-select-selector'), '2');

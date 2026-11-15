@@ -10,7 +10,7 @@ test('a guest orders, pays on delivery and sees the order', async ({ page }) => 
   await addToCart(page, 'Gray Hand Knit Wool Socks', 2);
 
   await goToCheckout(page);
-  await expect(page.getByTestId('payment-summary-product-cost')).toContainText('$21.80');
+  await expect(page.getByTestId('payment-summary-product-cost')).toContainText('€21.80');
   const total = await readOrderTotal(page);
   await placeOrder(page);
 
@@ -31,8 +31,8 @@ test('a coupon takes its discount off the order', async ({ page }) => {
   await page.getByTestId('coupon-input').fill('welcome10');
   await page.getByTestId('coupon-apply-button').click();
   await expect(page.getByTestId('coupon-applied')).toContainText('WELCOME10');
-  // 10% of $18.99
-  await expect(page.getByTestId('payment-summary-discount')).toContainText('-$1.90');
+  // 10% of €18.99
+  await expect(page.getByTestId('payment-summary-discount')).toContainText('-€1.90');
   const total = await readOrderTotal(page);
 
   await placeOrder(page);

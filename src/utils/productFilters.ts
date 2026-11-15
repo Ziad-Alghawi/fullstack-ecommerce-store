@@ -8,7 +8,7 @@ export interface Filters {
   search: string;
   category: string;
   sort: Sort;
-  // In dollars, as typed. Empty for no limit
+  // In euros, as typed. Empty for no limit
   minPrice: string;
   maxPrice: string;
 }

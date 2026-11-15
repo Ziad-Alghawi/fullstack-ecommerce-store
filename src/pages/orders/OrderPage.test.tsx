@@ -107,7 +107,7 @@ describe('OrdersPage component', () => {
     ).toHaveTextContent('August 12');
     expect(
       within(orderContainers[0]).getByTestId('order-total')
-    ).toHaveTextContent('$35.06');
+    ).toHaveTextContent('€35.06');
     expect(
       within(orderContainers[0]).getByTestId('order-id')
     ).toHaveTextContent('27cba69d-4c3d-4098-b42d-ac7fa62b7664');
@@ -129,7 +129,7 @@ describe('OrdersPage component', () => {
     ).toHaveTextContent('June 10');
     expect(
       within(orderContainers[1]).getByTestId('order-total')
-    ).toHaveTextContent('$41.90');
+    ).toHaveTextContent('€41.90');
     expect(
       within(orderContainers[1]).getByTestId('order-id')
     ).toHaveTextContent('b6b6c212-d30e-4d4a-805d-90b52ce6b37d');

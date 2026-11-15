@@ -8,7 +8,7 @@ test('a visitor switches to German, which stays after a reload', async ({ page }
   await expect(page.getByRole('heading', { level: 1, name: 'Alltägliches, direkt geliefert' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('lang', 'de');
   await expect(page.getByRole('navigation', { name: 'Kategorien' }).getByRole('link', { name: 'Sport' })).toBeVisible();
-  await expect(productCard(page, 'Intermediate Size Basketball')).toContainText('20,95 $');
+  await expect(productCard(page, 'Intermediate Size Basketball')).toContainText('20,95 €');
 
   // The API's reason comes with a code, so it's shown in German too. The tote bag starts with 2 left
   const tote = productCard(page, 'Woven Straw Tote Bag');

@@ -100,7 +100,7 @@ describe('AdminOrdersPage component', () => {
     expect(rows[0]).toHaveTextContent('ma***');
     expect(within(rows[0]).getAllByRole('listitem').map((item) => item.textContent))
       .toEqual(['2 × Gray Hand Knit Wool Socks', '1 × Intermediate Size Basketball']);
-    expect(rows[0]).toHaveTextContent('$47.03');
+    expect(rows[0]).toHaveTextContent('€47.03');
     expect(rows[0]).toHaveTextContent('On delivery');
     expect(within(rows[0]).getByTestId('order-status')).toHaveTextContent('Processing');
     expect(within(rows[1]).getByTestId('order-status')).toHaveTextContent('Shipped');

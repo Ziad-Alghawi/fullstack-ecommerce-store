@@ -129,7 +129,7 @@ describe('CheckoutPage component', () => {
     expect(screen.getByTestId('payment-summary-product-cost'))
       .toHaveTextContent('Items (3):');
     expect(screen.getByTestId('payment-summary-shipping-cost'))
-      .toHaveTextContent('$4.99');
+      .toHaveTextContent('€4.99');
   });
 
   it('shows an empty cart message with a link back to the products', async () => {
@@ -178,8 +178,8 @@ describe('CheckoutPage component', () => {
 
     expect(axios.get).toHaveBeenCalledWith('/api/coupons/welcome10');
     expect(axios.get).toHaveBeenLastCalledWith('/api/payment-summary?couponCode=WELCOME10');
-    expect(await screen.findByTestId('payment-summary-discount')).toHaveTextContent('-$4.28');
-    expect(screen.getByTestId('payment-summary-total')).toHaveTextContent('$47.81');
+    expect(await screen.findByTestId('payment-summary-discount')).toHaveTextContent('-€4.28');
+    expect(screen.getByTestId('payment-summary-total')).toHaveTextContent('€47.81');
 
     await user.click(screen.getByTestId('coupon-remove-button'));
     await waitFor(() => expect(screen.queryByTestId('payment-summary-discount')).not.toBeInTheDocument());

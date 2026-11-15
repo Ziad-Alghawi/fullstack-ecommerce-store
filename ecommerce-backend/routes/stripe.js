@@ -21,7 +21,7 @@ router.param('sessionId', (req, res, next, id) => (
 
 function lineItem(name, unitAmountCents, quantity = 1, metadata = undefined) {
   return {
-    price_data: { currency: 'usd', unit_amount: unitAmountCents, product_data: { name, metadata } },
+    price_data: { currency: 'eur', unit_amount: unitAmountCents, product_data: { name, metadata } },
     quantity
   };
 }
@@ -110,7 +110,7 @@ router.post('/checkout-sessions', checkoutLimit, requireVisitor, readCoupon, asy
   const discounts = discountCents > 0 ? [{
     coupon: (await stripe.coupons.create({
       amount_off: discountCents,
-      currency: 'usd',
+      currency: 'eur',
       duration: 'once',
       max_redemptions: 1,
       name: `${req.coupon.code} (${req.coupon.percentOff}% off)`,

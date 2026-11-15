@@ -36,7 +36,7 @@ The admin area needs an account listed in `ADMIN_USER_IDS`, so the screenshots b
 
 **Language and look**
 - English and German for every page, notification and form hint, chosen in the header, remembered in the browser and taken from the browser's language at first
-- Dates and numbers are written the way the language does, while prices stay in US dollars. The API sends a code with each reason a shopper can run into, so those are translated too. Rarer ones, like an admin form field the browser already checks, stay in English
+- Dates and numbers are written the way the language does, while prices are always in euros, written "€20.67" in English and "20,67 €" in German. The API sends a code with each reason a shopper can run into, so those are translated too. Rarer ones, like an admin form field the browser already checks, stay in English
 - A dark mode that follows the system's theme, with a toggle in the header. Every color is a CSS variable with a light and a dark value, and the end-to-end tests check contrast in both
 
 **Admin**

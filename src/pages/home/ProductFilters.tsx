@@ -23,14 +23,14 @@ function PriceFilter({ filters, onApply }: PriceFilterProps) {
     <form className="price-filter" onSubmit={applyPrices} aria-label={t.home.price}>
       <label className="price-filter-field">
         <span className="visually-hidden">{t.home.minPrice}</span>
-        <span aria-hidden="true">$</span>
+        <span aria-hidden="true">€</span>
         <input type="number" min="0" step="0.01" inputMode="decimal" placeholder={t.home.min} value={minPrice}
           onChange={(event) => setMinPrice(event.target.value)} data-testid="min-price-input" />
       </label>
       <span aria-hidden="true">{t.home.priceTo}</span>
       <label className="price-filter-field">
         <span className="visually-hidden">{t.home.maxPrice}</span>
-        <span aria-hidden="true">$</span>
+        <span aria-hidden="true">€</span>
         <input type="number" min="0" step="0.01" inputMode="decimal" placeholder={t.home.max} value={maxPrice}
           onChange={(event) => setMaxPrice(event.target.value)} data-testid="max-price-input" />
       </label>

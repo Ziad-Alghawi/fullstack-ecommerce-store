@@ -76,24 +76,24 @@ describe('PaymentSummary', () => {
     ).toBeInTheDocument();
 
     expect(
-      within(screen.getByTestId('payment-summary-product-cost')).getByText('$42.75')
+      within(screen.getByTestId('payment-summary-product-cost')).getByText('€42.75')
     ).toBeInTheDocument();
 
     expect(
       screen.getByTestId('payment-summary-shipping-cost')
-    ).toHaveTextContent('$4.99');
+    ).toHaveTextContent('€4.99');
 
     expect(
       screen.getByTestId('payment-summary-total-before-tax')
-    ).toHaveTextContent('$47.74');
+    ).toHaveTextContent('€47.74');
 
     expect(
       screen.getByTestId('payment-summary-tax')
-    ).toHaveTextContent('$4.77');
+    ).toHaveTextContent('€4.77');
 
     expect(
       screen.getByTestId('payment-summary-total')
-    ).toHaveTextContent('$52.51');
+    ).toHaveTextContent('€52.51');
     expect(screen.queryByTestId('payment-summary-discount')).not.toBeInTheDocument();
   });
 
@@ -111,8 +111,8 @@ describe('PaymentSummary', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByTestId('payment-summary-discount')).toHaveTextContent('Discount (WELCOME10):-$4.28');
-    expect(screen.getByTestId('payment-summary-total')).toHaveTextContent('$47.81');
+    expect(screen.getByTestId('payment-summary-discount')).toHaveTextContent('Discount (WELCOME10):-€4.28');
+    expect(screen.getByTestId('payment-summary-total')).toHaveTextContent('€47.81');
     expect(screen.getByTestId('coupon-applied')).toHaveTextContent('WELCOME10 applied: 10% off your items');
 
     await user.click(await screen.findByTestId('pay-with-card-button'));
