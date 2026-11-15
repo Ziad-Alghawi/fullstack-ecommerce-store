@@ -497,7 +497,7 @@ Tells the frontend whether to show the shopping assistant. Works for everyone.
 **Response:**
 ```js
 {
-  // False without ANTHROPIC_API_KEY
+  // False without GEMINI_API_KEY
   "chat": "boolean",
   // The longest message the assistant takes, in characters
   "maxMessageLength": 500
@@ -505,7 +505,7 @@ Tells the frontend whether to show the shopping assistant. Works for everyone.
 ```
 
 ## POST /api/chat
-Asks the shopping assistant, which uses the Anthropic Messages API (the model in `CHAT_MODEL`, Claude Haiku by default). It answers about this store only. It can call two read-only tools on the database, searching products (text, category, highest price, in stock) and getting a product by ID, so product names, prices and stock only come from the store. Shipping, payment, cancelling and coupons come from the delivery options and featured coupon in the database. Everything the visitor wrote is treated as untrusted text: it only ever reaches the model as a message, and the model has no other tools. Needs `X-Visitor-Id` or a login, like the cart.
+Asks the shopping assistant, which uses the Google Gemini API (the model in `CHAT_MODEL`, Gemini Flash by default). It answers about this store only. It can call two read-only tools on the database, searching products (text, category, highest price, in stock) and getting a product by ID, so product names, prices and stock only come from the store. Shipping, payment, cancelling and coupons come from the delivery options and featured coupon in the database. Everything the visitor wrote is treated as untrusted text: it only ever reaches the model as a message, and the model has no other tools. Needs `X-Visitor-Id` or a login, like the cart.
 
 **Request body:**
 ```js
@@ -520,7 +520,7 @@ Asks the shopping assistant, which uses the Anthropic Messages API (the model in
 **Response:**
 - Status 200 with `{ "reply": "string", "products": [Product] }`. The products are the ones the tools found, up to 4, for showing as cards
 - Status 400 for messages in the wrong shape or over 500 characters (code `chatMessageTooLong`), or an unknown language
-- Status 404 with code `chatDisabled` without ANTHROPIC_API_KEY
+- Status 404 with code `chatDisabled` without GEMINI_API_KEY
 - Status 429 when one visitor asks more than 15 questions in 15 minutes, one address more than 30, or the whole store more than `CHAT_DAILY_LIMIT` (300) in a day (code `chatBusy`)
 - Status 502 with code `chatUnavailable` when the model fails, refuses or takes longer than 25 seconds
 

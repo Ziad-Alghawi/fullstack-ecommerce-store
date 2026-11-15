@@ -1,5 +1,5 @@
 // Runs the store for the end-to-end tests like it runs in production: the built frontend served by
-// the API, here on a fresh SQLite database. Supabase Auth and the Anthropic API are replaced by local
+// the API, here on a fresh SQLite database. Supabase Auth and the Gemini API are replaced by local
 // stand-ins, and Stripe gets no key, so checkout offers paying on delivery only
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -8,7 +8,7 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
-import { ADMIN, ANTHROPIC_URL, AUTH_URL, PASSWORD, STORE_URL } from './settings.ts';
+import { ADMIN, AUTH_URL, GEMINI_URL, PASSWORD, STORE_URL } from './settings.ts';
 
 const root = path.join(import.meta.dirname, '..');
 const issuer = `${AUTH_URL}/auth/v1`;
@@ -80,20 +80,18 @@ function startAuth() {
   return new Promise<void>((resolve) => server.listen(Number(new URL(AUTH_URL).port), resolve));
 }
 
-// Stands in for the Anthropic API: the assistant looks for socks, then says so in the language it was asked for
-function startAnthropic() {
-  const anthropic = http.createServer(async (req, res) => {
-    const { system, messages } = await readJson(req);
-    const hasFoundSocks = JSON.stringify(messages).includes('tool_result');
-    const message = {
-      id: 'msg_e2e', type: 'message', role: 'assistant', model: 'e2e', usage: { input_tokens: 1, output_tokens: 1 },
-      ...(hasFoundSocks
-        ? { stop_reason: 'end_turn', content: [{ type: 'text', text: system.includes('German') ? 'Hier sind Socken.' : 'Here are some socks.' }] }
-        : { stop_reason: 'tool_use', content: [{ type: 'tool_use', id: 'toolu_e2e', name: 'search_products', input: { query: 'socks', max_price_eur: 15 } }] })
-    };
-    res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify(message));
+// Stands in for the Gemini API: the assistant looks for socks, then says so in the language it was asked for
+function startGemini() {
+  const gemini = http.createServer(async (req, res) => {
+    const { systemInstruction, contents } = await readJson(req);
+    const hasFoundSocks = JSON.stringify(contents).includes('functionResponse');
+    const parts = hasFoundSocks
+      ? [{ text: systemInstruction.parts[0].text.includes('German') ? 'Hier sind Socken.' : 'Here are some socks.' }]
+      : [{ functionCall: { name: 'search_products', args: { query: 'socks', max_price_eur: 15 } } }];
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+      .end(JSON.stringify({ candidates: [{ content: { role: 'model', parts }, finishReason: 'STOP' }] }));
   });
-  return new Promise<void>((resolve) => anthropic.listen(Number(new URL(ANTHROPIC_URL).port), resolve));
+  return new Promise<void>((resolve) => gemini.listen(Number(new URL(GEMINI_URL).port), resolve));
 }
 
 // A production build that logs in with the stand-in. Real environment variables win over .env.local
@@ -121,8 +119,8 @@ function startStore() {
       ADMIN_USER_IDS: ADMIN.id,
       DATABASE_URL: '',
       STRIPE_SECRET_KEY: '',
-      ANTHROPIC_API_KEY: 'sk-ant-e2e',
-      ANTHROPIC_BASE_URL: ANTHROPIC_URL
+      GEMINI_API_KEY: 'e2e-stand-in',
+      GEMINI_API_URL: GEMINI_URL
     }
   });
   store.on('exit', (code) => {
@@ -135,5 +133,5 @@ function startStore() {
 
 buildFrontend();
 await startAuth();
-await startAnthropic();
+await startGemini();
 startStore();

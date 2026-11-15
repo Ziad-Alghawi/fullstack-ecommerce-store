@@ -1,6 +1,7 @@
 import { DeliveryOption } from '../models/DeliveryOption.js';
 import { findFeaturedCoupon } from '../middleware/coupon.js';
-import { anthropic, CHAT_MODEL } from './anthropic.js';
+import { FinishReason, FunctionCallingConfigMode, ThinkingLevel } from '@google/genai';
+import { gemini, CHAT_MODEL } from './gemini.js';
 import { chatTools, runChatTool } from './chatTools.js';
 
 export const LANGUAGE_NAMES = { en: 'English', de: 'German' };
@@ -46,41 +47,47 @@ Store facts:
 ${await describeStore()}`;
 }
 
-function getText(response) {
-  return response.content.filter((block) => block.type === 'text').map((block) => block.text).join('\n').trim();
-}
+const FORMAT_ROLES = { user: 'user', assistant: 'model' };
 
 // Answers the last message of the conversation, with the products the tools found. The reply is
 // empty when the model gave none. Errors from the API are left to the caller
 export async function answerChat(messages, language) {
-  const system = await buildSystemPrompt(language);
-  const signal = AbortSignal.timeout(TIMEOUT_MS);
-  const conversation = [...messages];
+  const systemInstruction = await buildSystemPrompt(language);
+  const abortSignal = AbortSignal.timeout(TIMEOUT_MS);
+  const contents = messages.map(({ role, content }) => ({ role: FORMAT_ROLES[role], parts: [{ text: content }] }));
   const found = new Map();
 
   for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
-    const response = await anthropic.messages.create({
+    const response = await gemini.models.generateContent({
       model: CHAT_MODEL,
-      max_tokens: MAX_OUTPUT_TOKENS,
-      system,
-      tools: chatTools,
-      // In the last round the model has to answer with what it found
-      ...(round === MAX_TOOL_ROUNDS && { tool_choice: { type: 'none' } }),
-      messages: conversation
-    }, { signal, maxRetries: 0 });
+      contents,
+      config: {
+        systemInstruction,
+        maxOutputTokens: MAX_OUTPUT_TOKENS,
+        // Little thinking is needed to pick a search, and it counts toward the output limit
+        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+        tools: [{ functionDeclarations: chatTools }],
+        // In the last round the model has to answer with what it found
+        toolConfig: { functionCallingConfig: { mode: round === MAX_TOOL_ROUNDS ? FunctionCallingConfigMode.NONE : FunctionCallingConfigMode.AUTO } },
+        abortSignal,
+        httpOptions: { timeout: TIMEOUT_MS }
+      }
+    });
 
-    const toolCalls = response.content.filter((block) => block.type === 'tool_use');
-    if (response.stop_reason !== 'tool_use' || !toolCalls.length) {
+    const toolCalls = response.functionCalls ?? [];
+    if (!toolCalls.length) {
       const cards = [...found.values()].slice(-MAX_CARDS).reverse();
-      return { reply: response.stop_reason === 'end_turn' ? getText(response) : '', products: cards };
+      const isComplete = response.candidates?.[0]?.finishReason === FinishReason.STOP;
+      return { reply: isComplete ? (response.text ?? '').trim() : '', products: cards };
     }
 
-    const results = await Promise.all(toolCalls.map(async ({ id, name, input }) => {
-      const { content, isError, products } = await runChatTool(name, input);
+    const results = await Promise.all(toolCalls.map(async ({ id, name, args }) => {
+      const { output, isError, products } = await runChatTool(name, args);
       products.forEach((product) => found.set(product.id, product));
-      return { type: 'tool_result', tool_use_id: id, content, is_error: isError };
+      return { functionResponse: { id, name, response: isError ? { error: output } : { output } } };
     }));
-    conversation.push({ role: 'assistant', content: response.content }, { role: 'user', content: results });
+    // The model's turn goes back as it came, which keeps the thought signatures of its function calls
+    contents.push(response.candidates[0].content, { role: 'user', parts: results });
   }
   return { reply: '', products: [] };
 }

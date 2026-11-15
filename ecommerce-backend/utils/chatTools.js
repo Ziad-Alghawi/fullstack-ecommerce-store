@@ -10,7 +10,7 @@ export const chatTools = [
     name: 'search_products',
     description: "Searches the store's products. Every filter is optional. Returns up to 4 matching products, best rated first. "
       + "Words in the query must all appear in a product's name or keywords, so use one or two plain words like \"socks\".",
-    input_schema: {
+    parametersJsonSchema: {
       type: 'object',
       properties: {
         query: { type: 'string', description: 'Words from the product name or keywords, in English' },
@@ -24,7 +24,7 @@ export const chatTools = [
   {
     name: 'get_product_details',
     description: 'Gets one product by the id that search_products returned.',
-    input_schema: {
+    parametersJsonSchema: {
       type: 'object',
       properties: { product_id: { type: 'string' } },
       required: ['product_id'],
@@ -74,14 +74,14 @@ async function getProductDetails({ product_id: productId }) {
 const tools = { search_products: searchProducts, get_product_details: getProductDetails };
 
 // Runs a tool the model asked for, always read-only. The products are for showing as cards, and
-// the content is what the model reads back. What the model sends is checked here, not trusted
+// the output is what the model reads back. What the model sends is checked here, not trusted
 export async function runChatTool(name, input) {
   if (!Object.hasOwn(tools, name)) {
-    return { content: 'Unknown tool', isError: true, products: [] };
+    return { output: 'Unknown tool', isError: true, products: [] };
   }
   const products = await tools[name](input && typeof input === 'object' ? input : {});
   return {
-    content: JSON.stringify(products.length ? products.map(describeProduct) : 'No products found'),
+    output: products.length ? products.map(describeProduct) : 'No products found',
     isError: false,
     products
   };

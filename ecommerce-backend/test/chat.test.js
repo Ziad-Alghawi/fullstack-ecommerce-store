@@ -15,41 +15,39 @@ const socksId = 'e43638ce-6aa0-4b85-b27f-e1d07eb678c6';
 
 let server;
 let baseUrl;
-let anthropicApi;
-// The requests the stand-in for the Anthropic API got, and what it answers next. A script step is a
+let geminiApi;
+// The requests the stand-in for the Gemini API got, and what it answers next. A script step is a
 // response body, or a function of the request that gives one. Without a step, it answers with text
-let anthropicRequests = [];
+let geminiRequests = [];
 let script = [];
-let anthropicDelayMs = 0;
+let geminiDelayMs = 0;
 
-const textResponse = (text, stopReason = 'end_turn') => ({
-  id: `msg_${randomUUID().replaceAll('-', '')}`,
-  type: 'message',
-  role: 'assistant',
-  model: 'claude-haiku-5-5',
-  content: text ? [{ type: 'text', text }] : [],
-  stop_reason: stopReason,
-  usage: { input_tokens: 10, output_tokens: 5 }
+const textResponse = (text, finishReason = 'STOP') => ({
+  candidates: [{ content: { role: 'model', parts: text ? [{ text }] : [] }, finishReason }],
+  usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 5, totalTokenCount: 15 }
 });
 
-const toolResponse = (name, input) => ({
-  ...textResponse('', 'tool_use'),
-  content: [{ type: 'tool_use', id: `toolu_${randomUUID().replaceAll('-', '')}`, name, input }]
+const toolResponse = (name, args) => ({
+  ...textResponse(''),
+  candidates: [{ content: { role: 'model', parts: [{ functionCall: { name, args } }] }, finishReason: 'STOP' }]
 });
 
-// Stands in for the Anthropic API, so no test makes a real call
-async function startAnthropic() {
-  anthropicApi = http.createServer(async (req, res) => {
+// What the model was last told, which after a tool call is that tool's response
+const lastToolResponse = (body) => body.contents.at(-1).parts[0].functionResponse?.response;
+
+// Stands in for the Gemini API, so no test makes a real call
+async function startGemini() {
+  geminiApi = http.createServer(async (req, res) => {
     let body = '';
     for await (const chunk of req) body += chunk;
-    anthropicRequests.push({ url: req.url, headers: req.headers, body: JSON.parse(body) });
-    await new Promise((resolve) => setTimeout(resolve, anthropicDelayMs));
+    geminiRequests.push({ url: req.url, headers: req.headers, body: JSON.parse(body) });
+    await new Promise((resolve) => setTimeout(resolve, geminiDelayMs));
 
     const step = script.shift() ?? textResponse('Happy to help.');
-    const { status = 200, ...response } = typeof step === 'function' ? step(anthropicRequests.at(-1).body) : step;
+    const { status = 200, ...response } = typeof step === 'function' ? step(geminiRequests.at(-1).body) : step;
     res.writeHead(status, { 'Content-Type': 'application/json' }).end(JSON.stringify(response));
   });
-  await new Promise((resolve) => anthropicApi.listen(0, resolve));
+  await new Promise((resolve) => geminiApi.listen(0, resolve));
 }
 
 function getFreePort() {
@@ -70,8 +68,8 @@ async function startServer(settings = {}) {
     RATE_LIMIT_SCALE: '100',
     // Always a throwaway SQLite file, so these tests never share a database with the API tests that run beside them
     DATABASE_URL: '',
-    ANTHROPIC_API_KEY: 'sk-ant-test-stand-in',
-    ANTHROPIC_BASE_URL: `http://localhost:${anthropicApi.address().port}`,
+    GEMINI_API_KEY: 'gemini-test-stand-in',
+    GEMINI_API_URL: `http://localhost:${geminiApi.address().port}`,
     ...settings
   };
   for (const [name, value] of Object.entries(env)) {
@@ -91,7 +89,7 @@ async function restartServer(settings) {
   const exited = new Promise((resolve) => server.once('exit', resolve));
   server.kill();
   await exited;
-  anthropicRequests = [];
+  geminiRequests = [];
   script = [];
   await startServer(settings);
 }
@@ -107,12 +105,12 @@ function chat(messages, { visitorId = randomUUID(), ...body } = {}) {
 const ask = (text, options) => chat([{ role: 'user', content: text }], options);
 
 before(async () => {
-  await startAnthropic();
+  await startGemini();
   await startServer();
 });
 
 beforeEach(() => {
-  anthropicRequests = [];
+  geminiRequests = [];
   script = [];
 });
 
@@ -120,18 +118,18 @@ after(async () => {
   const exited = new Promise((resolve) => server.once('exit', resolve));
   server.kill();
   await exited;
-  anthropicApi.close();
+  geminiApi.close();
   fs.rmSync(workDir, { recursive: true, force: true });
 });
 
 test('is off without an API key, and says so', async () => {
-  await restartServer({ ANTHROPIC_API_KEY: undefined });
+  await restartServer({ GEMINI_API_KEY: undefined });
   assert.deepEqual(await (await fetch(`${baseUrl}/api/chat/config`)).json(), { chat: false, maxMessageLength: 500 });
 
   const response = await ask('Hello');
   assert.equal(response.status, 404);
   assert.equal((await response.json()).code, 'chatDisabled');
-  assert.equal(anthropicRequests.length, 0);
+  assert.equal(geminiRequests.length, 0);
 
   await restartServer();
   assert.equal((await (await fetch(`${baseUrl}/api/chat/config`)).json()).chat, true);
@@ -149,27 +147,29 @@ test('answers from what the search tool finds in the database, and returns those
   assert.equal(reply, 'The Gray Hand Knit Wool Socks cost €10.90.');
   assert.deepEqual(products.map(({ id, priceCents }) => [id, priceCents]), [[socksId, 1090]]);
 
-  const [first, second] = anthropicRequests.map(({ body }) => body);
-  assert.equal(anthropicRequests[0].url, '/v1/messages');
-  assert.equal(first.model, 'claude-haiku-5-5');
-  assert.ok(first.max_tokens <= 2048);
-  // The model's own default effort, so any CHAT_MODEL works
-  assert.equal(first.output_config, undefined);
-  assert.equal(first.model, 'claude-haiku-5-5');
+  const [first, second] = geminiRequests.map(({ body }) => body);
+  assert.equal(geminiRequests[0].url, '/v1/models/gemini-3.8-flash:generateContent');
+  assert.equal(geminiRequests[0].headers['x-goog-api-key'], 'gemini-test-stand-in');
+  assert.ok(first.generationConfig.maxOutputTokens <= 2048);
+  assert.equal(first.generationConfig.thinkingConfig.thinkingLevel, 'LOW');
+  assert.equal(first.toolConfig.functionCallingConfig.mode, 'AUTO');
   // Only the two read-only tools
-  assert.deepEqual(first.tools.map(({ name }) => name), ['search_products', 'get_product_details']);
-  assert.deepEqual(first.messages, [{ role: 'user', content: 'Do you have wool socks under 15 euros?' }]);
-  assert.match(first.system, /Answer in German/);
-  assert.match(first.system, /untrusted/);
+  assert.deepEqual(first.tools.map(({ functionDeclarations }) => functionDeclarations.map(({ name }) => name)), [
+    ['search_products', 'get_product_details']
+  ]);
+  assert.deepEqual(first.contents, [{ role: 'user', parts: [{ text: 'Do you have wool socks under 15 euros?' }] }]);
+  const system = first.systemInstruction.parts[0].text;
+  assert.match(system, /Answer in German/);
+  assert.match(system, /untrusted/);
   // The store's facts come from the database
-  assert.match(first.system, /1 day for €9.99/);
-  assert.match(first.system, /7 days for free/);
-  assert.match(first.system, /WELCOME10 takes 10% off/);
+  assert.match(system, /1 day for €9.99/);
+  assert.match(system, /7 days for free/);
+  assert.match(system, /WELCOME10 takes 10% off/);
 
-  const toolResult = second.messages.at(-1).content[0];
-  assert.equal(toolResult.type, 'tool_result');
-  assert.equal(toolResult.is_error, false);
-  assert.deepEqual(JSON.parse(toolResult.content).map(({ id, name, price_eur }) => [id, name, price_eur]), [
+  // The model's call goes back as it was, with the tool's answer after it
+  assert.equal(second.contents.at(-2).role, 'model');
+  assert.equal(second.contents.at(-1).role, 'user');
+  assert.deepEqual(lastToolResponse(second).output.map(({ id, name, price_eur }) => [id, name, price_eur]), [
     [socksId, 'Gray Hand Knit Wool Socks', '10.90']
   ]);
 });
@@ -184,7 +184,7 @@ test('says when nothing is found, and gets a product by its id', async () => {
   const { products } = await (await ask('Do you sell spaceships?')).json();
   assert.deepEqual(products.map(({ id }) => id), [socksId]);
 
-  const results = anthropicRequests.map(({ body }) => JSON.parse(body.messages.at(-1).content?.[0]?.content ?? 'null'));
+  const results = geminiRequests.map(({ body }) => lastToolResponse(body)?.output);
   assert.equal(results[1], 'No products found');
   assert.equal(results[2][0].name, 'Gray Hand Knit Wool Socks');
   assert.equal(results[3], 'No products found');
@@ -200,23 +200,20 @@ test('treats what the visitor writes as text: the model can only use the two rea
   assert.equal(response.status, 200);
 
   // The made-up tool ran nothing and was reported to the model as an error
-  const [first, second] = anthropicRequests.map(({ body }) => body);
-  assert.equal(second.messages.at(-1).content[0].is_error, true);
-  assert.equal(second.messages.at(-1).content[0].content, 'Unknown tool');
+  const [first, second] = geminiRequests.map(({ body }) => body);
+  assert.deepEqual(lastToolResponse(second), { error: 'Unknown tool' });
   // The injection reached the model only as a user message, never in the system prompt or as another tool
-  assert.equal(first.system.includes('hacker'), false);
-  assert.equal(first.tools.length, 2);
-  assert.equal(first.messages[0].content, injection);
+  assert.equal(first.systemInstruction.parts[0].text.includes('hacker'), false);
+  assert.equal(first.tools[0].functionDeclarations.length, 2);
+  assert.equal(first.contents[0].parts[0].text, injection);
   // Products are still there
   assert.equal((await (await fetch(`${baseUrl}/api/products`)).json()).length > 0, true);
 });
 
-test('uses CHAT_MODEL, and sends the API key only to the API', async () => {
-  await restartServer({ CHAT_MODEL: 'claude-sonnet-5-5' });
+test('uses CHAT_MODEL', async () => {
+  await restartServer({ CHAT_MODEL: 'gemini-3.6-flash' });
   await ask('Hello');
-  assert.equal(anthropicRequests[0].body.model, 'claude-sonnet-5-5');
-  const { headers } = anthropicRequests[0];
-  assert.ok(`${headers['x-api-key']} ${headers.authorization}`.includes('sk-ant-test-stand-in'), JSON.stringify(Object.keys(headers)));
+  assert.equal(geminiRequests[0].url, '/v1/models/gemini-3.6-flash:generateContent');
 });
 
 test('sends on only the last few messages, starting with a visitor message', async () => {
@@ -226,14 +223,15 @@ test('sends on only the last few messages, starting with a visitor message', asy
   }));
   assert.equal((await chat(conversation)).status, 200);
 
-  const sent = anthropicRequests.at(-1).body.messages;
+  const sent = geminiRequests.at(-1).body.contents;
   // The last 6 are assistant, user, assistant, user, assistant, user. The assistant message that would start it is dropped
-  assert.deepEqual(sent.map(({ content }) => content), ['Message 4', 'Message 5', 'Message 6', 'Message 7', 'Message 8']);
-  assert.equal(sent[0].role, 'user');
+  assert.deepEqual(sent.map(({ parts }) => parts[0].text), ['Message 4', 'Message 5', 'Message 6', 'Message 7', 'Message 8']);
+  // Gemini calls the assistant "model"
+  assert.deepEqual(sent.map(({ role }) => role), ['user', 'model', 'user', 'model', 'user']);
 });
 
 test('refuses messages that are too long, empty or in the wrong shape, without asking the model', async () => {
-  const before = anthropicRequests.length;
+  const before = geminiRequests.length;
   const tooLong = await ask('x'.repeat(501));
   assert.equal(tooLong.status, 400);
   assert.deepEqual(await tooLong.json(), {
@@ -254,7 +252,7 @@ test('refuses messages that are too long, empty or in the wrong shape, without a
   }
   assert.equal((await ask('Hi', { language: 'fr' })).status, 400);
   // Only the one that was fine reached the model
-  assert.equal(anthropicRequests.length, before + 1);
+  assert.equal(geminiRequests.length, before + 1);
 });
 
 test('limits how many questions one visitor can ask, and how many the store answers a day', async () => {
@@ -276,7 +274,7 @@ test('limits how many questions one visitor can ask, and how many the store answ
   const busy = await ask('Hello');
   assert.equal(busy.status, 429);
   assert.equal((await busy.json()).code, 'chatBusy');
-  assert.equal(anthropicRequests.length, 20);
+  assert.equal(geminiRequests.length, 20);
 });
 
 test('gives a clear error when the model fails, refuses, or takes too long', async () => {
@@ -287,23 +285,23 @@ test('gives a clear error when the model fails, refuses, or takes too long', asy
     assert.equal((await response.json()).code, 'chatUnavailable');
   };
 
-  script = [{ status: 500, type: 'error', error: { type: 'api_error', message: 'Overloaded' } }];
+  script = [{ status: 503, error: { code: 503, message: 'The model is overloaded', status: 'UNAVAILABLE' } }];
   await expectUnavailable();
-  script = [textResponse('', 'refusal')];
+  script = [textResponse('', 'SAFETY')];
   await expectUnavailable();
-  script = [textResponse('Cut off', 'max_tokens')];
+  script = [textResponse('Cut off', 'MAX_TOKENS')];
   await expectUnavailable();
 
-  anthropicDelayMs = 1000;
+  geminiDelayMs = 1000;
   await expectUnavailable();
-  anthropicDelayMs = 0;
+  geminiDelayMs = 0;
 });
 
 test('stops asking for tools after a few rounds and makes the model answer', async () => {
   await restartServer();
   script = Array.from({ length: 4 }, () => toolResponse('search_products', { query: 'socks' }));
-  script.push((body) => (body.tool_choice?.type === 'none' ? textResponse('Here you go.') : toolResponse('search_products', {})));
+  script.push((body) => (body.toolConfig.functionCallingConfig.mode === 'NONE' ? textResponse('Here you go.') : toolResponse('search_products', {})));
   const response = await ask('Show me socks');
   assert.equal((await response.json()).reply, 'Here you go.');
-  assert.equal(anthropicRequests.length, 5);
+  assert.equal(geminiRequests.length, 5);
 });

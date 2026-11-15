@@ -2,7 +2,7 @@ import express from 'express';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { chatAddressLimit, chatVisitorLimit } from '../middleware/rateLimits.js';
 import { requireVisitor } from '../middleware/visitor.js';
-import { anthropic } from '../utils/anthropic.js';
+import { gemini } from '../utils/gemini.js';
 import { answerChat, LANGUAGE_NAMES } from '../utils/chatAssistant.js';
 import { refusal, sendRefusal } from '../utils/refusal.js';
 
@@ -56,7 +56,7 @@ function readMessages(messages) {
 }
 
 function requireChat(req, res, next) {
-  if (!anthropic) {
+  if (!gemini) {
     return sendRefusal(res, { status: 404, ...refusal('chatDisabled', 'The shopping assistant is not available') });
   }
   next();
@@ -64,7 +64,7 @@ function requireChat(req, res, next) {
 
 // The frontend only shows the chat button when this says yes
 router.get('/config', (req, res) => {
-  res.json({ chat: Boolean(anthropic), maxMessageLength: MAX_MESSAGE_LENGTH });
+  res.json({ chat: Boolean(gemini), maxMessageLength: MAX_MESSAGE_LENGTH });
 });
 
 router.post('/', requireChat, chatAddressLimit, requireVisitor, chatVisitorLimit, asyncHandler(async (req, res) => {

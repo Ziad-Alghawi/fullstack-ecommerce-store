@@ -15,7 +15,7 @@ A full-stack online store built with React, TypeScript and an Express API: produ
 - **Cancel an order** from your orders page before it ships. Its items go back in stock, and a card payment is refunded in full.
 - **Sold out products:** the Straw Wide Brim Sun Hat can't be added to the cart, and the Woven Straw Tote Bag has only 2 left.
 - **Create an account** to keep your cart, orders and wishlist on every device. What you added as a guest moves to the account when you log in.
-- **Ask the shopping assistant** (the chat button in the corner) for products under a price, or about shipping and coupons. It only answers about this store, and shows the products it found as cards you can add to the cart. It needs `ANTHROPIC_API_KEY` on the server.
+- **Ask the shopping assistant** (the chat button in the corner) for products under a price, or about shipping and coupons. It only answers about this store, and shows the products it found as cards you can add to the cart. It needs `GEMINI_API_KEY` on the server.
 - **Switch to German** with DE in the header, or **turn on dark mode** with the moon next to it. Both are remembered, and until you choose, the store follows your browser's language and your system's theme.
 
 The admin area needs an account listed in `ADMIN_USER_IDS`, so the screenshots below show it.
@@ -48,10 +48,10 @@ The admin area needs an account listed in `ADMIN_USER_IDS`, so the screenshots b
 - Removing any review
 
 **Shopping assistant**
-- A chat button opens an assistant that answers in the store's language, about this store only. It uses the Anthropic Messages API with tool use: it can search the products (text, category, highest price, in stock) and get one product, read-only and straight from the database, so it never invents a product or a price. Shipping, payment, cancelling and coupons come from the delivery options and coupon in the database
+- A chat button opens an assistant that answers in the store's language, about this store only. It uses the Google Gemini API with function calling: it can search the products (text, category, highest price, in stock) and get one product, read-only and straight from the database, so it never invents a product or a price. Shipping, payment, cancelling and coupons come from the delivery options and coupon in the database
 - Products it finds show as the shop's own cards, with Add to Cart and a link to the product page
 - It declines anything else politely. What visitors write only reaches the model as a message, and the model has no tools beyond those two, so a prompt injection has nothing to unlock
-- Limits on cost: per visitor, per address and per day for the whole store, short messages, only the last 6 sent on, a cap on the answer's length and a timeout. Without `ANTHROPIC_API_KEY`, the button is hidden. Tests use a stand-in for the API, never the real one
+- Limits on cost: per visitor, per address and per day for the whole store, short messages, only the last 6 sent on, a cap on the answer's length and a timeout. Without `GEMINI_API_KEY`, the button is hidden. Tests use a stand-in for the API, never the real one
 
 **Prices and domain**
 - Everything is sold in euros, kept as whole cents. One formatter writes them for the language: "€20.67" in English, "20,67 €" in German. Stripe Checkout, its coupons and refunds use euros too
@@ -150,8 +150,8 @@ The frontend reads `.env.local` when it's built, and the backend reads `ecommerc
 | `STRIPE_SECRET_KEY` | Backend | Stripe test key (`sk_test_...`). Without it, card payment is hidden |
 | `STRIPE_WEBHOOK_SECRET` | Backend | Signing secret of the Stripe webhook (`whsec_...`) |
 | `PUBLIC_SITE_URL` | Backend | The store's one public address, like `https://shop.example.com`. Used for link previews, the canonical link, where Stripe and the password-reset email send people back, and CORS. On Render, the service's own address redirects here. Leave empty locally |
-| `ANTHROPIC_API_KEY` | Backend | Anthropic API key. Without it, the shopping assistant is hidden |
-| `CHAT_MODEL` | Backend | The model the assistant uses, `claude-haiku-5-5` by default |
+| `GEMINI_API_KEY` | Backend | Google Gemini API key. Without it, the shopping assistant is hidden |
+| `CHAT_MODEL` | Backend | The model the assistant uses, `gemini-3.8-flash` by default |
 | `CHAT_DAILY_LIMIT` | Backend | Most answers the assistant gives a day for the whole store, 300 by default |
 | `CORS_ORIGIN` | Backend | Other origins allowed to call the API. Defaults to the Vite dev server, and to none in production |
 | `DEMO_RESTOCK` | Backend | `false` turns off the daily restock of demo products |
