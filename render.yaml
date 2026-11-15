@@ -18,6 +18,12 @@ services:
         sync: false
       - key: ADMIN_USER_IDS
         sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: CHAT_MODEL
+        sync: false
+      - key: CHAT_DAILY_LIMIT
+        sync: false
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET

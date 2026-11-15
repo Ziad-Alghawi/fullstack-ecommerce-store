@@ -211,6 +211,20 @@ export const en = {
     refunded: ' Its payment was refunded.',
     notFound: "We couldn't find this package"
   },
+  chat: {
+    open: 'Ask our assistant',
+    close: 'Close the assistant',
+    title: 'Shopping assistant',
+    greeting: "Hi! I'm the store's assistant. Ask me about products, shipping, coupons or how this demo works.",
+    suggestionsLabel: 'Suggested questions',
+    suggestions: ['What do you have under €15?', 'How does shipping work?', 'Is there a coupon I can use?'],
+    inputLabel: 'Your message',
+    placeholder: 'Ask about our products…',
+    send: 'Send',
+    typing: 'The assistant is typing…',
+    from: { user: 'You', assistant: 'Assistant' },
+    foundProducts: 'Products the assistant found'
+  },
   wishlist: {
     title: 'Your wishlist',
     link: 'Wishlist',
@@ -406,6 +420,10 @@ export const en = {
     refundUnavailable: () => "Card payments can't be refunded right now, so this order can't be cancelled.",
     refundNotAllowed: () => "This order's payment can't be refunded by the store.",
     refundFailed: () => "The refund didn't go through, so the order wasn't cancelled. Please try again later.",
+    chatDisabled: () => 'The shopping assistant is not available.',
+    chatMessageTooLong: ({ max }: ApiErrorParams) => `Please keep your message under ${max} characters.`,
+    chatBusy: () => 'The assistant has answered a lot of questions today. Please try again tomorrow.',
+    chatUnavailable: () => "The assistant couldn't answer. Please try again.",
     tooManyRequests: () => 'Too many requests. Please wait a few minutes and try again.'
   },
   // Shown by the browser when a form field is filled in wrong

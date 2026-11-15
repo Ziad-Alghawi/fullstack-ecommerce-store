@@ -4,6 +4,7 @@ import { asyncHandler } from '../middleware/asyncHandler.js';
 import { PRODUCT_CATEGORIES, Product } from '../models/Product.js';
 import { rejectInvalidId } from '../utils/isUuid.js';
 import { restockIfDue } from '../utils/demoRestock.js';
+import { matchesSearch } from '../utils/productSearch.js';
 
 const router = express.Router();
 
@@ -58,13 +59,7 @@ router.get('/', asyncHandler(async (req, res) => {
 
   const search = req.query.search;
   if (typeof search === 'string' && search) {
-    const lowerCaseSearch = search.toLowerCase();
-
-    products = products.filter((product) => {
-      const nameMatch = product.name.toLowerCase().includes(lowerCaseSearch);
-      const keywordsMatch = product.keywords.some((keyword) => keyword.toLowerCase().includes(lowerCaseSearch));
-      return nameMatch || keywordsMatch;
-    });
+    products = products.filter((product) => matchesSearch(product, search));
   }
 
   res.json(compare ? products.sort(compare) : products);

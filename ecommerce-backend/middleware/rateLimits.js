@@ -24,3 +24,7 @@ export const authLimit = limitTo(100);
 export const reviewLimit = limitTo(20);
 // Placing, paying for and cancelling orders
 export const checkoutLimit = limitTo(30);
+// The shopping assistant costs money per message, so it has limits of its own: per address, and per
+// visitor or user, as an address may be shared. requireVisitor has to come before the second
+export const chatAddressLimit = limitTo(30);
+export const chatVisitorLimit = limitTo(15, { keyGenerator: (req) => req.visitorId });

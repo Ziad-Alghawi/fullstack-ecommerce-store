@@ -22,6 +22,7 @@ import couponRoutes, { getFeaturedCoupon } from './routes/coupons.js';
 import meRoutes from './routes/me.js';
 import wishlistRoutes from './routes/wishlist.js';
 import stripeRoutes, { handleWebhook } from './routes/stripe.js';
+import chatRoutes from './routes/chat.js';
 import { corsOrigins } from './utils/corsOrigins.js';
 import { publicSiteUrl } from './utils/publicSiteUrl.js';
 import { renderIndexHtml } from './utils/indexHtml.js';
@@ -77,6 +78,7 @@ app.get('/api/featured-coupon', getFeaturedCoupon);
 app.use('/api/me', meRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/stripe', stripeRoutes);
+app.use('/api/chat', chatRoutes);
 // Checked once for every admin path, so an admin route can't be added without it
 app.use('/api/admin', requireAdmin);
 app.use('/api/admin/coupons', adminCouponRoutes);

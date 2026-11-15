@@ -1,0 +1,195 @@
+/* Below the toasts (1100), which also sit in the bottom right corner */
+.chat-toggle {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 900;
+  min-height: 48px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-md);
+}
+
+.chat-panel {
+  position: fixed;
+  right: var(--space-4);
+  bottom: calc(var(--space-4) + 48px + var(--space-3));
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  width: min(400px, calc(100vw - 2 * var(--space-4)));
+  height: min(600px, calc(100dvh - 48px - 4 * var(--space-4)));
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.chat-title {
+  margin: 0;
+  font-size: var(--font-size-md);
+}
+
+.chat-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.chat-close:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.chat-log {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.chat-turn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.chat-message {
+  max-width: 90%;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.chat-message-assistant {
+  align-self: flex-start;
+  background-color: var(--color-surface-hover);
+}
+
+.chat-message-user {
+  align-self: flex-end;
+  background-color: var(--color-brand-dark);
+  color: var(--color-text-inverse);
+}
+
+.chat-typing {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.chat-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chat-suggestion {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface);
+  color: var(--color-brand-text);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.chat-suggestion:hover {
+  background-color: var(--color-surface-hover);
+}
+
+/* The same product cards as in the shop, laid out as small rows */
+.chat-products {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.chat-products .product-container {
+  --card-padding: var(--space-2);
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  column-gap: var(--space-3);
+  align-items: start;
+}
+
+.chat-products .product-container:hover {
+  box-shadow: var(--shadow-sm);
+  transform: none;
+}
+
+.chat-products .product-container > :not(.product-image-container) {
+  grid-column: 2;
+}
+
+.chat-products .product-image-container {
+  grid-row: 1 / span 5;
+  margin-bottom: 0;
+}
+
+.chat-products .wishlist-button {
+  display: none;
+}
+
+.chat-products .product-name {
+  min-height: 0;
+  margin-bottom: 0;
+  font-size: var(--font-size-sm);
+}
+
+.chat-products .product-price {
+  font-size: var(--font-size-md);
+}
+
+.chat-products .product-actions {
+  padding-top: var(--space-2);
+}
+
+.chat-form {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.chat-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-sm);
+}
+
+.chat-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -137,6 +137,9 @@ The frontend reads `.env.local` when it's built, and the backend reads `ecommerc
 | `STRIPE_SECRET_KEY` | Backend | Stripe test key (`sk_test_...`). Without it, card payment is hidden |
 | `STRIPE_WEBHOOK_SECRET` | Backend | Signing secret of the Stripe webhook (`whsec_...`) |
 | `PUBLIC_SITE_URL` | Backend | The store's one public address, like `https://shop.example.com`. Used for link previews, the canonical link, where Stripe and the password-reset email send people back, and CORS. On Render, the service's own address redirects here. Leave empty locally |
+| `ANTHROPIC_API_KEY` | Backend | Anthropic API key. Without it, the shopping assistant is hidden |
+| `CHAT_MODEL` | Backend | The model the assistant uses, `claude-haiku-5-5` by default |
+| `CHAT_DAILY_LIMIT` | Backend | Most answers the assistant gives a day for the whole store, 300 by default |
 | `CORS_ORIGIN` | Backend | Other origins allowed to call the API. Defaults to the Vite dev server, and to none in production |
 | `DEMO_RESTOCK` | Backend | `false` turns off the daily restock of demo products |
 | `PORT` | Backend | Server port, 3000 by default. Render sets it |
@@ -164,6 +167,7 @@ GitHub Actions runs the checks on every push, runs the API tests a second time o
 ## Security
 
 - helmet sets security headers, including a content security policy that only allows the store's own scripts and connections to the API and Supabase
+- The shopping assistant costs money per answer, so it has its own limits: per visitor, per IP address and per day for the whole store, with short messages, the last 6 messages sent on, a cap on the answer's length and a timeout. What visitors write is only ever a message to the model, which can only run two read-only product tools
 - Rate limits per IP address: 1000 API requests per 15 minutes, and lower limits for checking coupon codes, placing and cancelling orders, writing reviews and checking login tokens. Every request that sends a coupon code shares one limit, so codes can't be guessed through another route. Logging in itself goes to Supabase, which limits it
 - JSON bodies are limited to 10 kB
 - Every `/api/admin` path checks for an admin's verified token before any route runs, and who is an admin is only decided from the token

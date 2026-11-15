@@ -1,6 +1,6 @@
 // Runs the store for the end-to-end tests like it runs in production: the built frontend served by
-// the API, here on a fresh SQLite database. Supabase Auth is replaced by a local stand-in, and Stripe
-// gets no key, so checkout offers paying on delivery only
+// the API, here on a fresh SQLite database. Supabase Auth and the Anthropic API are replaced by local
+// stand-ins, and Stripe gets no key, so checkout offers paying on delivery only
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
@@ -8,7 +8,7 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
-import { ADMIN, AUTH_URL, PASSWORD, STORE_URL } from './settings.ts';
+import { ADMIN, ANTHROPIC_URL, AUTH_URL, PASSWORD, STORE_URL } from './settings.ts';
 
 const root = path.join(import.meta.dirname, '..');
 const issuer = `${AUTH_URL}/auth/v1`;
@@ -80,6 +80,22 @@ function startAuth() {
   return new Promise<void>((resolve) => server.listen(Number(new URL(AUTH_URL).port), resolve));
 }
 
+// Stands in for the Anthropic API: the assistant looks for socks, then says so in the language it was asked for
+function startAnthropic() {
+  const anthropic = http.createServer(async (req, res) => {
+    const { system, messages } = await readJson(req);
+    const hasFoundSocks = JSON.stringify(messages).includes('tool_result');
+    const message = {
+      id: 'msg_e2e', type: 'message', role: 'assistant', model: 'e2e', usage: { input_tokens: 1, output_tokens: 1 },
+      ...(hasFoundSocks
+        ? { stop_reason: 'end_turn', content: [{ type: 'text', text: system.includes('German') ? 'Hier sind Socken.' : 'Here are some socks.' }] }
+        : { stop_reason: 'tool_use', content: [{ type: 'tool_use', id: 'toolu_e2e', name: 'search_products', input: { query: 'socks', max_price_eur: 15 } }] })
+    };
+    res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify(message));
+  });
+  return new Promise<void>((resolve) => anthropic.listen(Number(new URL(ANTHROPIC_URL).port), resolve));
+}
+
 // A production build that logs in with the stand-in. Real environment variables win over .env.local
 function buildFrontend() {
   const { status } = spawnSync(process.execPath, [path.join(root, 'node_modules/vite/bin/vite.js'), 'build'], {
@@ -104,7 +120,9 @@ function startStore() {
       SUPABASE_URL: AUTH_URL,
       ADMIN_USER_IDS: ADMIN.id,
       DATABASE_URL: '',
-      STRIPE_SECRET_KEY: ''
+      STRIPE_SECRET_KEY: '',
+      ANTHROPIC_API_KEY: 'sk-ant-e2e',
+      ANTHROPIC_BASE_URL: ANTHROPIC_URL
     }
   });
   store.on('exit', (code) => {
@@ -117,4 +135,5 @@ function startStore() {
 
 buildFrontend();
 await startAuth();
+await startAnthropic();
 startStore();

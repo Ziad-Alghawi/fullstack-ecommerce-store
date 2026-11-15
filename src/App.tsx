@@ -8,6 +8,7 @@ import { OrdersPage } from './pages/orders/OrdersPage';
 import { TrackingPage } from './pages/TrackingPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ErrorMessage, LoadingMessage } from './components/PageStatus';
+import { ChatWidget } from './components/ChatWidget';
 import { Toasts } from './components/Toasts';
 import { ActionFailureContext } from './hooks/useAction';
 import { ToastContext, useToasts } from './hooks/useToast';
@@ -169,6 +170,7 @@ function App() {
                   ) : (
                     <LoadingMessage />
                   )}
+                  <ChatWidget loadCart={loadCart} />
                 </ActionFailureContext>
               </ToastContext>
             </WishlistContext>

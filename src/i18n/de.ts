@@ -222,6 +222,20 @@ export const de: Messages = {
     refunded: ' Die Zahlung wurde erstattet.',
     notFound: 'Dieses Paket wurde nicht gefunden'
   },
+  chat: {
+    open: 'Assistent fragen',
+    close: 'Assistenten schließen',
+    title: 'Einkaufsassistent',
+    greeting: 'Hallo! Ich bin der Assistent des Shops. Frag mich nach Produkten, Versand, Gutscheinen oder wie diese Demo funktioniert.',
+    suggestionsLabel: 'Vorgeschlagene Fragen',
+    suggestions: ['Was habt ihr unter 15 €?', 'Wie funktioniert der Versand?', 'Gibt es einen Gutschein?'],
+    inputLabel: 'Deine Nachricht',
+    placeholder: 'Frag nach unseren Produkten…',
+    send: 'Senden',
+    typing: 'Der Assistent schreibt…',
+    from: { user: 'Du', assistant: 'Assistent' },
+    foundProducts: 'Produkte, die der Assistent gefunden hat'
+  },
   wishlist: {
     title: 'Deine Merkliste',
     link: 'Merkliste',
@@ -417,6 +431,10 @@ export const de: Messages = {
     refundUnavailable: () => 'Kartenzahlungen können gerade nicht erstattet werden, daher lässt sich diese Bestellung nicht stornieren.',
     refundNotAllowed: () => 'Die Zahlung dieser Bestellung kann der Shop nicht erstatten.',
     refundFailed: () => 'Die Erstattung ist fehlgeschlagen, daher wurde die Bestellung nicht storniert. Versuche es später erneut.',
+    chatDisabled: () => 'Der Einkaufsassistent ist nicht verfügbar.',
+    chatMessageTooLong: ({ max }) => `Bitte halte deine Nachricht unter ${max} Zeichen.`,
+    chatBusy: () => 'Der Assistent hat heute schon sehr viele Fragen beantwortet. Versuche es morgen wieder.',
+    chatUnavailable: () => 'Der Assistent konnte nicht antworten. Bitte versuche es erneut.',
     tooManyRequests: () => 'Zu viele Anfragen. Warte ein paar Minuten und versuche es erneut.'
   },
   validation: {
