@@ -190,12 +190,6 @@ button, select {
   box-shadow: var(--shadow-sm);
 }
 
-/* The logo file has wide margins around the artwork, so crop them */
-.logo {
-  display: block;
-  object-fit: cover;
-}
-
 @media (max-width: 640px) {
   .page {
     padding: var(--space-5) var(--space-4) var(--space-7);

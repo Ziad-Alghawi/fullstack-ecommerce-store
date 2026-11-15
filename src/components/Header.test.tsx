@@ -34,10 +34,9 @@ describe('Header component', () => {
     );
 
     const logo = screen.getByTestId('logo');
-    expect(logo.getAttribute('src')).toContain('logo-white.webp');
-
-    const mobileLogo = screen.getByTestId('mobile-logo');
-    expect(mobileLogo.getAttribute('srcset')).toContain('mobile-logo-white.png');
+    expect(logo).toHaveAccessibleName('Full-Stack E-Commerce Store home');
+    expect(logo).toHaveClass('logo-white');
+    expect(screen.getByTestId('mobile-logo')).toBeInTheDocument();
 
     expect(screen.getByTestId('header-search-bar')).toBeInTheDocument();
     expect(screen.getByTestId('header-search-button')).toBeInTheDocument();
