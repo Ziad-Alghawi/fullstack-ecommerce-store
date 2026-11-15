@@ -1,6 +1,13 @@
 {
-  "name": "ecommerce-project",
+  "name": "fullstack-ecommerce-store",
   "private": true,
+  "description": "A full-stack e-commerce store with React, Express, PostgreSQL, Stripe and an AI shopping assistant",
+  "homepage": "https://shop.ziadalghawi.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ziad-Alghawi/fullstack-ecommerce-store.git"
+  },
+  "author": "Ziad Alghawi (https://ziadalghawi.com)",
   "version": "0.0.0",
   "type": "module",
   "scripts": {

@@ -1,73 +1,55 @@
-# React E-Commerce Store
+# Full-Stack E-Commerce Store
 
-A full-stack online store built with React, TypeScript and an Express API: product search and filters, a cart, coupons, two ways to pay, order tracking with real statuses, customer accounts with a wishlist, an AI shopping assistant, an admin area to run the store, prices in euros, English and German, and a dark mode.
+A complete online store with a React frontend, an Express API and PostgreSQL: catalog and search, cart, coupons, card payments through Stripe, customer accounts, an admin area and an AI shopping assistant.
 
-**Live demo:** https://shop.ziadalghawi.com
+[![CI](https://github.com/Ziad-Alghawi/fullstack-ecommerce-store/actions/workflows/ci.yml/badge.svg)](https://github.com/Ziad-Alghawi/fullstack-ecommerce-store/actions/workflows/ci.yml)
 
-> The demo runs on a free server that sleeps when idle, so the first visit may take about a minute to load.
+**Live demo: https://shop.ziadalghawi.com**
+
+> The demo runs on a free server that sleeps when idle, so the first visit can take about a minute to load.
 
 ![The store's home page with category filters and product cards](docs/screenshots/home.png)
 
 ## Try It
 
-- **Pay by card** with Stripe's test card `4242 4242 4242 4242`, any future date and any CVC. No money moves.
-- **Use a coupon:** type `WELCOME10` at checkout for 10% off the items. Checkout also suggests it.
-- **Cancel an order** from your orders page before it ships. Its items go back in stock, and a card payment is refunded in full.
-- **Sold out products:** the Straw Wide Brim Sun Hat can't be added to the cart, and the Woven Straw Tote Bag has only 2 left.
-- **Create an account** to keep your cart, orders and wishlist on every device. What you added as a guest moves to the account when you log in.
-- **Ask the shopping assistant** (the chat button in the corner) for products under a price, or about shipping and coupons. It only answers about this store, and shows the products it found as cards you can add to the cart. It needs `GEMINI_API_KEY` on the server.
-- **Switch to German** with DE in the header, or **turn on dark mode** with the moon next to it. Both are remembered, and until you choose, the store follows your browser's language and your system's theme.
+- **Card payment:** use Stripe's test card `4242 4242 4242 4242` with any future expiry date and any CVC. Payments run in Stripe test mode, so no money moves.
+- **Coupon:** enter `WELCOME10` at checkout for 10% off the items.
+- **Assistant:** open the chat button and ask for products under a price, or about shipping and coupons.
+- **Other things to click:** cancel an order before it ships (stock returns, a card payment is refunded), save products to a wishlist after signing up, and switch to German or dark mode in the header.
 
-The admin area needs an account listed in `ADMIN_USER_IDS`, so the screenshots below show it.
+The admin area needs an account listed in `ADMIN_USER_IDS`, so it is only shown in the [screenshots](#screenshots).
 
 ## Features
 
 **Shopping**
-- Search by name or keyword, browse by category, filter by price and sort by price, rating or newest. Every filter is kept in the URL, so links and the back button work
-- Product pages with verified reviews: customers who ordered a product can rate and review it, and the shop shows a masked name such as "ja\*\*\*"
-- Up to 4 suggestions from the same category on every product page, best rated first, and the last 4 products this browser looked at
-- A wishlist for logged in customers, saved with the heart on any product. Guests are asked to log in, and a product deleted since shows as no longer available
-- Stock for every product: the shop says when only a few are left, and sold out products can't be added. Demo products that run low are restocked once a day
-- A cart with quantities, three delivery options and a live payment summary
-- Coupons typed at checkout, with the discount worked out by the API every time
-- Order history with each order's status (processing, shipped, delivered or cancelled) and package tracking
-- Cancelling an order until it ships, which puts its items back in stock and refunds a card payment
-- A separate cart and order history for each visitor without signing up, or optional accounts with email and password, a password reset by email and an account page
-- Notifications that confirm actions or explain what failed, with a retry, and loading, empty and error states everywhere
+- Search, categories, price filter and sorting by price, rating or newest, all kept in the URL
+- Product pages with verified reviews (only customers who ordered the product can review it) and related and recently viewed products
+- Stock per product: low stock is shown and sold out products can't be added to the cart
+- Cart with quantities, three delivery options and a live payment summary
+- English and German, a dark mode that follows the system theme, and prices in euros formatted per language
 
-**Language and look**
-- English and German for every page, notification and form hint, chosen in the header, remembered in the browser and taken from the browser's language at first
-- Dates and numbers are written the way the language does, while prices are always in euros, written "€20.67" in English and "20,67 €" in German. The API sends a code with each reason a shopper can run into, so those are translated too. Rarer ones, like an admin form field the browser already checks, stay in English
-- A dark mode that follows the system's theme, with a toggle in the header. Every color is a CSS variable with a light and a dark value, and the end-to-end tests check contrast in both
+**Accounts and payments**
+- Guests get a cart and order history per browser. Optional accounts (email and password, password reset) keep them on every device, and the guest cart moves to the account on login
+- Pay on delivery, or by card with Stripe Checkout in test mode
+- Order statuses (processing, shipped, delivered, cancelled), package tracking, and cancelling until an order ships
+- A wishlist for logged in customers
+
+**AI assistant**
+- A chat assistant on the Google Gemini API that answers in the store's language, about this store only
+- It uses function calling with two read-only tools (search products, get one product), so product names and prices come from the database, not from the model
+- Products it finds appear as the shop's own cards with an Add to Cart button
+- Limits per visitor, per IP address and per day for the whole store, plus short messages, a capped answer length and a timeout
 
 **Admin**
-- An overview with the orders of the last 24 hours and 7 days, the week's revenue, low stock products and the 5 best sellers
-- Every order in one table, filtered by status and payment, where admins mark orders shipped, delivered or cancelled
-- Products to add, edit and delete, with a category, stock and one of the store's photos
-- Coupons with a percentage, an optional last day, and whether checkout suggests them
-- Removing any review
-
-**Shopping assistant**
-- A chat button opens an assistant that answers in the store's language, about this store only. It uses the Google Gemini API with function calling: it can search the products (text, category, highest price, in stock) and get one product, read-only and straight from the database, so it never invents a product or a price. Shipping, payment, cancelling and coupons come from the delivery options and coupon in the database
-- Products it finds show as the shop's own cards, with Add to Cart and a link to the product page
-- It declines anything else politely. What visitors write only reaches the model as a message, and the model has no tools beyond those two, so a prompt injection has nothing to unlock
-- Limits on cost: per visitor, per address and per day for the whole store, short messages, only the last 6 sent on, a cap on the answer's length and a timeout. Without `GEMINI_API_KEY`, the button is hidden. Tests use a stand-in for the API, never the real one
-
-**Prices and domain**
-- Everything is sold in euros, kept as whole cents. One formatter writes them for the language: "€20.67" in English, "20,67 €" in German. Stripe Checkout, its coupons and refunds use euros too
-- The store has one public address, `PUBLIC_SITE_URL`, used for link previews, the canonical link, Stripe's return pages, the password-reset email and CORS. Render's own address redirects there with a 301
-
-**Payments**
-- Pay on delivery, or by card with Stripe Checkout in test mode
-- The API builds every Stripe payment from the cart in the database, so nothing the browser sends sets a price, and a coupon becomes a one-time Stripe discount
-- A card order is only created once Stripe confirms the payment, through the webhook or the page the customer returns to, and one payment always makes exactly one order
-- Cancelling a card order refunds the whole payment first, and the order is only cancelled once Stripe accepts the refund. An idempotency key per order means a repeated cancel never refunds twice, and only payments tagged for this store are refunded
+- Overview: recent orders, weekly revenue, low stock products and best sellers
+- Orders table filtered by status and payment, with actions to ship, deliver or cancel
+- Create, edit and delete products and coupons, and remove reviews
 
 **Quality**
 - Unit, API and end-to-end tests, run by GitHub Actions on every push
-- Security headers, a content security policy, rate limits, body size limits and admin checks on every admin route
-- Keyboard and screen reader friendly: labelled controls, visible focus, focus kept in place after changes, and an automated accessibility check in the end-to-end tests
-- Lighthouse (mobile): 97 / 100 / 96 / 100 for performance, accessibility, best practices and SEO
+- Accessibility checked with axe in both themes, keyboard focus handled across pages
+- Security headers with a content security policy, rate limits, body size limits and admin checks on every admin route
+- Loading, empty and error states with retry on every page
 
 ## Screenshots
 
@@ -81,172 +63,103 @@ The admin area needs an account listed in `ADMIN_USER_IDS`, so the screenshots b
 | **Wishlist in dark mode** | **Product page in German** |
 | ![A wishlist with four saved products, shown in dark mode](docs/screenshots/wishlist-dark.png) | ![A product page in German with its reviews and four suggested products from the same category](docs/screenshots/product-german.png) |
 
-## Tech Stack
-
-- **Frontend:** React 19 with the React Compiler, TypeScript, Vite, React Router, Axios, Day.js
-- **Backend:** Node.js, Express, Sequelize, helmet, express-rate-limit
-- **Database:** Postgres on Supabase in production, SQLite locally
-- **Accounts:** Supabase Auth, with tokens verified in the API using jose
-- **Payments:** Stripe Checkout in test mode
-- **Testing:** Vitest and Testing Library, the Node test runner, Playwright with axe
-- **Tooling and hosting:** ESLint, GitHub Actions, Render
-
 ## Architecture
 
-```text
-Browser ──────────────► Express API (Render) ─────────► Postgres (Supabase)
-  React app              /api/*  JSON routes            SQLite file locally
-  served by the API      /*      the built React app
-     │                       │
-     │ login                 │ checks tokens against Supabase's public keys
-     ▼                       ▼
-Supabase Auth           Stripe Checkout ◄── webhook: checkout.session.completed
+In production one Express service serves both the JSON API under `/api` and the built React app, so the browser talks to a single origin.
+
+```mermaid
+flowchart LR
+  Browser["React SPA<br/>(browser)"] -->|"/api/*"| API["Express API<br/>(Render)"]
+  API --> DB[("PostgreSQL<br/>(Supabase)")]
+  Browser -->|login| Auth["Supabase Auth"]
+  API -->|"verifies JWTs via JWKS"| Auth
+  API -->|"Checkout, refunds"| Stripe["Stripe"]
+  Stripe -->|"webhook"| API
+  API -->|"function calling"| Gemini["Google Gemini"]
 ```
 
-- **One service.** In production the Express server serves both the API under `/api` and the built frontend, so they share one origin and need no CORS.
-- **Visitors and accounts.** The browser makes up a visitor ID and sends it as `X-Visitor-Id`, which keeps a cart and orders per browser without an account. A logged in user sends their Supabase token instead. The API verifies it with the project's public keys and uses the user ID in place of the visitor ID.
-- **The API decides.** Prices, discounts, stock, order totals, who is an admin and which status changes are allowed are all worked out on the server. The frontend only shows what the API says.
-- **Stock without transactions.** The local SQLite driver can't hold a transaction open, so taking stock is a single conditional `UPDATE` per item, and an order that runs short gives back what it took. Status changes work the same way, so two cancels at once can't return stock twice.
-- **Schema changes on startup.** `sync()` creates missing tables, like the wishlist's, and columns added later are added by `server.js` on startup, so a deploy upgrades the Postgres database by itself.
-- **Translations in one place.** The English messages in `src/i18n/en.ts` define the type the German ones must match, so a missing or extra key fails the build. A test checks that every code the API sends has a message.
+Key decisions:
 
-The endpoints are described in [ecommerce-backend/documentation.md](ecommerce-backend/documentation.md).
+- **JWTs verified through JWKS.** Supabase signs login tokens with an asymmetric key. The API checks them against the project's public keys with `jose`, so it holds no secret, and who is an admin is decided only from the verified token.
+- **Idempotent Stripe orders.** The API builds every payment from the cart in the database, so nothing the browser sends sets a price. An order is created only after Stripe confirms the payment, through the webhook or the page the customer returns to, and one payment always makes exactly one order. Cancelling refunds first, with an idempotency key, so a repeated cancel can't refund twice.
+- **Read-only AI tools with rate limits.** The model can only call two read-only product lookups. What visitors type reaches it as a message and unlocks nothing else. Per-visitor, per-IP and daily limits cap the cost.
+- **One public URL.** `PUBLIC_SITE_URL` is the store's only address, used for link previews, the canonical link, Stripe's return pages, password-reset emails and CORS. Render's own `onrender.com` address redirects to it with a 301.
+- **The API decides.** Prices, discounts, stock, totals and allowed status changes are all worked out on the server. Stock changes use single conditional updates, so two cancels at once can't return stock twice.
 
-## Run Locally
+## Tech Stack
 
-Requires Node.js 22 or newer.
+| Area | Technology |
+| --- | --- |
+| Frontend | React 19 (React Compiler), TypeScript, Vite, React Router, Axios, Day.js |
+| Backend | Node.js 22, Express, Sequelize, helmet, express-rate-limit |
+| Database | PostgreSQL on Supabase in production, SQLite locally |
+| Auth | Supabase Auth, tokens verified with jose |
+| Payments | Stripe Checkout (test mode) |
+| AI | Google Gemini API with function calling |
+| Testing | Vitest and Testing Library, Node test runner, Playwright with axe |
+| Tooling and hosting | ESLint, GitHub Actions, Render |
 
-```bash
-npm install
-npm --prefix ecommerce-backend install
-```
+## Testing and CI
 
-Start the backend on http://localhost:3000. It creates a SQLite database and loads the demo data on first run.
-
-```bash
-npm run dev:backend
-```
-
-In a second terminal, start the frontend on http://localhost:5173:
-
-```bash
-npm run dev
-```
-
-The dev server forwards API requests to the backend, so nothing needs configuring. Without the optional settings below, the store runs in guest-only mode with paying on delivery.
-
-## Environment Variables
-
-The frontend reads `.env.local` when it's built, and the backend reads `ecommerce-backend/.env` when it starts, where real environment variables win. [.env.example](.env.example) and [ecommerce-backend/.env.example](ecommerce-backend/.env.example) describe each one.
-
-| Variable | Where | What it does |
+| Suite | Tool | Tests |
 | --- | --- | --- |
-| `VITE_SUPABASE_URL` | Frontend | Supabase project URL. With the key below, turns on login |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Frontend | Supabase publishable key (`sb_publishable_...`), safe to ship to the browser |
-| `VITE_API_URL` | Frontend | The API's URL, only when it's hosted apart from the frontend |
-| `DATABASE_URL` | Backend | Postgres connection string. Without it, a local SQLite file is used |
-| `SUPABASE_URL` | Backend | The same project URL, to verify login tokens and allow Supabase in the content security policy |
-| `ADMIN_USER_IDS` | Backend | Comma-separated Supabase user IDs of the admins |
-| `STRIPE_SECRET_KEY` | Backend | Stripe test key (`sk_test_...`). Without it, card payment is hidden |
-| `STRIPE_WEBHOOK_SECRET` | Backend | Signing secret of the Stripe webhook (`whsec_...`) |
-| `PUBLIC_SITE_URL` | Backend | The store's one public address, like `https://shop.example.com`. Used for link previews, the canonical link, where Stripe and the password-reset email send people back, and CORS. On Render, the service's own address redirects here. Leave empty locally |
-| `GEMINI_API_KEY` | Backend | Google Gemini API key. Without it, the shopping assistant is hidden |
-| `CHAT_MODEL` | Backend | The model the assistant uses, `gemini-3.8-flash` by default |
-| `CHAT_DAILY_LIMIT` | Backend | Most answers the assistant gives a day for the whole store, 300 by default |
-| `CORS_ORIGIN` | Backend | Other origins allowed to call the API. Defaults to the Vite dev server, and to none in production |
-| `DEMO_RESTOCK` | Backend | `false` turns off the daily restock of demo products |
-| `PORT` | Backend | Server port, 3000 by default. Render sets it |
+| Frontend unit | Vitest, Testing Library | 239 in 39 files |
+| API | Node test runner, against the real server | 91 |
+| End-to-end | Playwright, axe | 23 |
 
-## Testing
+Lighthouse (mobile): **97 / 100 / 96 / 100** for performance, accessibility, best practices and SEO.
+
+API tests start the server on a throwaway database and use local stand-ins for Supabase Auth, Stripe and Gemini, so no accounts or keys are needed. GitHub Actions runs lint, unit tests, API tests (on SQLite and on Postgres, as in production), the build and the end-to-end tests on every push.
 
 ```bash
 npm run lint && npm test && npm run build
 npm --prefix ecommerce-backend run lint && npm --prefix ecommerce-backend test
-```
-
-- **Frontend unit tests** (Vitest, Testing Library) render pages and components with a stubbed API.
-- **API tests** (Node test runner) start the real server on a free port with a throwaway SQLite database and call it over HTTP. Local stand-ins for Supabase Auth and the Stripe API sign their own tokens and webhook events, so no accounts or keys are needed. To run them against Postgres, set `TEST_DATABASE_URL` to an empty throwaway database, for example one started with `docker run -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:17` and `postgres://postgres:postgres@localhost:5432/postgres`. A database on `localhost` is reached without SSL.
-- **End-to-end tests** (Playwright) click through a production build of the store, served by the backend on a fresh SQLite database, with a stand-in for Supabase Auth and card payment off. They cover browsing, filtering and search, related and recently viewed products, a guest order paid on delivery, coupons, stock limits, cancelling, an admin shipping an order, the wishlist, switching to German, dark mode, keyboard focus and an axe accessibility check of the pages in both themes.
-
-```bash
 npx playwright install chromium   # once
 npm run test:e2e
 ```
 
-The end-to-end run builds the frontend into `ecommerce-backend/dist` with its test settings, so run `npm run build` again before starting the backend on its own.
+To run the API tests on Postgres, set `TEST_DATABASE_URL` to an empty throwaway database.
 
-GitHub Actions runs the checks on every push, runs the API tests a second time on Postgres, as production uses it, and runs the end-to-end tests as a separate job that uploads a report when they fail.
+## Local Setup
 
-## Security
+Requires Node.js 22 or newer.
 
-- helmet sets security headers, including a content security policy that only allows the store's own scripts and connections to the API and Supabase
-- The shopping assistant costs money per answer, so it has its own limits: per visitor, per IP address and per day for the whole store, with short messages, the last 6 messages sent on, a cap on the answer's length and a timeout. What visitors write is only ever a message to the model, which can only run two read-only product tools
-- Rate limits per IP address: 1000 API requests per 15 minutes, and lower limits for checking coupon codes, placing and cancelling orders, writing reviews and checking login tokens. Every request that sends a coupon code shares one limit, so codes can't be guessed through another route. Logging in itself goes to Supabase, which limits it
-- JSON bodies are limited to 10 kB
-- Every `/api/admin` path checks for an admin's verified token before any route runs, and who is an admin is only decided from the token
-- In production, CORS allows only the public address, plus any origins `CORS_ORIGIN` lists
-- Reviews and orders save a masked name instead of the customer's email
+```bash
+git clone https://github.com/Ziad-Alghawi/fullstack-ecommerce-store.git
+cd fullstack-ecommerce-store
+npm install
+npm --prefix ecommerce-backend install
 
-## Deployment
-
-[render.yaml](render.yaml) describes the Render service: it builds the frontend, installs the backend and starts it. Set the variables marked `sync: false` in the Render dashboard, and redeploy after changing a `VITE_` one, as they're read by the build.
-
-The store is public at one address, set in `PUBLIC_SITE_URL`. Render also serves the service on its own `onrender.com` address, and with `PUBLIC_SITE_URL` set, every request there is redirected (301, same path and query) to the public address. Only Stripe's `POST /api/stripe/webhook` is left out, as Stripe doesn't follow redirects, so point the webhook at the public address. The keep-alive workflow pings the address in the `PUBLIC_SITE_URL` repository variable.
-
-### Database
-
-Locally, the backend keeps its data in a SQLite file, so there's nothing to set up. In production it uses Postgres on Supabase, because the free Render server has no persistent disk.
-
-For Supabase, copy the Session pooler URL from **Connect** in the project dashboard (the direct connection is IPv6 only), fill in the database password and set it as `DATABASE_URL`. The server connects over SSL, creates the tables and adds any new columns on startup, and adds the demo data only to empty tables, so data survives restarts and deploys. When the status column is first added, older orders whose packages have all arrived start as delivered, and the rest as processing.
-
-Supabase pauses free projects after a week without activity, so a [GitHub Actions workflow](.github/workflows/keep-alive.yml) loads the products from the live API every 3 days.
-
-### Accounts
-
-1. In **Authentication > Sign In / Providers**, enable the Email provider.
-2. In **Authentication > URL Configuration**, set the **Site URL** to the store's URL and add it, plus `http://localhost:5173`, to the **Redirect URLs**, with `/reset-password` on each or a wildcard like `https://<your-store>/**`.
-3. In **Project Settings > JWT Keys**, make sure the project signs tokens with an asymmetric key (the default for new projects). The API checks tokens against the public keys, so it needs no secret.
-4. Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_URL`.
-
-To make an account an admin, sign up in the store, copy the user's **User UID** from **Authentication > Users**, add it to `ADMIN_USER_IDS` and restart the backend.
-
-Supabase's built-in email service only sends to the project's team and a few emails an hour. For real customers, set up SMTP in **Authentication > Emails > SMTP Settings**.
-
-### Card Payment
-
-In the Stripe Dashboard in test mode, copy the secret key from **Developers > API keys** into `STRIPE_SECRET_KEY`. For the deployed store, add a webhook endpoint at `<PUBLIC_SITE_URL>/api/stripe/webhook` for the event `checkout.session.completed` and copy its signing secret into `STRIPE_WEBHOOK_SECRET`. Locally the webhook is optional, as the page Stripe returns to confirms the payment too. Only a test key turns card payment on.
-
-The Stripe sandbox is shared with another app, so every session is tagged with `app: "react-ecommerce"` and the webhook ignores events without the tag.
-
-## Project Structure
-
-```text
-.
-├── .github/workflows/    # CI (checks and end-to-end tests) and the database keep-alive
-├── docs/screenshots/     # README images
-├── e2e/                  # Playwright tests and the server they run against
-├── ecommerce-backend/    # Express API
-│   ├── defaultData/      # Demo products, delivery options and coupons
-│   ├── middleware/       # Visitor ID, login tokens, admin check, coupons and rate limits
-│   ├── models/           # Sequelize models
-│   ├── routes/           # API routes
-│   ├── test/             # API tests
-│   ├── utils/            # Stock, order status, demo restock, the shopping assistant and other helpers
-│   ├── documentation.md  # API reference
-│   └── server.js         # Server entry point
-├── public/               # Favicon, link preview image and product photos
-├── src/
-│   ├── components/       # Shared components
-│   ├── hooks/            # Shared hooks
-│   ├── i18n/             # English and German messages, and formatting for each language
-│   ├── pages/            # Home, product, checkout, orders, tracking, login, account, wishlist and admin pages
-│   ├── types/            # Shared TypeScript types
-│   └── utils/            # Helpers and their tests
-└── render.yaml           # Render deployment config
+npm run dev:backend   # API on http://localhost:3000, creates a SQLite file and demo data
+npm run dev           # frontend on http://localhost:5173, in a second terminal
 ```
 
-## Background
+The dev server forwards API requests to the backend. With no settings, the store runs in guest-only mode with pay on delivery. The frontend reads `.env.local` ([.env.example](.env.example)) and the backend reads `ecommerce-backend/.env` ([ecommerce-backend/.env.example](ecommerce-backend/.env.example)).
 
-This project started from a React course. The backend is based on the [SuperSimpleDev course starter code](https://github.com/SuperSimpleDev/ecommerce-project), and I built the frontend while following the course, then migrated it to TypeScript. Since then I've extended it with a separate cart and orders per visitor, accounts with Supabase Auth, product pages with reviews, categories and filters, stock, coupons, card payment with Stripe, order statuses with an admin orders dashboard and overview, a wishlist, related and recently viewed products, German, a dark mode, a security pass, accessibility work, unit, API and end-to-end tests, CI and deployment config.
+| Variable | Where | What it does |
+| --- | --- | --- |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` | Frontend | Supabase project URL and publishable key. Together they turn on login |
+| `VITE_API_URL` | Frontend | The API's URL, only when hosted apart from the frontend |
+| `DATABASE_URL` | Backend | Postgres connection string. Without it, a local SQLite file is used |
+| `SUPABASE_URL` | Backend | Same project URL, used to verify tokens |
+| `ADMIN_USER_IDS` | Backend | Comma-separated Supabase user IDs of the admins |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Backend | Stripe test key and webhook signing secret. Without the key, card payment is hidden |
+| `GEMINI_API_KEY` | Backend | Google Gemini API key. Without it, the assistant is hidden |
+| `CHAT_MODEL`, `CHAT_DAILY_LIMIT` | Backend | The assistant's model and the most answers it gives per day |
+| `PUBLIC_SITE_URL` | Backend | The store's public address. Leave empty locally |
+| `CORS_ORIGIN`, `DEMO_RESTOCK`, `PORT` | Backend | CORS origins, the daily demo restock switch, and the server port |
 
-Product photos are from Unsplash and Pexels and credited in [CREDITS.md](public/images/products/CREDITS.md).
+Deployment to Render, the Supabase and Stripe setup, and the full API reference are in [ecommerce-backend/documentation.md](ecommerce-backend/documentation.md).
+
+## Known Limitations
+
+- Stripe runs in test mode only, so no real payments can be made.
+- The demo is on free tiers: the server sleeps when idle, and Supabase's built-in email service only sends a few emails an hour, so password reset emails to arbitrary addresses are unreliable.
+- The assistant has a daily answer limit for the whole store, so it can be unavailable late in the day, and it is hidden without a Gemini key.
+- The catalog is demo data, restocked once a day, and the product photos come from Unsplash and Pexels ([credits](public/images/products/CREDITS.md)).
+- Local development uses SQLite, which is not transactional in this setup, so stock handling relies on conditional updates rather than transactions.
+- Translations cover English and German only, and a few rare admin form messages stay in English.
+
+## Author
+
+Ziad Alghawi. [ziadalghawi.com](https://ziadalghawi.com)

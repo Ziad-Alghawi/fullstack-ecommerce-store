@@ -1,4 +1,4 @@
-## E-Commerce Backend Documentation
+## Full-Stack E-Commerce Store: API Documentation
 Here's a list of all the URL Paths you can use with this backend and what each URL Path does.
 
 **Products, Delivery Options**
@@ -757,3 +757,36 @@ Changes a coupon. Takes the same fields as [POST /api/admin/coupons](#post-apiad
 - Status 400 with the reason if a field is missing or invalid
 - Status 404 if the coupon doesn't exist
 - Status 409 if another coupon has the same code
+
+---
+
+## Deployment and Configuration
+
+[render.yaml](../render.yaml) describes the Render service: it builds the frontend, installs the backend and starts it. Set the variables marked `sync: false` in the Render dashboard, and redeploy after changing a `VITE_` one, as they're read by the build.
+
+The store is public at one address, set in `PUBLIC_SITE_URL`. Render also serves the service on its own `onrender.com` address, and with `PUBLIC_SITE_URL` set, every request there is redirected (301, same path and query) to the public address. Only Stripe's `POST /api/stripe/webhook` is left out, as Stripe doesn't follow redirects, so point the webhook at the public address. The keep-alive workflow pings the address in the `PUBLIC_SITE_URL` repository variable.
+
+### Database
+
+Locally, the backend keeps its data in a SQLite file, so there's nothing to set up. In production it uses Postgres on Supabase, because the free Render server has no persistent disk.
+
+For Supabase, copy the Session pooler URL from **Connect** in the project dashboard (the direct connection is IPv6 only), fill in the database password and set it as `DATABASE_URL`. The server connects over SSL, creates the tables and adds any new columns on startup, and adds the demo data only to empty tables, so data survives restarts and deploys. When the status column is first added, older orders whose packages have all arrived start as delivered, and the rest as processing.
+
+Supabase pauses free projects after a week without activity, so a [GitHub Actions workflow](../.github/workflows/keep-alive.yml) loads the products from the live API every 3 days.
+
+### Accounts
+
+1. In **Authentication > Sign In / Providers**, enable the Email provider.
+2. In **Authentication > URL Configuration**, set the **Site URL** to the store's URL and add it, plus `http://localhost:5173`, to the **Redirect URLs**, with `/reset-password` on each or a wildcard like `https://<your-store>/**`.
+3. In **Project Settings > JWT Keys**, make sure the project signs tokens with an asymmetric key (the default for new projects). The API checks tokens against the public keys, so it needs no secret.
+4. Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_URL`.
+
+To make an account an admin, sign up in the store, copy the user's **User UID** from **Authentication > Users**, add it to `ADMIN_USER_IDS` and restart the backend.
+
+Supabase's built-in email service only sends to the project's team and a few emails an hour. For real customers, set up SMTP in **Authentication > Emails > SMTP Settings**.
+
+### Card Payment
+
+In the Stripe Dashboard in test mode, copy the secret key from **Developers > API keys** into `STRIPE_SECRET_KEY`. For the deployed store, add a webhook endpoint at `<PUBLIC_SITE_URL>/api/stripe/webhook` for the event `checkout.session.completed` and copy its signing secret into `STRIPE_WEBHOOK_SECRET`. Locally the webhook is optional, as the page Stripe returns to confirms the payment too. Only a test key turns card payment on.
+
+The Stripe sandbox is shared with another app, so every session is tagged with `app: "react-ecommerce"` and the webhook ignores events without the tag.

@@ -182,7 +182,7 @@ function App() {
         <footer className="site-footer" data-testid="site-footer">
           <div className="site-footer-content">
             <span>{t.app.footerNote}</span>
-            <a className="site-footer-link" href="https://github.com/Ziad-Alghawi/react-ecommerce"
+            <a className="site-footer-link" href="https://github.com/Ziad-Alghawi/fullstack-ecommerce-store"
               target="_blank" rel="noreferrer">
               {t.app.footerLink}
             </a>

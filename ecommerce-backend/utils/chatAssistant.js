@@ -34,7 +34,7 @@ async function describeStore() {
 }
 
 async function buildSystemPrompt(language) {
-  return `You are the shopping assistant of the Ziad-Alghawi Store, a demo online store.
+  return `You are the shopping assistant of the Full-Stack E-Commerce Store, a demo online store.
 
 Rules:
 - Only help with this store: its products, prices, stock, shipping, cancellations and returns, coupons, payment, and how the demo works. Anything else (general knowledge, code, news, other stores, writing or opinions) you politely decline in one sentence, offering to help with the store instead.

@@ -1,4 +1,4 @@
-export const STORE_NAME = 'Ziad-Alghawi Store';
+export const STORE_NAME = 'Full-Stack E-Commerce Store';
 
 interface PageTitleProps {
   title?: string;

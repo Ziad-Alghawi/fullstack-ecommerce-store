@@ -21,7 +21,7 @@ test('a visitor switches to German, which stays after a reload', async ({ page }
 
   await page.goto('/page-that-does-not-exist');
   await expect(page.getByRole('heading', { level: 1, name: 'Seite nicht gefunden' })).toBeVisible();
-  await expect(page).toHaveTitle('Seite nicht gefunden | Ziad-Alghawi Store');
+  await expect(page).toHaveTitle('Seite nicht gefunden | Full-Stack E-Commerce Store');
 
   await page.getByRole('button', { name: 'English' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();

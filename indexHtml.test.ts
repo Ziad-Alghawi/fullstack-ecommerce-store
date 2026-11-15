@@ -18,7 +18,7 @@ function readJpegSize(file: string) {
 describe('link previews', () => {
   it('describe the store for search engines and link previews', () => {
     expect(readMeta(html, 'description')).toMatch(/demo store built with React/);
-    expect(readMeta(html, 'og:title')).toBe('Ziad-Alghawi Store: everyday essentials, delivered');
+    expect(readMeta(html, 'og:title')).toBe('Full-Stack E-Commerce Store: everyday essentials, delivered');
     expect(readMeta(html, 'og:description')).toBe(readMeta(html, 'description'));
     expect(readMeta(html, 'og:image:alt')).toBeTruthy();
     expect(readMeta(html, 'twitter:card')).toBe('summary_large_image');

@@ -1,6 +1,6 @@
-# E-Commerce Backend
+# Full-Stack E-Commerce Store: Backend
 
-The Express API for the store. It started from the [SuperSimpleDev ecommerce course](https://github.com/SuperSimpleDev/ecommerce-project) starter code, and I extended it with a separate cart and order history for each visitor, optional user accounts with Supabase Auth, admin routes to manage products, coupons and orders, product reviews, stock, order statuses, card payment with Stripe Checkout, rate limits and security headers, input validation and tests.
+The Express API for the store: a separate cart and order history for each visitor, optional user accounts with Supabase Auth, admin routes to manage products, coupons and orders, product reviews, stock, order statuses, card payment with Stripe Checkout, an AI shopping assistant, rate limits and security headers, input validation and tests.
 
 The endpoints are listed in [documentation.md](documentation.md).
 
