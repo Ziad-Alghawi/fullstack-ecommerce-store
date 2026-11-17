@@ -2,14 +2,17 @@
 import { it, expect, describe } from 'vitest';
 import fs from 'node:fs';
 
-const html = fs.readFileSync('index.html', 'utf8');
+// index.html and public/ are in the project root, one folder up
+const rootFile = (name: string) => new URL(`../${name}`, import.meta.url);
+
+const html = fs.readFileSync(rootFile('index.html'), 'utf8');
 
 function readMeta(page: string, name: string) {
   return page.match(new RegExp(`<meta (?:name|property)="${name}"\\s+content="([^"]*)"`))?.[1];
 }
 
 // A baseline JPEG gives its size in the start of frame segment, after the bytes FF C0
-function readJpegSize(file: string) {
+function readJpegSize(file: URL) {
   const bytes = fs.readFileSync(file);
   const start = bytes.indexOf(Buffer.from([0xff, 0xc0]));
   return { height: bytes.readUInt16BE(start + 5), width: bytes.readUInt16BE(start + 7), fileSize: bytes.length };
@@ -32,7 +35,7 @@ describe('link previews', () => {
   });
 
   it('use an image of the size LinkedIn and X show in full, under their 5 MB limit', () => {
-    const { width, height, fileSize } = readJpegSize('public/og-image.jpg');
+    const { width, height, fileSize } = readJpegSize(rootFile('public/og-image.jpg'));
 
     expect({ width, height }).toEqual({ width: 1200, height: 630 });
     expect(readMeta(html, 'og:image:width')).toBe(String(width));

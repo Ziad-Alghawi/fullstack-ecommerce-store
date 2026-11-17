@@ -6,7 +6,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: './setupTests.js',
+    setupFiles: './setupTests.ts',
     // The backend has its own tests, run with node --test, and the end-to-end tests run with Playwright
     exclude: [...configDefaults.exclude, 'ecommerce-backend/**', 'e2e/**'],
   }
