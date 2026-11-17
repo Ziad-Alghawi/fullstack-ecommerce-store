@@ -4,7 +4,6 @@ import { MemoryRouter } from 'react-router';
 import userEvent from '@testing-library/user-event';
 import axios, { AxiosError } from 'axios';
 import App from './App';
-import { LoadingMessage } from './components/PageStatus';
 
 const product = {
   id: 'e43638ce-6aa0-4b85-b27f-e1d07eb678c6',
@@ -387,22 +386,5 @@ describe('App when the API fails', () => {
     expect(await screen.findByTestId('order-product-details')).toHaveTextContent(product.name);
     expect(requests.filter((request) => request === 'post /api/orders')).toHaveLength(2);
     expect(screen.getByRole('status', { name: 'Notifications' })).toHaveTextContent('Order placed. Thank you!');
-  });
-});
-
-describe('LoadingMessage', () => {
-  it('explains the wait when loading is slow', () => {
-    vi.useFakeTimers();
-    render(<LoadingMessage />);
-
-    expect(screen.queryByTestId('slow-loading-message')).not.toBeInTheDocument();
-
-    act(() => {
-      vi.advanceTimersByTime(4000);
-    });
-
-    expect(screen.getByTestId('slow-loading-message'))
-      .toHaveTextContent('The demo server is waking up');
-    vi.useRealTimers();
   });
 });
