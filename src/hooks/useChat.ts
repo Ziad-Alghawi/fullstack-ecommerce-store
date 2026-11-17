@@ -6,7 +6,7 @@ import type { Product } from '../types/store';
 // Only the last few messages are sent, which is all a shopping question needs
 export const MAX_HISTORY = 6;
 
-export interface ChatMessage {
+interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   // The products the assistant found, shown as cards under its answer

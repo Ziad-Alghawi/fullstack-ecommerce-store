@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useState } from 'react';
 
-export interface ToastAction {
+interface ToastAction {
   label: string;
   onClick: () => void;
 }

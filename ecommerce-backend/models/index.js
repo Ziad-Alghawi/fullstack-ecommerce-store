@@ -51,7 +51,7 @@ if (process.env.DATABASE_URL) {
   sequelize.addHook('afterBulkUpdate', saveDatabaseToFile);
 }
 
-export async function saveDatabaseToFile() {
+async function saveDatabaseToFile() {
   const dbInstance = await sequelize.connectionManager.getConnection();
   const binaryArray = dbInstance.database.export();
   const buffer = Buffer.from(binaryArray);

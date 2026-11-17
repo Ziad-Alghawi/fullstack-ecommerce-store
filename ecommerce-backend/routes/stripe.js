@@ -71,7 +71,7 @@ async function fulfillCheckout(session) {
   return order;
 }
 
-export function requireStripe(req, res, next) {
+function requireStripe(req, res, next) {
   if (!stripe) {
     return res.status(404).json({ error: 'Card payment is not available' });
   }

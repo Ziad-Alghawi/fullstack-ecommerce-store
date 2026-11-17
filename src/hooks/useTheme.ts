@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useState } from 'react';
 import { readStorage, removeStorage, writeStorage } from '../utils/storage';
 
-export type Theme = 'light' | 'dark';
+type Theme = 'light' | 'dark';
 
 interface ThemeSetting {
   theme: Theme;

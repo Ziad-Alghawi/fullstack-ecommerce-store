@@ -7,7 +7,7 @@ export function normalizeCouponCode(code) {
   return typeof code === 'string' ? code.trim().toUpperCase() : '';
 }
 
-export function isExpired(coupon) {
+function isExpired(coupon) {
   return coupon.expiresAt !== null && coupon.expiresAt <= new Date();
 }
 

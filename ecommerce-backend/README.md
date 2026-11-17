@@ -13,7 +13,7 @@ npm install
 npm run dev
 ```
 
-The server runs on http://localhost:3000. It uses a local SQLite file, or Postgres when `DATABASE_URL` is set, and loads the demo products into empty tables on startup. Optional settings are described in [.env.example](.env.example), and the [main README](../README.md#database) explains the Postgres setup.
+The server runs on http://localhost:3000. It uses a local SQLite file, or Postgres when `DATABASE_URL` is set, and loads the demo products into empty tables on startup. Optional settings are described in [.env.example](.env.example), and the [Database section of documentation.md](documentation.md#database) explains the Postgres setup.
 
 ## Test
 
