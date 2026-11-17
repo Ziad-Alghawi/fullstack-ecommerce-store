@@ -1,54 +1,54 @@
 # Full-Stack E-Commerce Store
 
-A complete online store with a React frontend, an Express API and PostgreSQL: catalog and search, cart, coupons, card payments through Stripe, customer accounts, an admin area and an AI shopping assistant.
+An online store with a React frontend, an Express API and PostgreSQL. It has a catalog with search, a cart, coupons, Stripe card payments, customer accounts, an admin area and an AI shopping assistant.
 
 [![CI](https://github.com/Ziad-Alghawi/fullstack-ecommerce-store/actions/workflows/ci.yml/badge.svg)](https://github.com/Ziad-Alghawi/fullstack-ecommerce-store/actions/workflows/ci.yml)
 
-**Live demo: https://shop.ziadalghawi.com**
+Live demo: https://shop.ziadalghawi.com
 
-> The demo runs on a free server that sleeps when idle, so the first visit can take about a minute to load.
+> The demo runs on a free Render instance that sleeps when idle. The first request can take about a minute.
 
 ![The store's home page with category filters and product cards](docs/screenshots/home.png)
 
 ## Try It
 
-- **Card payment:** use Stripe's test card `4242 4242 4242 4242` with any future expiry date and any CVC. Payments run in Stripe test mode, so no money moves.
-- **Coupon:** enter `WELCOME10` at checkout for 10% off the items.
-- **Assistant:** open the chat button and ask for products under a price, or about shipping and coupons.
-- **Other things to click:** cancel an order before it ships (stock returns, a card payment is refunded), save products to a wishlist after signing up, and switch to German or dark mode in the header.
+- Card payment: Stripe test card `4242 4242 4242 4242`, any future expiry date, any CVC. Stripe runs in test mode.
+- Coupon: `WELCOME10` gives 10% off the items.
+- Assistant: open the chat button and ask for products under a price, or about shipping and coupons.
+- Also: cancel an order before it ships (stock is returned, card payments are refunded), save products to a wishlist after signing up, switch to German or dark mode in the header.
 
-The admin area needs an account listed in `ADMIN_USER_IDS`, so it is only shown in the [screenshots](#screenshots).
+The admin area requires an account listed in `ADMIN_USER_IDS`, so it is only shown in the [screenshots](#screenshots).
 
 ## Features
 
-**Shopping**
-- Search, categories, price filter and sorting by price, rating or newest, all kept in the URL
-- Product pages with verified reviews (only customers who ordered the product can review it) and related and recently viewed products
-- Stock per product: low stock is shown and sold out products can't be added to the cart
-- Cart with quantities, three delivery options and a live payment summary
-- English and German, a dark mode that follows the system theme, and prices in euros formatted per language
+### Shopping
+- Search, categories, price filter and sorting (price, rating, newest), stored in the URL
+- Product pages with reviews from customers who ordered the product, plus related and recently viewed products
+- Stock per product; low stock is shown and sold-out products can't be added to the cart
+- Cart with quantities, three delivery options and a payment summary
+- English and German, dark mode following the system theme, euro prices formatted per language
 
-**Accounts and payments**
-- Guests get a cart and order history per browser. Optional accounts (email and password, password reset) keep them on every device, and the guest cart moves to the account on login
-- Pay on delivery, or by card with Stripe Checkout in test mode
-- Order statuses (processing, shipped, delivered, cancelled), package tracking, and cancelling until an order ships
-- A wishlist for logged in customers
+### Accounts and payments
+- Guests get a cart and order history per browser. Optional accounts (email and password, password reset) share them across devices; the guest cart moves to the account on login
+- Pay on delivery, or by card through Stripe Checkout (test mode)
+- Order statuses (processing, shipped, delivered, cancelled), package tracking, cancelling until an order ships
+- Wishlist for logged-in customers
 
-**AI assistant**
-- A chat assistant on the Google Gemini API that answers in the store's language, about this store only
-- It uses function calling with two read-only tools (search products, get one product), so product names and prices come from the database, not from the model
-- Products it finds appear as the shop's own cards with an Add to Cart button
-- Limits per visitor, per IP address and per day for the whole store, plus short messages, a capped answer length and a timeout
+### AI assistant
+- Chat assistant on the Google Gemini API, answering in the store's language and only about this store
+- Function calling with two read-only tools (search products, get one product), so names and prices come from the database
+- Products it returns are shown as the shop's product cards with an Add to Cart button
+- Limits per visitor, per IP address and per day, plus a message length limit, a capped answer length and a timeout
 
-**Admin**
-- Overview: recent orders, weekly revenue, low stock products and best sellers
-- Orders table filtered by status and payment, with actions to ship, deliver or cancel
-- Create, edit and delete products and coupons, and remove reviews
+### Admin
+- Overview: recent orders, weekly revenue, low-stock products, best sellers
+- Orders table filtered by status and payment method, with ship, deliver and cancel actions
+- Create, edit and delete products and coupons; remove reviews
 
-**Quality**
+### Quality
 - Unit, API and end-to-end tests, run by GitHub Actions on every push
-- Accessibility checked with axe in both themes, keyboard focus handled across pages
-- Security headers with a content security policy, rate limits, body size limits and admin checks on every admin route
+- Accessibility checked with axe in both themes; keyboard focus handled across pages
+- Security headers with a content security policy, rate limits, body size limits, admin checks on every admin route
 - Loading, empty and error states with retry on every page
 
 ## Screenshots
@@ -56,16 +56,16 @@ The admin area needs an account listed in `ADMIN_USER_IDS`, so it is only shown 
 | Product page | Checkout |
 | --- | --- |
 | ![A product page with its photo, rating, price and reviews](docs/screenshots/product.png) | ![Checkout with delivery options, the payment summary and a coupon field](docs/screenshots/checkout.png) |
-| **Admin overview and products** | **Admin orders** |
+| Admin overview and products | Admin orders |
 | ![The admin overview with order counts, revenue, low stock and top products, above the product table](docs/screenshots/admin-products.png) | ![The admin orders table with filters, statuses and buttons to ship or cancel](docs/screenshots/admin-orders.png) |
-| **Shopping assistant** | **Assistant on a phone, in dark mode** |
+| Shopping assistant | Assistant on a phone, dark mode |
 | ![The shopping assistant open over the shop, answering with a product card and an Add to Cart button](docs/screenshots/chat.png) | ![The shopping assistant on a 375 px wide phone in dark mode](docs/screenshots/chat-mobile.png) |
-| **Wishlist in dark mode** | **Product page in German** |
+| Wishlist, dark mode | Product page in German |
 | ![A wishlist with four saved products, shown in dark mode](docs/screenshots/wishlist-dark.png) | ![A product page in German with its reviews and four suggested products from the same category](docs/screenshots/product-german.png) |
 
 ## Architecture
 
-In production one Express service serves both the JSON API under `/api` and the built React app, so the browser talks to a single origin.
+In production a single Express service serves the JSON API under `/api` and the built React app, so the browser talks to one origin.
 
 ```mermaid
 flowchart LR
@@ -78,13 +78,13 @@ flowchart LR
   API -->|"function calling"| Gemini["Google Gemini"]
 ```
 
-Key decisions:
+Design notes:
 
-- **JWTs verified through JWKS.** Supabase signs login tokens with an asymmetric key. The API checks them against the project's public keys with `jose`, so it holds no secret, and who is an admin is decided only from the verified token.
-- **Idempotent Stripe orders.** The API builds every payment from the cart in the database, so nothing the browser sends sets a price. An order is created only after Stripe confirms the payment, through the webhook or the page the customer returns to, and one payment always makes exactly one order. Cancelling refunds first, with an idempotency key, so a repeated cancel can't refund twice.
-- **Read-only AI tools with rate limits.** The model can only call two read-only product lookups. What visitors type reaches it as a message and unlocks nothing else. Per-visitor, per-IP and daily limits cap the cost.
-- **One public URL.** `PUBLIC_SITE_URL` is the store's only address, used for link previews, the canonical link, Stripe's return pages, password-reset emails and CORS. Render's own `onrender.com` address redirects to it with a 301.
-- **The API decides.** Prices, discounts, stock, totals and allowed status changes are all worked out on the server. Stock changes use single conditional updates, so two cancels at once can't return stock twice.
+- JWT verification via JWKS. Supabase signs tokens with an asymmetric key. The API verifies them against the project's public keys with `jose`, so it holds no secret. Admin status is read only from the verified token.
+- Idempotent Stripe orders. Every payment is built from the cart in the database; the browser never sets a price. An order is created only after Stripe confirms the payment, from either the webhook or the return page, and one payment always produces exactly one order. Cancelling refunds first with an idempotency key, so a repeated cancel can't refund twice.
+- Read-only AI tools with rate limits. The model can only call two read-only product lookups. User input reaches it as a message and grants no other access. Per-visitor, per-IP and daily limits cap the cost.
+- One public URL. `PUBLIC_SITE_URL` is used for link previews, the canonical link, Stripe return pages, password-reset emails and CORS. Render's `onrender.com` address redirects to it with a 301.
+- Server-side rules. Prices, discounts, stock, totals and allowed status changes are computed on the server. Stock changes use single conditional updates, so two concurrent cancels can't return stock twice.
 
 ## Tech Stack
 
@@ -103,13 +103,13 @@ Key decisions:
 
 | Suite | Tool | Tests |
 | --- | --- | --- |
-| Frontend unit | Vitest, Testing Library | 239 in 39 files |
+| Frontend unit | Vitest, Testing Library | 239 in 40 files |
 | API | Node test runner, against the real server | 91 |
 | End-to-end | Playwright, axe | 23 |
 
-Lighthouse (mobile): **97 / 100 / 96 / 100** for performance, accessibility, best practices and SEO.
+Lighthouse (mobile): 97 / 100 / 96 / 100 for performance, accessibility, best practices and SEO.
 
-API tests start the server on a throwaway database and use local stand-ins for Supabase Auth, Stripe and Gemini, so no accounts or keys are needed. GitHub Actions runs lint, unit tests, API tests (on SQLite and on Postgres, as in production), the build and the end-to-end tests on every push.
+The API tests start the server on a throwaway database, one per test file, with local stand-ins for Supabase Auth, Stripe and Gemini, so no accounts or keys are needed. GitHub Actions runs lint, unit tests, API tests (on SQLite and on Postgres), the build and the end-to-end tests on every push.
 
 ```bash
 npm run lint && npm test && npm run build
@@ -118,7 +118,7 @@ npx playwright install chromium   # once
 npm run test:e2e
 ```
 
-To run the API tests on Postgres, set `TEST_DATABASE_URL` to an empty throwaway database.
+To run the API tests on Postgres, set `TEST_DATABASE_URL` to a server where the user can create databases. Each test file creates its own database and drops it afterwards.
 
 ## Local Setup
 
@@ -134,31 +134,31 @@ npm run dev:backend   # API on http://localhost:3000, creates a SQLite file and 
 npm run dev           # frontend on http://localhost:5173, in a second terminal
 ```
 
-The dev server forwards API requests to the backend. With no settings, the store runs in guest-only mode with pay on delivery. The frontend reads `.env.local` ([.env.example](.env.example)) and the backend reads `ecommerce-backend/.env` ([ecommerce-backend/.env.example](ecommerce-backend/.env.example)).
+The Vite dev server proxies API requests to the backend. Without any settings the store runs in guest-only mode with pay on delivery. The frontend reads `.env.local` ([.env.example](.env.example)), the backend reads `ecommerce-backend/.env` ([ecommerce-backend/.env.example](ecommerce-backend/.env.example)).
 
-| Variable | Where | What it does |
+| Variable | Where | Purpose |
 | --- | --- | --- |
-| `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` | Frontend | Supabase project URL and publishable key. Together they turn on login |
-| `VITE_API_URL` | Frontend | The API's URL, only when hosted apart from the frontend |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` | Frontend | Supabase project URL and publishable key; both are needed to enable login |
+| `VITE_API_URL` | Frontend | API URL, only when it is hosted separately from the frontend |
 | `DATABASE_URL` | Backend | Postgres connection string. Without it, a local SQLite file is used |
 | `SUPABASE_URL` | Backend | Same project URL, used to verify tokens |
 | `ADMIN_USER_IDS` | Backend | Comma-separated Supabase user IDs of the admins |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Backend | Stripe test key and webhook signing secret. Without the key, card payment is hidden |
 | `GEMINI_API_KEY` | Backend | Google Gemini API key. Without it, the assistant is hidden |
-| `CHAT_MODEL`, `CHAT_DAILY_LIMIT` | Backend | The assistant's model and the most answers it gives per day |
+| `CHAT_MODEL`, `CHAT_DAILY_LIMIT` | Backend | Assistant model and maximum answers per day |
 | `PUBLIC_SITE_URL` | Backend | The store's public address. Leave empty locally |
-| `CORS_ORIGIN`, `DEMO_RESTOCK`, `PORT` | Backend | CORS origins, the daily demo restock switch, and the server port |
+| `CORS_ORIGIN`, `DEMO_RESTOCK`, `PORT` | Backend | CORS origins, daily demo restock switch, server port |
 
-Deployment to Render, the Supabase and Stripe setup, and the full API reference are in [ecommerce-backend/documentation.md](ecommerce-backend/documentation.md).
+Render deployment, Supabase and Stripe setup, and the API reference are in [ecommerce-backend/documentation.md](ecommerce-backend/documentation.md).
 
 ## Known Limitations
 
-- Stripe runs in test mode only, so no real payments can be made.
-- The demo is on free tiers: the server sleeps when idle, and Supabase's built-in email service only sends a few emails an hour, so password reset emails to arbitrary addresses are unreliable.
-- The assistant has a daily answer limit for the whole store, so it can be unavailable late in the day, and it is hidden without a Gemini key.
-- The catalog is demo data, restocked once a day, and the product photos come from Unsplash and Pexels ([credits](public/images/products/CREDITS.md)).
-- Local development uses SQLite, which is not transactional in this setup, so stock handling relies on conditional updates rather than transactions.
-- Translations cover English and German only, and a few rare admin form messages stay in English.
+- Stripe runs in test mode only.
+- The demo uses free tiers: the server sleeps when idle, and Supabase's built-in email service sends only a few emails per hour, so password reset emails are unreliable.
+- The assistant has a store-wide daily answer limit, so it can be unavailable late in the day. It is hidden without a Gemini key.
+- The catalog is demo data, restocked once a day. Product photos are from Unsplash and Pexels ([credits](public/images/products/CREDITS.md)).
+- Local development uses SQLite, which is not transactional in this setup, so stock handling relies on conditional updates instead of transactions.
+- Only English and German are supported, and a few rare admin form messages are English only.
 
 ## Author
 
