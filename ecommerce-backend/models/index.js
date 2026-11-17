@@ -2,14 +2,6 @@ import { Sequelize } from 'sequelize';
 import sqlJsAsSqlite3 from 'sql.js-as-sqlite3';
 import fs from 'fs';
 
-const isUsingRDS = process.env.RDS_HOSTNAME && process.env.RDS_USERNAME && process.env.RDS_PASSWORD;
-const dbType = process.env.DB_TYPE || 'mysql';
-const defaultPorts = {
-  mysql: 3306,
-  postgres: 5432,
-};
-const defaultPort = defaultPorts[dbType];
-
 export let sequelize;
 
 if (process.env.DATABASE_URL) {
@@ -21,16 +13,6 @@ if (process.env.DATABASE_URL) {
       // Supabase signs its certificate with its own CA, which Node doesn't trust by default
       ssl: isLocal ? false : { require: true, rejectUnauthorized: false }
     },
-    logging: false
-  });
-} else if (isUsingRDS) {
-  sequelize = new Sequelize({
-    database: process.env.RDS_DB_NAME,
-    username: process.env.RDS_USERNAME,
-    password: process.env.RDS_PASSWORD,
-    host: process.env.RDS_HOSTNAME,
-    port: process.env.RDS_PORT || defaultPort,
-    dialect: dbType,
     logging: false
   });
 } else {
