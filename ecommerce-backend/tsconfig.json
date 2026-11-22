@@ -1,0 +1,21 @@
+{
+  // Type checking only: Node 24 runs the .ts files directly by stripping the types, so nothing is
+  // compiled, and every import names the file it loads (./x.ts)
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "allowJs": true,
+    "checkJs": false
+  },
+  "include": ["**/*.ts", "**/*.js"],
+  "exclude": ["node_modules", "dist", "test", "eslint.config.js"]
+}

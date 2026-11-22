@@ -28,6 +28,9 @@ jobs:
       - name: Backend lint
         run: npm --prefix ecommerce-backend run lint
 
+      - name: Backend typecheck
+        run: npm --prefix ecommerce-backend run typecheck
+
       - name: Test
         run: npm test
 

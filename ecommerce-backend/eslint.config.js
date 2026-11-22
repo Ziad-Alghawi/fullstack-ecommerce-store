@@ -1,7 +1,8 @@
 import js from '@eslint/js';
 import globals from 'globals';
+import tseslint from 'typescript-eslint';
 
-export default [
+export default tseslint.config(
   { ignores: ['dist'] },
   js.configs.recommended,
   {
@@ -11,4 +12,8 @@ export default [
       globals: globals.node,
     },
   },
-];
+  {
+    files: ['**/*.ts'],
+    extends: [tseslint.configs.recommended],
+  },
+);
