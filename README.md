@@ -6,7 +6,7 @@ An online store with a React frontend, an Express API and PostgreSQL. It has a c
 
 Live demo: https://shop.ziadalghawi.com
 
-> The demo runs on a free Render instance that sleeps when idle. The first request can take about a minute.
+> The demo runs on a free Render instance. A scheduled ping keeps it awake during the European day (06:00 to 22:00 UTC); at night it sleeps, and the first request can take about a minute.
 
 ![The store's home page with category filters and product cards](docs/screenshots/home.png)
 
@@ -154,7 +154,7 @@ Render deployment, Supabase and Stripe setup, and the API reference are in [ecom
 ## Known Limitations
 
 - Stripe runs in test mode only.
-- The demo uses free tiers: the server sleeps when idle, and Supabase's built-in email service sends only a few emails per hour, so password reset emails are unreliable.
+- The demo uses free tiers: the server sleeps at night, and Supabase's built-in email service sends only a few emails per hour, so password reset emails are unreliable.
 - The assistant has a store-wide daily answer limit, so it can be unavailable late in the day. It is hidden without a Gemini key.
 - The catalog is demo data, restocked once a day. Product photos are from Unsplash and Pexels ([credits](public/images/products/CREDITS.md)).
 - Local development uses SQLite, which is not transactional in this setup, so stock handling relies on conditional updates instead of transactions.

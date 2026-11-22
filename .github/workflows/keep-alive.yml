@@ -1,10 +1,12 @@
 name: Keep alive
 
-# Supabase pauses free projects after a week without activity, and loading
-# the products reads from the database
+# The free Render service sleeps after 15 minutes without requests, and Supabase pauses free projects
+# after a week without activity. Loading the products every 10 minutes from 06:00 to 21:59 UTC keeps
+# both awake during the European day (about 500 of Render's 750 free hours a month) and lets the
+# service sleep at night
 on:
   schedule:
-    - cron: '0 6 */3 * *'
+    - cron: '*/10 6-21 * * *'
   workflow_dispatch:
 
 jobs:
