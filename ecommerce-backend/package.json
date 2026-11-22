@@ -15,25 +15,25 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@google/genai": "^3.3.0",
+    "@google/genai": "^3.6.1",
     "compression": "^1.8.2",
-    "cors": "^2.8.5",
+    "cors": "^2.8.6",
     "express": "^4.21.2",
-    "express-rate-limit": "^8.7.4",
+    "express-rate-limit": "^8.7.5",
     "helmet": "^8.3.0",
-    "jose": "^6.2.17",
+    "jose": "^6.2.18",
     "patch-package": "8.0.1",
-    "pg": "^8.16.0",
+    "pg": "^8.23.1",
     "sequelize": "^6.6.5",
-    "sql.js": "1.10.3",
-    "sql.js-as-sqlite3": "0.2.1",
-    "stripe": "^23.1.0"
+    "sql.js": "1.17.0",
+    "sql.js-as-sqlite3": "0.2.3",
+    "stripe": "^23.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "eslint": "^9.39.5",
     "globals": "^16.5.0",
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.14"
   },
   "overrides": {
     "sequelize": {
