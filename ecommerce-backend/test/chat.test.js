@@ -40,11 +40,13 @@ async function startGemini() {
   geminiApi = http.createServer(async (req, res) => {
     let body = '';
     for await (const chunk of req) body += chunk;
-    geminiRequests.push({ url: req.url, headers: req.headers, body: JSON.parse(body) });
+    const request = { url: req.url, headers: req.headers, body: JSON.parse(body) };
+    geminiRequests.push(request);
+    // The step is taken before the delay, so a slow request that outlives its test can't take the next test's step
+    const step = script.shift() ?? textResponse('Happy to help.');
     await new Promise((resolve) => setTimeout(resolve, geminiDelayMs));
 
-    const step = script.shift() ?? textResponse('Happy to help.');
-    const { status = 200, ...response } = typeof step === 'function' ? step(geminiRequests.at(-1).body) : step;
+    const { status = 200, ...response } = typeof step === 'function' ? step(request.body) : step;
     res.writeHead(status, { 'Content-Type': 'application/json' }).end(JSON.stringify(response));
   });
   await new Promise((resolve) => geminiApi.listen(0, resolve));
