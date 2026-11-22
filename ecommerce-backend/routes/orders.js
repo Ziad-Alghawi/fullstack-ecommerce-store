@@ -1,16 +1,16 @@
 import express from 'express';
 import { asyncHandler } from '../middleware/asyncHandler.js';
-import { Order } from '../models/Order.js';
-import { Product } from '../models/Product.js';
-import { DeliveryOption, estimateDeliveryTimeMs } from '../models/DeliveryOption.js';
-import { CartItem } from '../models/CartItem.js';
+import { Order } from '../models/Order.ts';
+import { Product } from '../models/Product.ts';
+import { DeliveryOption, estimateDeliveryTimeMs } from '../models/DeliveryOption.ts';
+import { CartItem } from '../models/CartItem.ts';
 import { calculatePaymentSummary } from './paymentSummary.js';
 import { readCoupon } from '../middleware/coupon.js';
-import { rejectInvalidId } from '../utils/isUuid.js';
-import { getStockShortage, giveBackStock, takeStock } from '../utils/stock.js';
-import { refusal, sendRefusal } from '../utils/refusal.js';
-import { changeStatus } from '../utils/orderStatus.js';
-import { maskEmail } from '../utils/maskEmail.js';
+import { rejectInvalidId } from '../utils/isUuid.ts';
+import { getStockShortage, giveBackStock, takeStock } from '../utils/stock.ts';
+import { refusal, sendRefusal } from '../utils/refusal.ts';
+import { changeStatus } from '../utils/orderStatus.ts';
+import { maskEmail } from '../utils/maskEmail.ts';
 import { checkoutLimit } from '../middleware/rateLimits.js';
 
 const router = express.Router();

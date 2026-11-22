@@ -1,11 +1,11 @@
 import express from 'express';
 import { asyncHandler } from '../middleware/asyncHandler.js';
-import { Account } from '../models/Account.js';
-import { ORDER_STATUSES, Order } from '../models/Order.js';
-import { Product } from '../models/Product.js';
-import { rejectInvalidId } from '../utils/isUuid.js';
-import { changeStatus, getNextStatuses } from '../utils/orderStatus.js';
-import { sendRefusal } from '../utils/refusal.js';
+import { Account } from '../models/Account.ts';
+import { ORDER_STATUSES, Order } from '../models/Order.ts';
+import { Product } from '../models/Product.ts';
+import { rejectInvalidId } from '../utils/isUuid.ts';
+import { changeStatus, getNextStatuses } from '../utils/orderStatus.ts';
+import { sendRefusal } from '../utils/refusal.ts';
 
 const router = express.Router();
 

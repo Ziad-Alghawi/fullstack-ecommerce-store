@@ -1,10 +1,17 @@
-import { DeliveryOption } from '../models/DeliveryOption.js';
+import { DeliveryOption } from '../models/DeliveryOption.ts';
 import { findFeaturedCoupon } from '../middleware/coupon.js';
-import { FinishReason, FunctionCallingConfigMode, ThinkingLevel } from '@google/genai';
-import { gemini, CHAT_MODEL } from './gemini.js';
-import { chatTools, runChatTool } from './chatTools.js';
+import { FinishReason, FunctionCallingConfigMode, ThinkingLevel, type Content } from '@google/genai';
+import type { ProductModel } from '../models/Product.ts';
+import { gemini, CHAT_MODEL } from './gemini.ts';
+import { chatTools, runChatTool } from './chatTools.ts';
 
 export const LANGUAGE_NAMES = { en: 'English', de: 'German' };
+export type Language = keyof typeof LANGUAGE_NAMES;
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
 // Each answer may take a few rounds of tools, then it has to be said
 const MAX_TOOL_ROUNDS = 4;
 const MAX_CARDS = 4;
@@ -12,7 +19,7 @@ const MAX_CARDS = 4;
 const MAX_OUTPUT_TOKENS = 2048;
 const TIMEOUT_MS = Number(process.env.CHAT_TIMEOUT_MS) || 25_000;
 
-const formatEuros = (cents) => (cents === 0 ? 'free' : `€${(cents / 100).toFixed(2)}`);
+const formatEuros = (cents: number) => (cents === 0 ? 'free' : `€${(cents / 100).toFixed(2)}`);
 
 // The store's own facts, read from the database so they stay true when an admin changes them
 async function describeStore() {
@@ -33,7 +40,7 @@ async function describeStore() {
   ].join('\n');
 }
 
-async function buildSystemPrompt(language) {
+async function buildSystemPrompt(language: Language) {
   return `You are the shopping assistant of the Full-Stack E-Commerce Store, a demo online store.
 
 Rules:
@@ -51,11 +58,14 @@ const FORMAT_ROLES = { user: 'user', assistant: 'model' };
 
 // Answers the last message of the conversation, with the products the tools found. The reply is
 // empty when the model gave none. Errors from the API are left to the caller
-export async function answerChat(messages, language) {
+export async function answerChat(messages: ChatMessage[], language: Language) {
+  if (!gemini) {
+    throw new Error('The shopping assistant is off: GEMINI_API_KEY is not set.');
+  }
   const systemInstruction = await buildSystemPrompt(language);
   const abortSignal = AbortSignal.timeout(TIMEOUT_MS);
-  const contents = messages.map(({ role, content }) => ({ role: FORMAT_ROLES[role], parts: [{ text: content }] }));
-  const found = new Map();
+  const contents: Content[] = messages.map(({ role, content }) => ({ role: FORMAT_ROLES[role], parts: [{ text: content }] }));
+  const found = new Map<string, ProductModel>();
 
   for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
     const response = await gemini.models.generateContent({
@@ -87,7 +97,11 @@ export async function answerChat(messages, language) {
       return { functionResponse: { id, name, response: isError ? { error: output } : { output } } };
     }));
     // The model's turn goes back as it came, which keeps the thought signatures of its function calls
-    contents.push(response.candidates[0].content, { role: 'user', parts: results });
+    const modelTurn = response.candidates?.[0]?.content;
+    if (!modelTurn) {
+      throw new Error('The model asked for tools without a turn to send back.');
+    }
+    contents.push(modelTurn, { role: 'user', parts: results });
   }
   return { reply: '', products: [] };
 }

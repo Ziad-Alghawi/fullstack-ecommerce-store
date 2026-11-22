@@ -1,7 +1,7 @@
-import { Account } from '../models/Account.js';
-import { CartItem } from '../models/CartItem.js';
-import { Order } from '../models/Order.js';
-import { isUuid } from '../utils/isUuid.js';
+import { Account } from '../models/Account.ts';
+import { CartItem } from '../models/CartItem.ts';
+import { Order } from '../models/Order.ts';
+import { isUuid } from '../utils/isUuid.ts';
 import { getUser } from './auth.js';
 
 // The database is shared and small, so only the most recent guests keep their

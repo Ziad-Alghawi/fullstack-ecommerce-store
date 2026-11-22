@@ -2,9 +2,9 @@ import express from 'express';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { chatAddressLimit, chatVisitorLimit } from '../middleware/rateLimits.js';
 import { requireVisitor } from '../middleware/visitor.js';
-import { gemini } from '../utils/gemini.js';
-import { answerChat, LANGUAGE_NAMES } from '../utils/chatAssistant.js';
-import { refusal, sendRefusal } from '../utils/refusal.js';
+import { gemini } from '../utils/gemini.ts';
+import { answerChat, LANGUAGE_NAMES } from '../utils/chatAssistant.ts';
+import { refusal, sendRefusal } from '../utils/refusal.ts';
 
 const router = express.Router();
 

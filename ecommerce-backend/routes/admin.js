@@ -1,7 +1,7 @@
 import express from 'express';
 import { asyncHandler } from '../middleware/asyncHandler.js';
-import { PRODUCT_CATEGORIES, Product } from '../models/Product.js';
-import { rejectInvalidId } from '../utils/isUuid.js';
+import { PRODUCT_CATEGORIES, Product } from '../models/Product.ts';
+import { rejectInvalidId } from '../utils/isUuid.ts';
 
 const router = express.Router();
 

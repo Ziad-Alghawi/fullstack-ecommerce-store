@@ -1,5 +1,5 @@
 import { createRemoteJWKSet, errors, jwtVerify } from 'jose';
-import { isUuid } from '../utils/isUuid.js';
+import { isUuid } from '../utils/isUuid.ts';
 
 // Supabase signs sessions with a private key and publishes the public keys,
 // so tokens are checked here without any secret. Without SUPABASE_URL, accounts are off

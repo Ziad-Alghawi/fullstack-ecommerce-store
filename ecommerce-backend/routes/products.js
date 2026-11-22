@@ -1,10 +1,10 @@
 import express from 'express';
 import { Op } from 'sequelize';
 import { asyncHandler } from '../middleware/asyncHandler.js';
-import { PRODUCT_CATEGORIES, Product } from '../models/Product.js';
-import { rejectInvalidId } from '../utils/isUuid.js';
-import { restockIfDue } from '../utils/demoRestock.js';
-import { matchesSearch } from '../utils/productSearch.js';
+import { PRODUCT_CATEGORIES, Product } from '../models/Product.ts';
+import { rejectInvalidId } from '../utils/isUuid.ts';
+import { restockIfDue } from '../utils/demoRestock.ts';
+import { matchesSearch } from '../utils/productSearch.ts';
 
 const router = express.Router();
 

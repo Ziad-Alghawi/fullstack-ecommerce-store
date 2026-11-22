@@ -1,4 +1,4 @@
-import { publicSiteUrl } from '../utils/publicSiteUrl.js';
+import { publicSiteUrl } from '../utils/publicSiteUrl.ts';
 
 // Render also serves the store on an address of its own, which it names in RENDER_EXTERNAL_HOSTNAME.
 // Everything asked there moves to the public address, so the store has one address to link to and index

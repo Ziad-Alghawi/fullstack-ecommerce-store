@@ -1,8 +1,8 @@
 import express from 'express';
 import { Op } from 'sequelize';
 import { asyncHandler } from '../middleware/asyncHandler.js';
-import { Order } from '../models/Order.js';
-import { Product } from '../models/Product.js';
+import { Order } from '../models/Order.ts';
+import { Product } from '../models/Product.ts';
 
 const router = express.Router();
 

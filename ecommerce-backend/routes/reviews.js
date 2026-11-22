@@ -3,13 +3,13 @@ import { Op } from 'sequelize';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { getUserId, requireUser } from '../middleware/auth.js';
 import { isAdmin } from '../middleware/admin.js';
-import { Order } from '../models/Order.js';
-import { Product } from '../models/Product.js';
-import { MAX_REVIEW_TEXT_LENGTH, Review } from '../models/Review.js';
-import { isUuid } from '../utils/isUuid.js';
+import { Order } from '../models/Order.ts';
+import { Product } from '../models/Product.ts';
+import { MAX_REVIEW_TEXT_LENGTH, Review } from '../models/Review.ts';
+import { isUuid } from '../utils/isUuid.ts';
 import { reviewLimit } from '../middleware/rateLimits.js';
-import { maskEmail } from '../utils/maskEmail.js';
-import { refusal } from '../utils/refusal.js';
+import { maskEmail } from '../utils/maskEmail.ts';
+import { refusal } from '../utils/refusal.ts';
 
 // Mounted under /api/products/:productId, so it needs the parent's productId
 const router = express.Router({ mergeParams: true });

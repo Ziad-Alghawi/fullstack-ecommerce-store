@@ -1,10 +1,34 @@
-import { DataTypes } from 'sequelize';
-import { sequelize } from './index.js';
+import { DataTypes, type CreationOptional, type InferAttributes, type InferCreationAttributes, type Model } from 'sequelize';
+import { sequelize } from './index.ts';
 
 // Processing, then shipped, then delivered. Only an order that hasn't shipped can be cancelled
-export const ORDER_STATUSES = ['processing', 'shipped', 'delivered', 'cancelled'];
+export const ORDER_STATUSES = ['processing', 'shipped', 'delivered', 'cancelled'] as const;
+export type OrderStatus = typeof ORDER_STATUSES[number];
 
-export const Order = sequelize.define('Order', {
+export type PaymentMethod = 'delivery' | 'card';
+
+// What an order keeps of each item. Deliveries are worked out when the order is placed
+export interface OrderProduct {
+  productId: string;
+  quantity: number;
+  estimatedDeliveryTimeMs: number;
+}
+
+export interface OrderModel extends Model<InferAttributes<OrderModel>, InferCreationAttributes<OrderModel>> {
+  id: CreationOptional<string>;
+  visitorId: string;
+  orderTimeMs: number;
+  totalCostCents: number;
+  products: OrderProduct[];
+  paymentMethod: PaymentMethod;
+  customerName: CreationOptional<string | null>;
+  status: OrderStatus;
+  stripeSessionId: CreationOptional<string | null>;
+  createdAt: CreationOptional<Date>;
+  updatedAt: CreationOptional<Date>;
+}
+
+export const Order = sequelize.define<OrderModel>('Order', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,

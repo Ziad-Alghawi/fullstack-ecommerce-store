@@ -1,7 +1,7 @@
-import { Coupon } from '../models/Coupon.js';
+import { Coupon } from '../models/Coupon.ts';
 import { asyncHandler } from './asyncHandler.js';
 import { limitTo } from './rateLimits.js';
-import { refusal } from '../utils/refusal.js';
+import { refusal } from '../utils/refusal.ts';
 
 export function normalizeCouponCode(code) {
   return typeof code === 'string' ? code.trim().toUpperCase() : '';

@@ -1,4 +1,4 @@
-import { publicSiteUrl } from './publicSiteUrl.js';
+import { publicSiteUrl } from './publicSiteUrl.ts';
 
 // Comma-separated list of frontend origins allowed to call the API from another domain. In production
 // the API serves the store itself, which needs none, so only the Vite dev server is allowed by default.

@@ -1,6 +1,6 @@
 import express from 'express';
 import { asyncHandler } from '../middleware/asyncHandler.js';
-import { sequelize } from '../models/index.js';
+import { sequelize } from '../models/index.ts';
 import { addDefaultData } from '../defaultData/addDefaultData.js';
 
 const router = express.Router();

@@ -1,5 +1,5 @@
 import { rateLimit } from 'express-rate-limit';
-import { refusal } from '../utils/refusal.js';
+import { refusal } from '../utils/refusal.ts';
 
 const WINDOW_MS = 15 * 60 * 1000;
 // RATE_LIMIT_SCALE multiplies every limit, for example so the API tests can make many requests

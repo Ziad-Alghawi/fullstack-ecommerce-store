@@ -1,10 +1,10 @@
-import { Order } from '../models/Order.js';
-import { giveBackStock } from './stock.js';
-import { refundCardOrder, stripe } from './stripe.js';
-import { refusal } from './refusal.js';
+import { Order, type OrderModel, type OrderStatus } from '../models/Order.ts';
+import { giveBackStock } from './stock.ts';
+import { refundCardOrder, stripe } from './stripe.ts';
+import { refusal } from './refusal.ts';
 
 // Where an order can go from each status. Delivered and cancelled orders stay as they are
-const NEXT_STATUSES = {
+const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
   processing: ['shipped', 'cancelled'],
   shipped: ['delivered'],
   delivered: [],
@@ -12,7 +12,7 @@ const NEXT_STATUSES = {
 };
 
 // Why the order can't move to the status, or null when it can
-function getStatusChangeRefusal(order, status) {
+function getStatusChangeRefusal(order: OrderModel, status: OrderStatus) {
   if (!NEXT_STATUSES[order.status].includes(status)) {
     return NEXT_STATUSES[order.status].length === 0
       ? refusal('orderFinal', `This order is already ${order.status}.`, { status: order.status })
@@ -25,14 +25,14 @@ function getStatusChangeRefusal(order, status) {
 }
 
 // The statuses an admin can move the order to now
-export function getNextStatuses(order) {
+export function getNextStatuses(order: OrderModel) {
   return NEXT_STATUSES[order.status].filter((status) => !getStatusChangeRefusal(order, status));
 }
 
 // Moves the order to the status, or returns { status, error } with why it can't. One statement checks
 // and changes it, so two requests at once can't both cancel the order and give its stock back twice.
 // A card order is only cancelled once its payment is refunded
-export async function changeStatus(order, status) {
+export async function changeStatus(order: OrderModel, status: OrderStatus) {
   const statusRefusal = getStatusChangeRefusal(order, status);
   if (statusRefusal) {
     return { status: 409, ...statusRefusal };

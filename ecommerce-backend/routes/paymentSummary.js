@@ -1,8 +1,8 @@
 import express from 'express';
 import { asyncHandler } from '../middleware/asyncHandler.js';
-import { CartItem } from '../models/CartItem.js';
-import { Product } from '../models/Product.js';
-import { DeliveryOption } from '../models/DeliveryOption.js';
+import { CartItem } from '../models/CartItem.ts';
+import { Product } from '../models/Product.ts';
+import { DeliveryOption } from '../models/DeliveryOption.ts';
 import { readCoupon } from '../middleware/coupon.js';
 
 const router = express.Router();

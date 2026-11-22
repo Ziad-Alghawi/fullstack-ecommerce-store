@@ -1,17 +1,17 @@
 import express from 'express';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { requireVisitor } from '../middleware/visitor.js';
-import { CartItem } from '../models/CartItem.js';
-import { Order } from '../models/Order.js';
-import { Product } from '../models/Product.js';
+import { CartItem } from '../models/CartItem.ts';
+import { Order } from '../models/Order.ts';
+import { Product } from '../models/Product.ts';
 import { calculatePaymentSummary } from './paymentSummary.js';
 import { createOrder, getCustomerName, getOrderRefusal } from './orders.js';
-import { corsOrigins } from '../utils/corsOrigins.js';
-import { publicSiteUrl } from '../utils/publicSiteUrl.js';
-import { APP_TAG, stripe } from '../utils/stripe.js';
-import { takePaidStock } from '../utils/stock.js';
+import { corsOrigins } from '../utils/corsOrigins.ts';
+import { publicSiteUrl } from '../utils/publicSiteUrl.ts';
+import { APP_TAG, stripe } from '../utils/stripe.ts';
+import { takePaidStock } from '../utils/stock.ts';
 import { readCoupon } from '../middleware/coupon.js';
-import { sendRefusal } from '../utils/refusal.js';
+import { sendRefusal } from '../utils/refusal.ts';
 import { checkoutLimit } from '../middleware/rateLimits.js';
 
 const router = express.Router();

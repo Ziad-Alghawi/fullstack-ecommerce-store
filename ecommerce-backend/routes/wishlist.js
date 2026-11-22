@@ -1,9 +1,9 @@
 import express from 'express';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { requireUser } from '../middleware/auth.js';
-import { Product } from '../models/Product.js';
-import { WishlistItem } from '../models/WishlistItem.js';
-import { rejectInvalidId } from '../utils/isUuid.js';
+import { Product } from '../models/Product.ts';
+import { WishlistItem } from '../models/WishlistItem.ts';
+import { rejectInvalidId } from '../utils/isUuid.ts';
 
 const router = express.Router();
 

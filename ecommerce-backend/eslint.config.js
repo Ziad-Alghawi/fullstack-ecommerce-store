@@ -15,5 +15,9 @@ export default tseslint.config(
   {
     files: ['**/*.ts'],
     extends: [tseslint.configs.recommended],
+    rules: {
+      // Leaving a field out with a rest pattern, like { demoRating, ...product }
+      '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
+    },
   },
 );

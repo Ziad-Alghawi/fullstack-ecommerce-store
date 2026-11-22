@@ -1,10 +1,10 @@
 import { Op } from 'sequelize';
-import { DemoRestock } from '../models/DemoRestock.js';
-import { Product } from '../models/Product.js';
+import { DemoRestock } from '../models/DemoRestock.ts';
+import { Product } from '../models/Product.ts';
 import { defaultProducts } from '../defaultData/defaultProducts.js';
 
 // The store is a public demo, so visitors would otherwise sell it out for good. DEMO_RESTOCK=false turns it off
-const isOn = !['false', '0', 'off'].includes(process.env.DEMO_RESTOCK?.trim().toLowerCase());
+const isOn = !['false', '0', 'off'].includes(process.env.DEMO_RESTOCK?.trim().toLowerCase() ?? '');
 // Below this, a demo product goes back to the stock it started with
 const LOW_STOCK = 5;
 // DEMO_RESTOCK_INTERVAL_MS can shorten the day, for example in tests
@@ -24,7 +24,7 @@ async function restockDemoProducts() {
 
 // Kept in memory, so most requests skip the database
 let nextRunAtMs = 0;
-let running = null;
+let running: Promise<void> | null = null;
 
 // After a failed run, so a broken database isn't asked again on every product request
 const RETRY_MS = 10 * 60 * 1000;

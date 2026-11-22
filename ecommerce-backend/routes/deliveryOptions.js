@@ -1,6 +1,6 @@
 import express from 'express';
 import { asyncHandler } from '../middleware/asyncHandler.js';
-import { DeliveryOption, estimateDeliveryTimeMs } from '../models/DeliveryOption.js';
+import { DeliveryOption, estimateDeliveryTimeMs } from '../models/DeliveryOption.ts';
 
 const router = express.Router();
 

@@ -1,7 +1,16 @@
-import { DataTypes } from 'sequelize';
-import { sequelize } from './index.js';
+import { DataTypes, type CreationOptional, type InferAttributes, type InferCreationAttributes, type Model } from 'sequelize';
+import { sequelize } from './index.ts';
 
-export const CartItem = sequelize.define('CartItem', {
+export interface CartItemModel extends Model<InferAttributes<CartItemModel>, InferCreationAttributes<CartItemModel>> {
+  visitorId: string;
+  productId: string;
+  quantity: number;
+  deliveryOptionId: string;
+  createdAt: CreationOptional<Date>;
+  updatedAt: CreationOptional<Date>;
+}
+
+export const CartItem = sequelize.define<CartItemModel>('CartItem', {
   visitorId: {
     type: DataTypes.UUID,
     allowNull: false

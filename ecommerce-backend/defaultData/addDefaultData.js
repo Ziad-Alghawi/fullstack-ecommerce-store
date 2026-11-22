@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
-import { Product } from '../models/Product.js';
-import { DeliveryOption } from '../models/DeliveryOption.js';
-import { Coupon } from '../models/Coupon.js';
+import { Product } from '../models/Product.ts';
+import { DeliveryOption } from '../models/DeliveryOption.ts';
+import { Coupon } from '../models/Coupon.ts';
 import { defaultProducts } from './defaultProducts.js';
 import { defaultDeliveryOptions } from './defaultDeliveryOptions.js';
 import { defaultCoupons } from './defaultCoupons.js';

@@ -1,10 +1,10 @@
 import express from 'express';
 import { asyncHandler } from '../middleware/asyncHandler.js';
-import { CartItem } from '../models/CartItem.js';
-import { Product } from '../models/Product.js';
-import { DeliveryOption } from '../models/DeliveryOption.js';
-import { isUuid, rejectInvalidId } from '../utils/isUuid.js';
-import { refusal } from '../utils/refusal.js';
+import { CartItem } from '../models/CartItem.ts';
+import { Product } from '../models/Product.ts';
+import { DeliveryOption } from '../models/DeliveryOption.ts';
+import { isUuid, rejectInvalidId } from '../utils/isUuid.ts';
+import { refusal } from '../utils/refusal.ts';
 
 const router = express.Router();
 

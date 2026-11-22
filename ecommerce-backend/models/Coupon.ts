@@ -1,7 +1,18 @@
-import { DataTypes } from 'sequelize';
-import { sequelize } from './index.js';
+import { DataTypes, type CreationOptional, type InferAttributes, type InferCreationAttributes, type Model } from 'sequelize';
+import { sequelize } from './index.ts';
 
-export const Coupon = sequelize.define('Coupon', {
+export interface CouponModel extends Model<InferAttributes<CouponModel>, InferCreationAttributes<CouponModel>> {
+  id: CreationOptional<string>;
+  code: string;
+  percentOff: number;
+  expiresAt: CreationOptional<Date | null>;
+  active: CreationOptional<boolean>;
+  featured: CreationOptional<boolean>;
+  createdAt: CreationOptional<Date>;
+  updatedAt: CreationOptional<Date>;
+}
+
+export const Coupon = sequelize.define<CouponModel>('Coupon', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,

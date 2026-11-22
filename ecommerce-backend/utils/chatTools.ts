@@ -1,7 +1,7 @@
-import { Op } from 'sequelize';
-import { PRODUCT_CATEGORIES, Product } from '../models/Product.js';
-import { isUuid } from './isUuid.js';
-import { matchesSearch } from './productSearch.js';
+import { Op, type WhereAttributeHash } from 'sequelize';
+import { PRODUCT_CATEGORIES, Product, isProductCategory, type ProductModel } from '../models/Product.ts';
+import { isUuid } from './isUuid.ts';
+import { matchesSearch } from './productSearch.ts';
 
 const MAX_RESULTS = 4;
 
@@ -34,7 +34,7 @@ export const chatTools = [
 ];
 
 // What the model sees of a product. Prices are in euros, as shoppers read them
-function describeProduct(product) {
+function describeProduct(product: ProductModel) {
   return {
     id: product.id,
     name: product.name,
@@ -47,9 +47,12 @@ function describeProduct(product) {
   };
 }
 
-async function searchProducts({ query, category, max_price_eur: maxPriceEur, in_stock_only: inStockOnly }) {
-  const where = {};
-  if (typeof category === 'string' && PRODUCT_CATEGORIES.includes(category)) {
+// What the model sends is unknown until it's checked
+type ToolInput = Record<string, unknown>;
+
+async function searchProducts({ query, category, max_price_eur: maxPriceEur, in_stock_only: inStockOnly }: ToolInput) {
+  const where: WhereAttributeHash<ProductModel> = {};
+  if (isProductCategory(category)) {
     where.category = category;
   }
   if (typeof maxPriceEur === 'number' && Number.isFinite(maxPriceEur)) {
@@ -66,7 +69,7 @@ async function searchProducts({ query, category, max_price_eur: maxPriceEur, in_
     .slice(0, MAX_RESULTS);
 }
 
-async function getProductDetails({ product_id: productId }) {
+async function getProductDetails({ product_id: productId }: ToolInput) {
   const product = isUuid(productId) ? await Product.findByPk(productId) : null;
   return product ? [product] : [];
 }
@@ -75,11 +78,11 @@ const tools = { search_products: searchProducts, get_product_details: getProduct
 
 // Runs a tool the model asked for, always read-only. The products are for showing as cards, and
 // the output is what the model reads back. What the model sends is checked here, not trusted
-export async function runChatTool(name, input) {
-  if (!Object.hasOwn(tools, name)) {
+export async function runChatTool(name: string | undefined, input: unknown) {
+  if (!name || !Object.hasOwn(tools, name)) {
     return { output: 'Unknown tool', isError: true, products: [] };
   }
-  const products = await tools[name](input && typeof input === 'object' ? input : {});
+  const products = await tools[name as keyof typeof tools](input && typeof input === 'object' ? input as ToolInput : {});
   return {
     output: products.length ? products.map(describeProduct) : 'No products found',
     isError: false,
