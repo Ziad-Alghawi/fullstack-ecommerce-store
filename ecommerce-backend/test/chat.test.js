@@ -9,7 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const serverFile = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'server.js');
+const serverFile = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'server.ts');
 const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ecommerce-chat-test-'));
 const socksId = 'e43638ce-6aa0-4b85-b27f-e1d07eb678c6';
 

@@ -166,7 +166,7 @@ router.get('/checkout-sessions/:sessionId/order', checkoutLimit, requireVisitor,
   res.json(await fulfillCheckout(session));
 }));
 
-// Needs the raw body to check Stripe's signature, so server.js mounts it before the JSON parser
+// Needs the raw body to check Stripe's signature, so server.ts mounts it before the JSON parser
 export const handleWebhook = [requireStripe, asyncHandler(async (req, res) => {
   let event: Stripe.Event;
   try {

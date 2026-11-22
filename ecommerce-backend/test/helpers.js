@@ -11,7 +11,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SignJWT, exportJWK, generateKeyPair } from 'jose';
 
-const serverFile = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'server.js');
+const serverFile = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'server.ts');
 // The database file is saved in the working directory, so use an empty
 // folder to keep the real database.sqlite untouched
 export const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ecommerce-backend-test-'));

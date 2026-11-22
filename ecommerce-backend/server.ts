@@ -1,6 +1,7 @@
 // Must come first: the modules below read their settings as soon as they load
-import './loadEnv.js';
-import express from 'express';
+import './loadEnv.ts';
+import express, { type NextFunction, type Request, type Response } from 'express';
+import type { Model, ModelStatic } from 'sequelize';
 import cors from 'cors';
 import compression from 'compression';
 import helmet from 'helmet';
@@ -34,7 +35,7 @@ import { CartItem } from './models/CartItem.ts';
 import { Order } from './models/Order.ts';
 import { Product } from './models/Product.ts';
 import { Coupon } from './models/Coupon.ts';
-import { addDefaultData } from './defaultData/addDefaultData.js';
+import { addDefaultData } from './defaultData/addDefaultData.ts';
 import { restockIfDue } from './utils/demoRestock.ts';
 import { markArrivedOrdersDelivered } from './utils/orderStatus.ts';
 import fs from 'fs';
@@ -97,7 +98,7 @@ app.use(express.static(path.join(__dirname, 'dist'), { index: false }));
 
 // Let React Router handle every other path
 const indexPath = path.join(__dirname, 'dist', 'index.html');
-let indexHtml;
+let indexHtml: string | undefined;
 app.get('*', (req, res) => {
   if (!indexHtml && fs.existsSync(indexPath)) {
     indexHtml = fs.readFileSync(indexPath, 'utf8');
@@ -109,8 +110,8 @@ app.get('*', (req, res) => {
 });
 
 // Express only treats a handler with four arguments as an error handler, so next has to stay
-// eslint-disable-next-line no-unused-vars
-app.use((err, req, res, next) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: Error & { status?: number }, req: Request, res: Response, next: NextFunction) => {
   // Errors like a malformed JSON body come with their own 4xx status and a message safe to show
   const status = err.status || 500;
   if (status >= 500) {
@@ -134,24 +135,27 @@ for (const model of [CartItem, Order]) {
 }
 
 // sync() creates missing tables and indexes but doesn't change existing tables, so
-// add the columns that came later first, as their indexes need them
-const laterColumns = [
-  [Product, ['deletedAt', 'demoRating', 'category', 'stock']],
-  [Order, ['paymentMethod', 'stripeSessionId', 'status', 'customerName']],
-  [Coupon, ['featured']]
-];
-for (const [model, columns] of laterColumns) {
+// add the columns that came later first, as their indexes need them. Returns the columns it added
+async function addLaterColumns<M extends Model>(model: ModelStatic<M>, columns: (keyof M['_attributes'] & string)[]) {
   const existingColumns = await sequelize.getQueryInterface()
     .describeTable(model.getTableName())
     .catch(() => null);
+  const attributes = model.getAttributes();
+  const added = [];
   for (const column of columns.filter((column) => existingColumns && !existingColumns[column])) {
-    await sequelize.getQueryInterface().addColumn(model.getTableName(), column, model.getAttributes()[column]);
+    await sequelize.getQueryInterface().addColumn(model.getTableName(), column, attributes[column]);
     console.log(`Added ${column} to the ${model.getTableName()} table.`);
-    if (model === Order && column === 'status') {
-      await markArrivedOrdersDelivered();
-    }
+    added.push(column);
   }
+  return added;
 }
+
+await addLaterColumns(Product, ['deletedAt', 'demoRating', 'category', 'stock']);
+const addedOrderColumns = await addLaterColumns(Order, ['paymentMethod', 'stripeSessionId', 'status', 'customerName']);
+if (addedOrderColumns.includes('status')) {
+  await markArrivedOrdersDelivered();
+}
+await addLaterColumns(Coupon, ['featured']);
 
 await sequelize.sync();
 

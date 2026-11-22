@@ -91,7 +91,7 @@ Design notes:
 | Area | Technology |
 | --- | --- |
 | Frontend | React 19 (React Compiler), TypeScript, Vite, React Router, Axios, Day.js |
-| Backend | Node.js 24, Express, Sequelize, helmet, express-rate-limit |
+| Backend | Node.js 24, TypeScript (run directly by Node, no build step), Express, Sequelize, helmet, express-rate-limit |
 | Database | PostgreSQL on Supabase in production, SQLite locally |
 | Auth | Supabase Auth, tokens verified with jose |
 | Payments | Stripe Checkout (test mode) |
@@ -109,11 +109,11 @@ Design notes:
 
 Lighthouse (mobile): 97 / 100 / 96 / 100 for performance, accessibility, best practices and SEO.
 
-The API tests start the server on a throwaway database, one per test file, with local stand-ins for Supabase Auth, Stripe and Gemini, so no accounts or keys are needed. GitHub Actions runs lint, unit tests, API tests (on SQLite and on Postgres), the build and the end-to-end tests on every push.
+The API tests start the server on a throwaway database, one per test file, with local stand-ins for Supabase Auth, Stripe and Gemini, so no accounts or keys are needed. GitHub Actions runs lint, the backend typecheck, unit tests, API tests (on SQLite and on Postgres), the build and the end-to-end tests on every push.
 
 ```bash
 npm run lint && npm test && npm run build
-npm --prefix ecommerce-backend run lint && npm --prefix ecommerce-backend test
+npm --prefix ecommerce-backend run lint && npm --prefix ecommerce-backend run typecheck && npm --prefix ecommerce-backend test
 npx playwright install chromium   # once
 npm run test:e2e
 ```

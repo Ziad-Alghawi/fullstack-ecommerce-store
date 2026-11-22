@@ -1,13 +1,13 @@
-import { Op } from 'sequelize';
+import { Op, type CreationAttributes, type Model, type ModelStatic } from 'sequelize';
 import { Product } from '../models/Product.ts';
 import { DeliveryOption } from '../models/DeliveryOption.ts';
 import { Coupon } from '../models/Coupon.ts';
-import { defaultProducts } from './defaultProducts.js';
-import { defaultDeliveryOptions } from './defaultDeliveryOptions.js';
-import { defaultCoupons } from './defaultCoupons.js';
+import { defaultProducts } from './defaultProducts.ts';
+import { defaultDeliveryOptions } from './defaultDeliveryOptions.ts';
+import { defaultCoupons } from './defaultCoupons.ts';
 
 // The models are sorted by createdAt, so each row gets its own timestamp to keep the list order
-function withTimestamps(rows, timestamp) {
+function withTimestamps<T extends object>(rows: T[], timestamp: number) {
   return rows.map((row, index) => ({
     ...row,
     createdAt: new Date(timestamp + index),
@@ -31,18 +31,20 @@ async function fillNewProductColumns() {
   }
 }
 
+async function fillIfEmpty<M extends Model>(model: ModelStatic<M>, rows: CreationAttributes<M>[], timestamp: number) {
+  // Hidden products still take up their IDs
+  if (await model.count({ paranoid: false }) === 0) {
+    await model.bulkCreate(withTimestamps(rows, timestamp));
+    console.log(`Added the default ${model.getTableName()}.`);
+  }
+}
+
 // Only fills empty tables, so a persistent database keeps its rows across restarts and deploys
 export async function addDefaultData() {
   const timestamp = Date.now();
-  const defaults = [[Product, defaultProducts], [DeliveryOption, defaultDeliveryOptions], [Coupon, defaultCoupons]];
-
-  for (const [model, rows] of defaults) {
-    // Hidden products still take up their IDs
-    if (await model.count({ paranoid: false }) === 0) {
-      await model.bulkCreate(withTimestamps(rows, timestamp));
-      console.log(`Added the default ${model.getTableName()}.`);
-    }
-  }
+  await fillIfEmpty(Product, defaultProducts, timestamp);
+  await fillIfEmpty(DeliveryOption, defaultDeliveryOptions, timestamp);
+  await fillIfEmpty(Coupon, defaultCoupons, timestamp);
 
   await fillNewProductColumns();
 }

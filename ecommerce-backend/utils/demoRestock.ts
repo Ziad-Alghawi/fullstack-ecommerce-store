@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import { DemoRestock } from '../models/DemoRestock.ts';
 import { Product } from '../models/Product.ts';
-import { defaultProducts } from '../defaultData/defaultProducts.js';
+import { defaultProducts } from '../defaultData/defaultProducts.ts';
 
 // The store is a public demo, so visitors would otherwise sell it out for good. DEMO_RESTOCK=false turns it off
 const isOn = !['false', '0', 'off'].includes(process.env.DEMO_RESTOCK?.trim().toLowerCase() ?? '');
@@ -16,7 +16,7 @@ async function restockDemoProducts() {
   const lowProducts = await Product.findAll({ where: { stock: { [Op.lt]: LOW_STOCK } }, attributes: ['id'] });
   for (const { id } of lowProducts) {
     const demoStock = defaultProducts.find((product) => product.id === id)?.stock;
-    if (demoStock !== undefined) {
+    if (typeof demoStock === 'number') {
       await Product.update({ stock: demoStock }, { where: { id, stock: { [Op.lt]: Math.min(LOW_STOCK, demoStock) } } });
     }
   }

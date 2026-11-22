@@ -109,7 +109,7 @@ function buildFrontend() {
 // From an empty folder, so the database starts with the demo data and ecommerce-backend/.env isn't read
 function startStore() {
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ecommerce-e2e-'));
-  const store = spawn(process.execPath, [path.join(root, 'ecommerce-backend/server.js')], {
+  const store = spawn(process.execPath, [path.join(root, 'ecommerce-backend/server.ts')], {
     cwd: workDir,
     stdio: 'inherit',
     env: {

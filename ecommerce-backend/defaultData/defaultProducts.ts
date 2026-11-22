@@ -1,4 +1,7 @@
-export const defaultProducts = [
+import type { CreationAttributes } from 'sequelize';
+import type { ProductModel } from '../models/Product.ts';
+
+export const defaultProducts: CreationAttributes<ProductModel>[] = [
   {
     "id": "e43638ce-6aa0-4b85-b27f-e1d07eb678c6",
     "image": "images/products/gray-hand-knit-wool-socks.jpg",

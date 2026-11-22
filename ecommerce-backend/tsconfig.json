@@ -12,10 +12,8 @@
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
-    "types": ["node"],
-    "allowJs": true,
-    "checkJs": false
+    "types": ["node"]
   },
-  "include": ["**/*.ts", "**/*.js"],
+  "include": ["**/*.ts"],
   "exclude": ["node_modules", "dist", "test", "eslint.config.js"]
 }
