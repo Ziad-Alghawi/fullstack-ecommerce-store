@@ -91,7 +91,7 @@ Design notes:
 | Area | Technology |
 | --- | --- |
 | Frontend | React 19 (React Compiler), TypeScript, Vite, React Router, Axios, Day.js |
-| Backend | Node.js 22, Express, Sequelize, helmet, express-rate-limit |
+| Backend | Node.js 24, Express, Sequelize, helmet, express-rate-limit |
 | Database | PostgreSQL on Supabase in production, SQLite locally |
 | Auth | Supabase Auth, tokens verified with jose |
 | Payments | Stripe Checkout (test mode) |
@@ -122,7 +122,7 @@ To run the API tests on Postgres, set `TEST_DATABASE_URL` to a server where the 
 
 ## Local Setup
 
-Requires Node.js 22 or newer.
+Requires Node.js 24 or newer.
 
 ```bash
 git clone https://github.com/Ziad-Alghawi/fullstack-ecommerce-store.git
