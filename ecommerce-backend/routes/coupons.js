@@ -1,6 +1,6 @@
 import express from 'express';
-import { asyncHandler } from '../middleware/asyncHandler.js';
-import { couponLimit, findFeaturedCoupon, findValidCoupon } from '../middleware/coupon.js';
+import { asyncHandler } from '../middleware/asyncHandler.ts';
+import { couponLimit, findFeaturedCoupon, findValidCoupon } from '../middleware/coupon.ts';
 
 const router = express.Router();
 

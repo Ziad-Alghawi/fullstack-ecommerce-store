@@ -1,8 +1,8 @@
 import express from 'express';
-import { asyncHandler } from '../middleware/asyncHandler.js';
-import { getUserId } from '../middleware/auth.js';
-import { isAdmin } from '../middleware/admin.js';
-import { authLimit } from '../middleware/rateLimits.js';
+import { asyncHandler } from '../middleware/asyncHandler.ts';
+import { getUserId } from '../middleware/auth.ts';
+import { isAdmin } from '../middleware/admin.ts';
+import { authLimit } from '../middleware/rateLimits.ts';
 
 const router = express.Router();
 

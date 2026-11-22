@@ -1,8 +1,9 @@
+import type { NextFunction, Request, Response } from 'express';
 import { Account } from '../models/Account.ts';
 import { CartItem } from '../models/CartItem.ts';
 import { Order } from '../models/Order.ts';
 import { isUuid } from '../utils/isUuid.ts';
-import { getUser } from './auth.js';
+import { getUser } from './auth.ts';
 
 // The database is shared and small, so only the most recent guests keep their
 // cart and orders. Logged in users always keep theirs. MAX_VISITORS can lower it, for example in tests
@@ -10,10 +11,10 @@ const MAX_VISITORS = Number(process.env.MAX_VISITORS) || 500;
 
 // Guest visitor IDs from least to most recently active. A Set keeps insertion order,
 // so moving a visitor to the end on each request leaves the oldest one first
-const visitors = new Set();
-const accountIds = new Set();
+const visitors = new Set<string>();
+const accountIds = new Set<string>();
 
-async function rememberAccount(userId) {
+async function rememberAccount(userId: string) {
   if (!accountIds.has(userId)) {
     // Parallel first requests may both insert, so a duplicate is fine
     await Account.bulkCreate([{ id: userId }], { ignoreDuplicates: true });
@@ -21,14 +22,14 @@ async function rememberAccount(userId) {
   }
 }
 
-function markActive(visitorId) {
+function markActive(visitorId: string) {
   visitors.delete(visitorId);
   visitors.add(visitorId);
 }
 
 async function dropOldestVisitors() {
   while (visitors.size > MAX_VISITORS) {
-    const oldest = visitors.values().next().value;
+    const oldest = visitors.values().next().value as string;
     visitors.delete(oldest);
     await CartItem.destroy({ where: { visitorId: oldest } });
     await Order.destroy({ where: { visitorId: oldest } });
@@ -38,7 +39,7 @@ async function dropOldestVisitors() {
 // A guest's cart and orders go to their account when they log in, and items already
 // in the account's cart add up. The local SQLite file can't hold a transaction open,
 // so the guest's item is removed first: a failure part way can't count it twice
-async function moveToAccount(guestId, userId) {
+async function moveToAccount(guestId: string, userId: string) {
   const userItems = await CartItem.findAll({ where: { visitorId: userId } });
   const guestItems = await CartItem.findAll({ where: { visitorId: guestId } });
 
@@ -59,9 +60,9 @@ async function moveToAccount(guestId, userId) {
 }
 
 // Moves still running, so parallel requests right after logging in don't move the same cart twice
-const moves = new Map();
+const moves = new Map<string, Promise<void>>();
 
-function moveGuestOnce(guestId, userId) {
+function moveGuestOnce(guestId: string, userId: string) {
   if (!moves.has(guestId)) {
     moves.set(guestId, moveToAccount(guestId, userId).finally(() => moves.delete(guestId)));
   }
@@ -78,7 +79,7 @@ export async function loadVisitors() {
     ...await Order.unscoped().findAll({ attributes })
   ];
 
-  rows.sort((a, b) => a.updatedAt - b.updatedAt);
+  rows.sort((a, b) => a.updatedAt.getTime() - b.updatedAt.getTime());
   rows
     .filter((row) => !accountIds.has(row.visitorId))
     .forEach((row) => markActive(row.visitorId));
@@ -87,17 +88,18 @@ export async function loadVisitors() {
 
 // Cart and order routes need to know whose cart and orders to use: the signed-in
 // user's, or else the guest's. Both are kept under visitorId and have the order limit
-export async function requireVisitor(req, res, next) {
+export async function requireVisitor(req: Request, res: Response, next: NextFunction) {
   try {
     req.user = await getUser(req);
     const userId = req.user?.id;
-    const guestId = req.get('X-Visitor-Id');
-    if (!userId && !isUuid(guestId)) {
+    const sentGuestId = req.get('X-Visitor-Id');
+    // The same ID in another case is the same visitor
+    const guestId = isUuid(sentGuestId) ? sentGuestId.toLowerCase() : null;
+    const visitorId = userId ?? guestId;
+    if (!visitorId) {
       return res.status(400).json({ error: 'Missing or invalid X-Visitor-Id header' });
     }
-
-    // The same ID in another case is the same visitor
-    req.visitorId = userId ?? guestId.toLowerCase();
+    req.visitorId = visitorId;
     // A user's cart and orders are only for their token, never for their ID sent as a guest's
     if (!userId && accountIds.has(req.visitorId)) {
       return res.status(401).json({ error: 'Please log in to see this cart.' });
@@ -106,9 +108,8 @@ export async function requireVisitor(req, res, next) {
     if (userId) {
       await rememberAccount(userId);
       // Only guests in the list can have a cart or orders, so most requests skip this
-      const loggedInGuestId = isUuid(guestId) && guestId.toLowerCase();
-      if (loggedInGuestId !== userId && visitors.has(loggedInGuestId)) {
-        await moveGuestOnce(loggedInGuestId, userId);
+      if (guestId && guestId !== userId && visitors.has(guestId)) {
+        await moveGuestOnce(guestId, userId);
       }
     } else {
       markActive(req.visitorId);

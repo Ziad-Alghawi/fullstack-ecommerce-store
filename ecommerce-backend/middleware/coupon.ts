@@ -1,13 +1,14 @@
-import { Coupon } from '../models/Coupon.ts';
-import { asyncHandler } from './asyncHandler.js';
-import { limitTo } from './rateLimits.js';
+import type { Request } from 'express';
+import { Coupon, type CouponModel } from '../models/Coupon.ts';
+import { asyncHandler } from './asyncHandler.ts';
+import { limitTo } from './rateLimits.ts';
 import { refusal } from '../utils/refusal.ts';
 
-export function normalizeCouponCode(code) {
+export function normalizeCouponCode(code: unknown) {
   return typeof code === 'string' ? code.trim().toUpperCase() : '';
 }
 
-function isExpired(coupon) {
+function isExpired(coupon: CouponModel) {
   return coupon.expiresAt !== null && coupon.expiresAt <= new Date();
 }
 
@@ -21,7 +22,7 @@ export async function findFeaturedCoupon() {
 }
 
 // The coupon a customer can use now, or why they can't
-export async function findValidCoupon(code) {
+export async function findValidCoupon(code: unknown) {
   const normalizedCode = normalizeCouponCode(code);
   const coupon = normalizedCode && await Coupon.findOne({ where: { code: normalizedCode } });
   if (!coupon || !coupon.active) {
@@ -34,7 +35,7 @@ export async function findValidCoupon(code) {
 }
 
 // The code the customer typed: in the path of a coupon lookup, the query of a GET or the body of a POST
-function getTypedCode(req) {
+function getTypedCode(req: Request): unknown {
   return req.params.code ?? (req.method === 'GET' ? req.query.couponCode : req.body?.couponCode);
 }
 

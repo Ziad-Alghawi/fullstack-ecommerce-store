@@ -1,17 +1,17 @@
 import express from 'express';
-import { asyncHandler } from '../middleware/asyncHandler.js';
+import { asyncHandler } from '../middleware/asyncHandler.ts';
 import { Order } from '../models/Order.ts';
 import { Product } from '../models/Product.ts';
 import { DeliveryOption, estimateDeliveryTimeMs } from '../models/DeliveryOption.ts';
 import { CartItem } from '../models/CartItem.ts';
 import { calculatePaymentSummary } from './paymentSummary.js';
-import { readCoupon } from '../middleware/coupon.js';
+import { readCoupon } from '../middleware/coupon.ts';
 import { rejectInvalidId } from '../utils/isUuid.ts';
 import { getStockShortage, giveBackStock, takeStock } from '../utils/stock.ts';
 import { refusal, sendRefusal } from '../utils/refusal.ts';
 import { changeStatus } from '../utils/orderStatus.ts';
 import { maskEmail } from '../utils/maskEmail.ts';
-import { checkoutLimit } from '../middleware/rateLimits.js';
+import { checkoutLimit } from '../middleware/rateLimits.ts';
 
 const router = express.Router();
 

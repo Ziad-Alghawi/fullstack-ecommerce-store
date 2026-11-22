@@ -1,5 +1,5 @@
 import { DeliveryOption } from '../models/DeliveryOption.ts';
-import { findFeaturedCoupon } from '../middleware/coupon.js';
+import { findFeaturedCoupon } from '../middleware/coupon.ts';
 import { FinishReason, FunctionCallingConfigMode, ThinkingLevel, type Content } from '@google/genai';
 import type { ProductModel } from '../models/Product.ts';
 import { gemini, CHAT_MODEL } from './gemini.ts';

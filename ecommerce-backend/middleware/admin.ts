@@ -1,4 +1,5 @@
-import { getUserId } from './auth.js';
+import type { NextFunction, Request, Response } from 'express';
+import { getUserId } from './auth.ts';
 
 // Supabase user IDs, comma-separated. Being an admin is only ever decided from a verified token
 const adminIds = new Set((process.env.ADMIN_USER_IDS || '')
@@ -6,11 +7,11 @@ const adminIds = new Set((process.env.ADMIN_USER_IDS || '')
   .map((id) => id.trim().toLowerCase())
   .filter(Boolean));
 
-export function isAdmin(userId) {
-  return adminIds.has(userId);
+export function isAdmin(userId: string | null) {
+  return userId !== null && adminIds.has(userId);
 }
 
-export async function requireAdmin(req, res, next) {
+export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = await getUserId(req);
     if (!userId) {

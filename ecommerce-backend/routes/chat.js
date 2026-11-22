@@ -1,7 +1,7 @@
 import express from 'express';
-import { asyncHandler } from '../middleware/asyncHandler.js';
-import { chatAddressLimit, chatVisitorLimit } from '../middleware/rateLimits.js';
-import { requireVisitor } from '../middleware/visitor.js';
+import { asyncHandler } from '../middleware/asyncHandler.ts';
+import { chatAddressLimit, chatVisitorLimit } from '../middleware/rateLimits.ts';
+import { requireVisitor } from '../middleware/visitor.ts';
 import { gemini } from '../utils/gemini.ts';
 import { answerChat, LANGUAGE_NAMES } from '../utils/chatAssistant.ts';
 import { refusal, sendRefusal } from '../utils/refusal.ts';

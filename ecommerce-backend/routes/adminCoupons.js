@@ -1,6 +1,6 @@
 import express from 'express';
-import { asyncHandler } from '../middleware/asyncHandler.js';
-import { normalizeCouponCode } from '../middleware/coupon.js';
+import { asyncHandler } from '../middleware/asyncHandler.ts';
+import { normalizeCouponCode } from '../middleware/coupon.ts';
 import { Coupon } from '../models/Coupon.ts';
 import { rejectInvalidId } from '../utils/isUuid.ts';
 import { refusal } from '../utils/refusal.ts';

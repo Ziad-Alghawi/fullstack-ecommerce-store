@@ -1,6 +1,6 @@
 import express from 'express';
-import { asyncHandler } from '../middleware/asyncHandler.js';
-import { requireUser } from '../middleware/auth.js';
+import { asyncHandler } from '../middleware/asyncHandler.ts';
+import { requireUser } from '../middleware/auth.ts';
 import { Product } from '../models/Product.ts';
 import { WishlistItem } from '../models/WishlistItem.ts';
 import { rejectInvalidId } from '../utils/isUuid.ts';

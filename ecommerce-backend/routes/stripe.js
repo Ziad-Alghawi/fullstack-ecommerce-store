@@ -1,6 +1,6 @@
 import express from 'express';
-import { asyncHandler } from '../middleware/asyncHandler.js';
-import { requireVisitor } from '../middleware/visitor.js';
+import { asyncHandler } from '../middleware/asyncHandler.ts';
+import { requireVisitor } from '../middleware/visitor.ts';
 import { CartItem } from '../models/CartItem.ts';
 import { Order } from '../models/Order.ts';
 import { Product } from '../models/Product.ts';
@@ -10,9 +10,9 @@ import { corsOrigins } from '../utils/corsOrigins.ts';
 import { publicSiteUrl } from '../utils/publicSiteUrl.ts';
 import { APP_TAG, stripe } from '../utils/stripe.ts';
 import { takePaidStock } from '../utils/stock.ts';
-import { readCoupon } from '../middleware/coupon.js';
+import { readCoupon } from '../middleware/coupon.ts';
 import { sendRefusal } from '../utils/refusal.ts';
-import { checkoutLimit } from '../middleware/rateLimits.js';
+import { checkoutLimit } from '../middleware/rateLimits.ts';
 
 const router = express.Router();
 

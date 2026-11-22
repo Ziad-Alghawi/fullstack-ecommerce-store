@@ -1,13 +1,13 @@
 import express from 'express';
 import { Op } from 'sequelize';
-import { asyncHandler } from '../middleware/asyncHandler.js';
-import { getUserId, requireUser } from '../middleware/auth.js';
-import { isAdmin } from '../middleware/admin.js';
+import { asyncHandler } from '../middleware/asyncHandler.ts';
+import { getUserId, requireUser } from '../middleware/auth.ts';
+import { isAdmin } from '../middleware/admin.ts';
 import { Order } from '../models/Order.ts';
 import { Product } from '../models/Product.ts';
 import { MAX_REVIEW_TEXT_LENGTH, Review } from '../models/Review.ts';
 import { isUuid } from '../utils/isUuid.ts';
-import { reviewLimit } from '../middleware/rateLimits.js';
+import { reviewLimit } from '../middleware/rateLimits.ts';
 import { maskEmail } from '../utils/maskEmail.ts';
 import { refusal } from '../utils/refusal.ts';
 

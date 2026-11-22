@@ -1,4 +1,4 @@
-import { rateLimit } from 'express-rate-limit';
+import { rateLimit, type Options } from 'express-rate-limit';
 import { refusal } from '../utils/refusal.ts';
 
 const WINDOW_MS = 15 * 60 * 1000;
@@ -6,7 +6,7 @@ const WINDOW_MS = 15 * 60 * 1000;
 const scale = Number(process.env.RATE_LIMIT_SCALE) || 1;
 
 // Requests per IP address in 15 minutes. Counts are kept in memory, as the store runs on one server
-export function limitTo(limit, options = {}) {
+export function limitTo(limit: number, options: Partial<Options> = {}) {
   return rateLimit({
     windowMs: WINDOW_MS,
     limit: limit * scale,

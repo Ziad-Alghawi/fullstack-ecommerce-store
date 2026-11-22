@@ -1,6 +1,6 @@
 import express from 'express';
 import { Op } from 'sequelize';
-import { asyncHandler } from '../middleware/asyncHandler.js';
+import { asyncHandler } from '../middleware/asyncHandler.ts';
 import { Order } from '../models/Order.ts';
 import { Product } from '../models/Product.ts';
 

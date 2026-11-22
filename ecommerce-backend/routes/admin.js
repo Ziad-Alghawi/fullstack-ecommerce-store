@@ -1,5 +1,5 @@
 import express from 'express';
-import { asyncHandler } from '../middleware/asyncHandler.js';
+import { asyncHandler } from '../middleware/asyncHandler.ts';
 import { PRODUCT_CATEGORIES, Product } from '../models/Product.ts';
 import { rejectInvalidId } from '../utils/isUuid.ts';
 
