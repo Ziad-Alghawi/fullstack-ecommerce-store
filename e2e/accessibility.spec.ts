@@ -34,11 +34,11 @@ test('a keyboard user ships an order and keeps their place', async ({ page }) =>
 
   await logIn(page, ADMIN.email);
   await page.goto('/admin/orders?status=processing');
-  const shipButton = page.getByRole('button', { name: `Mark order ${orderId} shipped` });
+  const shipButton = page.getByRole('button', { name: `Mark shipped, order ${orderId}` });
   await shipButton.focus();
   await page.keyboard.press('Enter');
 
-  await expect(page.getByRole('button', { name: `Mark order ${orderId} delivered` })).toBeFocused();
+  await expect(page.getByRole('button', { name: `Mark delivered, order ${orderId}` })).toBeFocused();
   await page.keyboard.press('Enter');
   const row = page.getByTestId('admin-order-row').filter({ hasText: `#${orderId}` });
   await expect(row.getByTestId('order-status')).toHaveText('Delivered');

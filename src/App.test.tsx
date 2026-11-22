@@ -126,9 +126,9 @@ describe('App when the API fails', () => {
       const { unmount } = renderApp();
       expect(await screen.findByTestId('product-container')).toHaveTextContent('€10.90');
 
-      await user.click(screen.getByRole('button', { name: 'Deutsch' }));
+      await user.click(screen.getByRole('button', { name: 'DE Deutsch' }));
 
-      expect(screen.getByRole('button', { name: 'Deutsch' })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'DE Deutsch' })).toHaveAttribute('aria-pressed', 'true');
       expect(screen.getByTestId('header-orders-link')).toHaveTextContent('Bestellungen');
       expect(screen.getByTestId('product-container')).toHaveTextContent('10,90 €');
       expect(screen.getByTestId('site-footer')).toHaveTextContent('Demo-Shop');
@@ -138,7 +138,7 @@ describe('App when the API fails', () => {
       renderApp('/page-that-does-not-exist');
       expect(screen.getByRole('heading', { level: 1, name: 'Seite nicht gefunden' })).toBeInTheDocument();
 
-      await user.click(screen.getByRole('button', { name: 'English' }));
+      await user.click(screen.getByRole('button', { name: 'EN English' }));
       expect(screen.getByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument();
       expect(document.documentElement.lang).toBe('en');
     });

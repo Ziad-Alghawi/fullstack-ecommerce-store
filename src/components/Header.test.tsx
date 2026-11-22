@@ -121,7 +121,7 @@ describe('Header component', () => {
 
     const accountLink = screen.getByTestId('header-account-link');
     expect(accountLink).toHaveTextContent('ziad@example.com');
-    expect(accountLink).toHaveAccessibleName('Your account, ziad@example.com');
+    expect(accountLink).toHaveAccessibleName('ziad@example.com Account');
     expect(accountLink).toHaveAttribute('href', '/account');
     expect(screen.queryByTestId('header-login-link')).not.toBeInTheDocument();
   });

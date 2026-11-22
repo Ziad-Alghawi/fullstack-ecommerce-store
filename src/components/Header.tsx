@@ -16,10 +16,12 @@ function LanguageSwitch() {
   return (
     <div className="header-switch" role="group" aria-label={t.header.language}>
       {LANGUAGE_CODES.map((code) => (
+        // The name starts with the visible code, so voice control users can say what they see (WCAG 2.5.3)
         <button key={code} className="header-switch-option" type="button" lang={code}
-          aria-label={LANGUAGES[code].name} aria-pressed={language === code}
+          aria-pressed={language === code}
           onClick={() => setLanguage(code)} data-testid={`language-${code}`}>
           {code.toUpperCase()}
+          <span className="visually-hidden"> {LANGUAGES[code].name}</span>
         </button>
       ))}
     </div>
@@ -101,7 +103,6 @@ export function Header({ cart }: HeaderProps) {
 
         {auth?.user ? (
           <NavLink className="header-link" to="/account"
-            aria-label={t.header.accountLabel(auth.user.email)}
             data-testid="header-account-link">
             <UserIcon className="header-link-icon" />
             <span className="header-account">

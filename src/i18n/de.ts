@@ -52,7 +52,6 @@ export const de: Messages = {
     admin: 'Admin',
     orders: 'Bestellungen',
     account: 'Konto',
-    accountLabel: (email) => `Dein Konto, ${email}`,
     cart: 'Warenkorb',
     cartLabel: (count) => `Warenkorb, ${plural(count, 'Artikel', 'Artikel')}`,
     language: 'Sprache',
@@ -402,9 +401,10 @@ export const de: Messages = {
       changed: (id, status) => `Bestellung ${id}: ${status}`,
       markShipped: 'Als versandt markieren',
       markDelivered: 'Als zugestellt markieren',
-      markLabel: (id, status) => `Bestellung ${id} als ${STATUS_WORDS[status]} markieren`,
+      markLabel: (id, status) => `Als ${STATUS_WORDS[status]} markieren, Bestellung ${id}`,
       cancelGroup: (id) => `Bestellung ${id} stornieren?`,
-      cancelLabel: (id) => `Bestellung ${id} stornieren`,
+      cancel: 'Stornieren',
+      cancelLabel: (id) => `Bestellung stornieren, ${id}`,
       refundQuestion: 'Erstatten und zurück ins Lager?',
       cancelQuestion: 'Stornieren und zurück ins Lager?'
     }

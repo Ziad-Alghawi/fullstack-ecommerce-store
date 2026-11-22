@@ -41,7 +41,6 @@ export const en = {
     admin: 'Admin',
     orders: 'Orders',
     account: 'Account',
-    accountLabel: (email: string | undefined) => `Your account, ${email}`,
     cart: 'Cart',
     cartLabel: (count: number) => `Cart, ${plural(count, 'item', 'items')}`,
     language: 'Language',
@@ -390,8 +389,9 @@ export const en = {
       changed: (id: string, status: string) => `Order ${id} is now ${status.toLowerCase()}`,
       markShipped: 'Mark shipped',
       markDelivered: 'Mark delivered',
-      markLabel: (id: string, status: OrderStatus) => `Mark order ${id} ${status}`,
+      markLabel: (id: string, status: OrderStatus) => `Mark ${status}, order ${id}`,
       cancelGroup: (id: string) => `Cancel order ${id}?`,
+      cancel: 'Cancel',
       cancelLabel: (id: string) => `Cancel order ${id}`,
       refundQuestion: 'Refund and restock?',
       cancelQuestion: 'Cancel and restock?'

@@ -111,7 +111,7 @@ export function AdminOrderRow({ order, onChanged }: AdminOrderRowProps) {
             {canCancel && (
               <button className="button-secondary" type="button" onClick={() => setIsConfirmingCancel(true)}
                 aria-label={t.admin.orderList.cancelLabel(id)} data-testid="admin-order-cancel-button">
-                {t.common.cancel}
+                {t.admin.orderList.cancel}
               </button>
             )}
           </div>

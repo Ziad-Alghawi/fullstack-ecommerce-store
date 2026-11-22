@@ -122,7 +122,7 @@ describe('AdminOrdersPage component', () => {
     api[`patch /api/admin/orders/${newOrder.id}`] = { data: { ...newOrder, status: 'shipped', nextStatuses: ['delivered'] } };
     renderPage();
 
-    await user.click(await screen.findByRole('button', { name: 'Mark order 27cba69d shipped' }));
+    await user.click(await screen.findByRole('button', { name: 'Mark shipped, order 27cba69d' }));
 
     const row = screen.getAllByTestId('admin-order-row')[0];
     // The same button now delivers it, and keeps keyboard focus

@@ -20,7 +20,7 @@ test('an admin ships an order, and the customer sees it shipped', async ({ page,
   const row = adminPage.getByTestId('admin-order-row').filter({ hasText: `#${orderId.slice(0, 8)}` });
   await expect(row).toContainText('1 × Round Sunglasses');
   await expect(row).toContainText('Guest');
-  await row.getByRole('button', { name: `Mark order ${orderId.slice(0, 8)} shipped` }).click();
+  await row.getByRole('button', { name: `Mark shipped, order ${orderId.slice(0, 8)}` }).click();
   await expect(row.getByTestId('order-status')).toHaveText('Shipped');
   await expect(row.getByTestId('admin-order-delivered-button')).toBeVisible();
   await adminContext.close();
