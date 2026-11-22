@@ -12,7 +12,7 @@ function readSources(dir: string): string[] {
     if (entry.isDirectory()) {
       return ['node_modules', 'dist', 'test'].includes(entry.name) ? [] : readSources(entryPath);
     }
-    return entry.name.endsWith('.js') ? [fs.readFileSync(entryPath, 'utf8')] : [];
+    return entry.name.endsWith('.ts') ? [fs.readFileSync(entryPath, 'utf8')] : [];
   });
 }
 
