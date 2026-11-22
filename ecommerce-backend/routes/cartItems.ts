@@ -1,7 +1,7 @@
 import express from 'express';
 import { asyncHandler } from '../middleware/asyncHandler.ts';
 import { CartItem } from '../models/CartItem.ts';
-import { Product } from '../models/Product.ts';
+import { Product, type ProductModel } from '../models/Product.ts';
 import { DeliveryOption } from '../models/DeliveryOption.ts';
 import { isUuid, rejectInvalidId } from '../utils/isUuid.ts';
 import { refusal } from '../utils/refusal.ts';
@@ -11,31 +11,27 @@ const router = express.Router();
 router.param('productId', rejectInvalidId('Cart item not found'));
 
 // Why the cart can't hold this many of the product, or null when it can. Mentions how many are in the cart already
-function getStockError({ name, stock }, quantity, inCart = 0) {
-  if (quantity <= stock) {
+function getStockError({ name, stock }: Pick<ProductModel, 'name' | 'stock'>, quantity: number, inCart = 0) {
+  const available = stock ?? 0;
+  if (quantity <= available) {
     return null;
   }
   const note = inCart ? ` You already have ${inCart} in your cart.` : '';
-  return stock === 0
+  return available === 0
     ? refusal('outOfStock', `${name} is out of stock.${note}`, { product: name, inCart })
-    : refusal('lowStock', `Only ${stock} of ${name} left in stock.${note}`, { product: name, stock, inCart });
+    : refusal('lowStock', `Only ${available} of ${name} left in stock.${note}`, { product: name, stock: available, inCart });
 }
 
 router.get('/', asyncHandler(async (req, res) => {
   const expand = req.query.expand;
-  let cartItems = await CartItem.findAll({ where: { visitorId: req.visitorId } });
+  const cartItems = await CartItem.findAll({ where: { visitorId: req.visitorId } });
 
-  if (expand === 'product') {
-    cartItems = await Promise.all(cartItems.map(async (item) => {
-      const product = await Product.findByPk(item.productId, { paranoid: false });
-      return {
-        ...item.toJSON(),
-        product
-      };
-    }));
-  }
-
-  res.json(cartItems);
+  res.json(expand === 'product'
+    ? await Promise.all(cartItems.map(async (item) => ({
+      ...item.toJSON(),
+      product: await Product.findByPk(item.productId, { paranoid: false })
+    })))
+    : cartItems);
 }));
 
 router.post('/', asyncHandler(async (req, res) => {
@@ -66,7 +62,7 @@ router.post('/', asyncHandler(async (req, res) => {
   res.status(201).json(cartItem);
 }));
 
-router.put('/:productId', asyncHandler(async (req, res) => {
+router.put('/:productId', asyncHandler<{ productId: string }>(async (req, res) => {
   const { productId } = req.params;
   const { quantity, deliveryOptionId } = req.body;
 
@@ -79,7 +75,11 @@ router.put('/:productId', asyncHandler(async (req, res) => {
     if (typeof quantity !== 'number' || quantity < 1) {
       return res.status(400).json({ error: 'Quantity must be a number greater than 0' });
     }
-    const stockError = getStockError(await Product.findByPk(productId, { paranoid: false }), quantity);
+    const product = await Product.findByPk(productId, { paranoid: false });
+    if (!product) {
+      throw new Error(`The product of cart item ${productId} doesn't exist.`);
+    }
+    const stockError = getStockError(product, quantity);
     if (stockError) {
       return res.status(409).json(stockError);
     }
@@ -98,7 +98,7 @@ router.put('/:productId', asyncHandler(async (req, res) => {
   res.json(cartItem);
 }));
 
-router.delete('/:productId', asyncHandler(async (req, res) => {
+router.delete('/:productId', asyncHandler<{ productId: string }>(async (req, res) => {
   const { productId } = req.params;
 
   const cartItem = await CartItem.findOne({ where: { productId, visitorId: req.visitorId } });

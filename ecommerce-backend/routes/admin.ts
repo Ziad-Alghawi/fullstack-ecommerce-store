@@ -1,6 +1,6 @@
 import express from 'express';
 import { asyncHandler } from '../middleware/asyncHandler.ts';
-import { PRODUCT_CATEGORIES, Product } from '../models/Product.ts';
+import { PRODUCT_CATEGORIES, Product, isProductCategory, type ProductCategory } from '../models/Product.ts';
 import { rejectInvalidId } from '../utils/isUuid.ts';
 
 const router = express.Router();
@@ -21,23 +21,35 @@ async function getProductImages() {
 }
 
 // The trimmed keywords, or null if any of them can't be saved
-function readKeywords(keywords) {
+function readKeywords(keywords: unknown) {
   if (!Array.isArray(keywords) || keywords.length > MAX_KEYWORDS) {
     return null;
   }
   const trimmed = keywords.map((keyword) => (typeof keyword === 'string' ? keyword.trim() : ''));
-  const isValid = (keyword) => keyword && keyword.length <= MAX_KEYWORD_LENGTH && !keyword.includes(',');
+  const isValid = (keyword: string) => keyword && keyword.length <= MAX_KEYWORD_LENGTH && !keyword.includes(',');
   return trimmed.every(isValid) ? trimmed : null;
 }
 
 // The fields an admin can set, or the reason they're refused. The rating is never set here
-async function readProductFields({ name, priceCents, image, keywords, category, stock }) {
+interface ProductFields {
+  name: string;
+  priceCents: number;
+  image: string;
+  keywords: string[];
+  category: ProductCategory;
+  stock: number;
+}
+
+type ReadProductFields = { fields: ProductFields; error?: never } | { error: string; fields?: never };
+
+// What the admin sends is unknown until it's checked
+async function readProductFields({ name, priceCents, image, keywords, category, stock }: Record<string, unknown>): Promise<ReadProductFields> {
   const trimmedName = typeof name === 'string' ? name.trim() : '';
   if (!trimmedName || trimmedName.length > MAX_NAME_LENGTH) {
     return { error: `Name is required and can be up to ${MAX_NAME_LENGTH} characters` };
   }
 
-  if (!Number.isInteger(priceCents) || priceCents < 1 || priceCents > MAX_PRICE_CENTS) {
+  if (typeof priceCents !== 'number' || !Number.isInteger(priceCents) || priceCents < 1 || priceCents > MAX_PRICE_CENTS) {
     return { error: `Price must be a whole number of cents from 1 to ${MAX_PRICE_CENTS}` };
   }
 
@@ -48,15 +60,15 @@ async function readProductFields({ name, priceCents, image, keywords, category, 
     };
   }
 
-  if (!Number.isInteger(stock) || stock < 0 || stock > MAX_STOCK) {
+  if (typeof stock !== 'number' || !Number.isInteger(stock) || stock < 0 || stock > MAX_STOCK) {
     return { error: `Stock must be a whole number from 0 to ${MAX_STOCK}` };
   }
 
-  if (!PRODUCT_CATEGORIES.includes(category)) {
+  if (!isProductCategory(category)) {
     return { error: `Category must be one of: ${PRODUCT_CATEGORIES.join(', ')}` };
   }
 
-  if (!(await getProductImages()).includes(image)) {
+  if (typeof image !== 'string' || !(await getProductImages()).includes(image)) {
     return { error: 'Image must be one of the product images' };
   }
 
@@ -69,7 +81,7 @@ router.get('/images', asyncHandler(async (req, res) => {
 
 router.post('/products', asyncHandler(async (req, res) => {
   const { error, fields } = await readProductFields(req.body);
-  if (error) {
+  if (!fields) {
     return res.status(400).json({ error });
   }
 
@@ -84,7 +96,7 @@ router.put('/products/:productId', asyncHandler(async (req, res) => {
   }
 
   const { error, fields } = await readProductFields(req.body);
-  if (error) {
+  if (!fields) {
     return res.status(400).json({ error });
   }
 

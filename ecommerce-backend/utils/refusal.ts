@@ -15,6 +15,9 @@ export function refusal(code: string, error: string, params?: RefusalParams): Re
 }
 
 // For refusals that carry their HTTP status
-export function sendRefusal(res: Response, { status, ...body }: Refusal & { status: number }) {
+// A refusal with the HTTP status to send it with. Errors only a developer meets may leave out the code
+export type HttpRefusal = Omit<Refusal, 'code'> & { code?: string; status: number };
+
+export function sendRefusal(res: Response, { status, ...body }: HttpRefusal) {
   return res.status(status).json(body);
 }

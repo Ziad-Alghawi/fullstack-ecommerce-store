@@ -14,20 +14,31 @@ const CODE_PATTERN = /^[A-Z0-9]{3,20}$/;
 router.param('couponId', rejectInvalidId('Coupon not found'));
 
 // The fields an admin can set, or the reason they're refused
-function readCouponFields({ code, percentOff, expiresAt = null, active, featured }) {
+interface CouponFields {
+  code: string;
+  percentOff: number;
+  expiresAt: Date | null;
+  active: boolean;
+  featured: boolean;
+}
+
+type ReadCouponFields = { fields: CouponFields; error?: never } | { error: string; fields?: never };
+
+// What the admin sends is unknown until it's checked
+function readCouponFields({ code, percentOff, expiresAt = null, active, featured }: Record<string, unknown>): ReadCouponFields {
   const normalizedCode = normalizeCouponCode(code);
   if (!CODE_PATTERN.test(normalizedCode)) {
     return { error: 'Code must be 3 to 20 letters or digits' };
   }
 
-  if (!Number.isInteger(percentOff) || percentOff < 1 || percentOff > MAX_PERCENT_OFF) {
+  if (typeof percentOff !== 'number' || !Number.isInteger(percentOff) || percentOff < 1 || percentOff > MAX_PERCENT_OFF) {
     return { error: `Percent off must be a whole number from 1 to ${MAX_PERCENT_OFF}` };
   }
 
-  const expiryDate = expiresAt === null ? null : new Date(expiresAt);
-  if (expiryDate && (typeof expiresAt !== 'string' || Number.isNaN(expiryDate.getTime()))) {
+  if (expiresAt !== null && (typeof expiresAt !== 'string' || Number.isNaN(new Date(expiresAt).getTime()))) {
     return { error: 'Expiry must be a date, or null for a coupon that never expires' };
   }
+  const expiryDate = expiresAt === null ? null : new Date(expiresAt);
 
   if (typeof active !== 'boolean' || typeof featured !== 'boolean') {
     return { error: 'Active and featured must be true or false' };
@@ -36,12 +47,12 @@ function readCouponFields({ code, percentOff, expiresAt = null, active, featured
   return { fields: { code: normalizedCode, percentOff, expiresAt: expiryDate, active, featured } };
 }
 
-async function isCodeTaken(code, exceptId = null) {
+async function isCodeTaken(code: string, exceptId: string | null = null) {
   const coupon = await Coupon.findOne({ where: { code } });
-  return Boolean(coupon) && coupon.id !== exceptId;
+  return coupon !== null && coupon.id !== exceptId;
 }
 
-function codeTaken(code) {
+function codeTaken(code: string) {
   return refusal('couponTaken', `There's already a coupon with the code ${code}`, { code });
 }
 
@@ -51,7 +62,7 @@ router.get('/', asyncHandler(async (req, res) => {
 
 router.post('/', asyncHandler(async (req, res) => {
   const { error, fields } = readCouponFields(req.body);
-  if (error) {
+  if (!fields) {
     return res.status(400).json({ error });
   }
   if (await isCodeTaken(fields.code)) {
@@ -68,7 +79,7 @@ router.put('/:couponId', asyncHandler(async (req, res) => {
   }
 
   const { error, fields } = readCouponFields(req.body);
-  if (error) {
+  if (!fields) {
     return res.status(400).json({ error });
   }
   if (await isCodeTaken(fields.code, coupon.id)) {

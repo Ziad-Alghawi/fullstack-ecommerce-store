@@ -3,8 +3,9 @@ import { asyncHandler } from '../middleware/asyncHandler.ts';
 import { chatAddressLimit, chatVisitorLimit } from '../middleware/rateLimits.ts';
 import { requireVisitor } from '../middleware/visitor.ts';
 import { gemini } from '../utils/gemini.ts';
-import { answerChat, LANGUAGE_NAMES } from '../utils/chatAssistant.ts';
-import { refusal, sendRefusal } from '../utils/refusal.ts';
+import type { NextFunction, Request, Response } from 'express';
+import { answerChat, LANGUAGE_NAMES, type ChatMessage, type Language } from '../utils/chatAssistant.ts';
+import { refusal, sendRefusal, type HttpRefusal } from '../utils/refusal.ts';
 
 const router = express.Router();
 
@@ -32,11 +33,15 @@ function takeFromDailyLimit() {
 }
 
 // The messages to send on, or the rejection to answer with. Whatever the browser sends is untrusted
-function readMessages(messages) {
-  const isValid = Array.isArray(messages) && messages.length > 0 && messages.every((message) => (
-    ['user', 'assistant'].includes(message?.role) && typeof message.content === 'string' && message.content.trim()
-  ));
-  if (!isValid || messages.at(-1).role !== 'user') {
+function isChatMessage(message: unknown): message is ChatMessage {
+  const { role, content } = (message ?? {}) as Partial<Record<keyof ChatMessage, unknown>>;
+  return (role === 'user' || role === 'assistant') && typeof content === 'string' && content.trim() !== '';
+}
+
+type ReadMessages = { history: ChatMessage[]; rejection?: never } | { rejection: HttpRefusal; history?: never };
+
+function readMessages(messages: unknown): ReadMessages {
+  if (!Array.isArray(messages) || !messages.every(isChatMessage) || messages.at(-1)?.role !== 'user') {
     return { rejection: { status: 400, error: 'Send the conversation as a list of messages that ends with a user message' } };
   }
 
@@ -55,7 +60,7 @@ function readMessages(messages) {
   return { history };
 }
 
-function requireChat(req, res, next) {
+function requireChat(req: Request, res: Response, next: NextFunction) {
   if (!gemini) {
     return sendRefusal(res, { status: 404, ...refusal('chatDisabled', 'The shopping assistant is not available') });
   }
@@ -83,13 +88,14 @@ router.post('/', requireChat, chatAddressLimit, requireVisitor, chatVisitorLimit
   }
 
   try {
-    const { reply, products } = await answerChat(history, language);
+    const { reply, products } = await answerChat(history, language as Language);
     if (reply) {
       return res.json({ reply, products });
     }
   } catch (error) {
     // Only what went wrong, never what the visitor wrote
-    console.error('The shopping assistant failed:', error.status ?? error.name, error.message);
+    const failure = error as { status?: number; name?: string; message?: string };
+    console.error('The shopping assistant failed:', failure.status ?? failure.name, failure.message);
   }
   sendRefusal(res, { status: 502, ...refusal('chatUnavailable', "The assistant couldn't answer. Please try again.") });
 }));

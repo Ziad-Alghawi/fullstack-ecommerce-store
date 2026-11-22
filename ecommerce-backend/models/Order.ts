@@ -5,7 +5,16 @@ import { sequelize } from './index.ts';
 export const ORDER_STATUSES = ['processing', 'shipped', 'delivered', 'cancelled'] as const;
 export type OrderStatus = typeof ORDER_STATUSES[number];
 
-export type PaymentMethod = 'delivery' | 'card';
+export const PAYMENT_METHODS = ['card', 'delivery'] as const;
+export type PaymentMethod = typeof PAYMENT_METHODS[number];
+
+export function isOrderStatus(value: unknown): value is OrderStatus {
+  return (ORDER_STATUSES as readonly unknown[]).includes(value);
+}
+
+export function isPaymentMethod(value: unknown): value is PaymentMethod {
+  return (PAYMENT_METHODS as readonly unknown[]).includes(value);
+}
 
 // What an order keeps of each item. Deliveries are worked out when the order is placed
 export interface OrderProduct {

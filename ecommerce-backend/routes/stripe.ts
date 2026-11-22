@@ -1,14 +1,15 @@
-import express from 'express';
+import express, { type NextFunction, type Request, type Response } from 'express';
+import type Stripe from 'stripe';
 import { asyncHandler } from '../middleware/asyncHandler.ts';
 import { requireVisitor } from '../middleware/visitor.ts';
 import { CartItem } from '../models/CartItem.ts';
 import { Order } from '../models/Order.ts';
 import { Product } from '../models/Product.ts';
-import { calculatePaymentSummary } from './paymentSummary.js';
-import { createOrder, getCustomerName, getOrderRefusal } from './orders.js';
+import { calculatePaymentSummary } from './paymentSummary.ts';
+import { createOrder, getCustomerName, getOrderRefusal, type OrderItem } from './orders.ts';
 import { corsOrigins } from '../utils/corsOrigins.ts';
 import { publicSiteUrl } from '../utils/publicSiteUrl.ts';
-import { APP_TAG, stripe } from '../utils/stripe.ts';
+import { APP_TAG, requireStripeClient, stripe } from '../utils/stripe.ts';
 import { takePaidStock } from '../utils/stock.ts';
 import { readCoupon } from '../middleware/coupon.ts';
 import { sendRefusal } from '../utils/refusal.ts';
@@ -20,7 +21,9 @@ router.param('sessionId', (req, res, next, id) => (
   /^cs_\w+$/.test(id) ? next() : res.status(404).json({ error: 'Payment not found' })
 ));
 
-function lineItem(name, unitAmountCents, quantity = 1, metadata = undefined) {
+function lineItem(
+  name: string, unitAmountCents: number, quantity = 1, metadata?: Record<string, string>
+): Stripe.Checkout.SessionCreateParams.LineItem {
   return {
     price_data: { currency: 'eur', unit_amount: unitAmountCents, product_data: { name, metadata } },
     quantity
@@ -28,27 +31,34 @@ function lineItem(name, unitAmountCents, quantity = 1, metadata = undefined) {
 }
 
 // Stripe sends the customer back to the store they came from, so it has to be one of ours
-function isStoreOrigin(req, origin) {
-  return corsOrigins.includes(origin) || URL.parse(origin)?.host === req.get('host');
+function isStoreOrigin(req: Request, origin: string | undefined): origin is string {
+  return origin !== undefined && (corsOrigins.includes(origin) || URL.parse(origin)?.host === req.get('host'));
 }
 
 // The webhook and the success page both get here for the same payment, maybe at the same
 // time. The unique session ID lets only one of them create the order, and only it clears the cart
-async function fulfillCheckout(session) {
+async function fulfillCheckout(session: Stripe.Checkout.Session) {
   const findOrder = () => Order.findOne({ where: { stripeSessionId: session.id } });
   const existingOrder = await findOrder();
   if (existingOrder) {
     return existingOrder;
   }
 
-  const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
+  const lineItems = await requireStripeClient().checkout.sessions.listLineItems(session.id, {
     limit: 100,
     expand: ['data.price.product']
   });
-  const items = lineItems.data
-    .filter((line) => line.price.product.metadata.productId)
-    .map((line) => ({ ...line.price.product.metadata, quantity: line.quantity }));
-  const { visitorId } = session.metadata;
+  // The product lines carry the cart item they came from; shipping and tax lines don't
+  const items: OrderItem[] = lineItems.data.flatMap((line) => {
+    const product = line.price?.product;
+    const metadata = typeof product === 'object' && product !== null && 'metadata' in product ? product.metadata : {};
+    const { productId, deliveryOptionId } = metadata;
+    return productId && deliveryOptionId && line.quantity ? [{ productId, deliveryOptionId, quantity: line.quantity }] : [];
+  });
+  const visitorId = session.metadata?.visitorId;
+  if (!visitorId || session.amount_total === null) {
+    throw new Error(`Checkout session ${session.id} has no visitor or total.`);
+  }
 
   let order;
   try {
@@ -56,7 +66,7 @@ async function fulfillCheckout(session) {
       totalCostCents: session.amount_total,
       paymentMethod: 'card',
       stripeSessionId: session.id,
-      customerName: session.metadata.customerName ?? null
+      customerName: session.metadata?.customerName ?? null
     });
   } catch (error) {
     const orderFromOtherPath = await findOrder();
@@ -71,7 +81,7 @@ async function fulfillCheckout(session) {
   return order;
 }
 
-function requireStripe(req, res, next) {
+function requireStripe(req: Request, res: Response, next: NextFunction) {
   if (!stripe) {
     return res.status(404).json({ error: 'Card payment is not available' });
   }
@@ -100,27 +110,33 @@ router.post('/checkout-sessions', checkoutLimit, requireVisitor, readCoupon, asy
   // Each line comes from the database, and together they add up to the payment summary's total
   const productLines = await Promise.all(cartItems.map(async ({ productId, quantity, deliveryOptionId }) => {
     const product = await Product.findByPk(productId, { paranoid: false });
+    if (!product) {
+      throw new Error(`The product of cart item ${productId} doesn't exist.`);
+    }
     return lineItem(product.name, product.priceCents, quantity, { productId, deliveryOptionId });
   }));
-  const { shippingCostCents, taxCents, discountCents } = await calculatePaymentSummary(cartItems, req.coupon);
-  const extraLines = [
+  const { coupon } = req;
+  const { shippingCostCents, taxCents, discountCents } = await calculatePaymentSummary(cartItems, coupon ?? null);
+  const extraCharges: [string, number][] = [
     ['Shipping & handling', shippingCostCents],
     ['Estimated tax (10%)', taxCents]
-  ].filter(([, amountCents]) => amountCents > 0).map(([name, amountCents]) => lineItem(name, amountCents));
+  ];
+  const extraLines = extraCharges.filter(([, amountCents]) => amountCents > 0).map(([name, amountCents]) => lineItem(name, amountCents));
 
   // Stripe takes a discount as a coupon of its own, made for this one payment
-  const discounts = discountCents > 0 ? [{
-    coupon: (await stripe.coupons.create({
+  const stripeClient = requireStripeClient();
+  const discounts = coupon && discountCents > 0 ? [{
+    coupon: (await stripeClient.coupons.create({
       amount_off: discountCents,
       currency: 'eur',
       duration: 'once',
       max_redemptions: 1,
-      name: `${req.coupon.code} (${req.coupon.percentOff}% off)`,
+      name: `${coupon.code} (${coupon.percentOff}% off)`,
       metadata: { app: APP_TAG }
     })).id
   }] : undefined;
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await stripeClient.checkout.sessions.create({
     mode: 'payment',
     line_items: [...productLines, ...extraLines],
     discounts,
@@ -133,8 +149,8 @@ router.post('/checkout-sessions', checkoutLimit, requireVisitor, readCoupon, asy
 }));
 
 // The success page asks for the order, so it appears even without the webhook, as locally
-router.get('/checkout-sessions/:sessionId/order', checkoutLimit, requireVisitor, asyncHandler(async (req, res) => {
-  const session = await stripe.checkout.sessions.retrieve(req.params.sessionId).catch((error) => {
+router.get('/checkout-sessions/:sessionId/order', checkoutLimit, requireVisitor, asyncHandler<{ sessionId: string }>(async (req, res) => {
+  const session = await requireStripeClient().checkout.sessions.retrieve(req.params.sessionId).catch((error) => {
     if (error.statusCode === 404) {
       return null;
     }
@@ -152,17 +168,21 @@ router.get('/checkout-sessions/:sessionId/order', checkoutLimit, requireVisitor,
 
 // Needs the raw body to check Stripe's signature, so server.js mounts it before the JSON parser
 export const handleWebhook = [requireStripe, asyncHandler(async (req, res) => {
-  let event;
+  let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(req.body, req.get('Stripe-Signature'), process.env.STRIPE_WEBHOOK_SECRET);
+    // A missing signature or secret fails the check like a wrong one
+    event = requireStripeClient().webhooks.constructEvent(
+      req.body, req.get('Stripe-Signature') ?? '', process.env.STRIPE_WEBHOOK_SECRET ?? ''
+    );
   } catch {
     return res.status(400).json({ error: 'Invalid signature' });
   }
 
-  const session = event.data.object;
-  if (event.type === 'checkout.session.completed' && session.metadata?.app === APP_TAG
-    && session.payment_status === 'paid') {
-    await fulfillCheckout(session);
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    if (session.metadata?.app === APP_TAG && session.payment_status === 'paid') {
+      await fulfillCheckout(session);
+    }
   }
   res.json({ received: true });
 })];

@@ -1,7 +1,8 @@
 import express from 'express';
 import { asyncHandler } from '../middleware/asyncHandler.ts';
 import { Account } from '../models/Account.ts';
-import { ORDER_STATUSES, Order } from '../models/Order.ts';
+import type { WhereAttributeHash } from 'sequelize';
+import { ORDER_STATUSES, Order, PAYMENT_METHODS, isOrderStatus, isPaymentMethod, type OrderModel } from '../models/Order.ts';
 import { Product } from '../models/Product.ts';
 import { rejectInvalidId } from '../utils/isUuid.ts';
 import { changeStatus, getNextStatuses } from '../utils/orderStatus.ts';
@@ -9,7 +10,6 @@ import { sendRefusal } from '../utils/refusal.ts';
 
 const router = express.Router();
 
-const PAYMENT_METHODS = ['card', 'delivery'];
 const STATUS_ERROR = `Status must be one of: ${ORDER_STATUSES.join(', ')}`;
 // The page shows the newest orders, and the filters narrow them down
 const MAX_ORDERS_SHOWN = 100;
@@ -17,18 +17,25 @@ const MAX_ORDERS_SHOWN = 100;
 router.param('orderId', rejectInvalidId('Order not found'));
 
 // The filters as a database query, or the reason they're refused
-function readFilters({ status = '', paymentMethod = '' }) {
-  if (status && !ORDER_STATUSES.includes(status)) {
+type ReadFilters = { where: WhereAttributeHash<OrderModel>; error?: never } | { error: string; where?: never };
+
+function readFilters({ status = '', paymentMethod = '' }: Record<string, unknown>): ReadFilters {
+  if (status && !isOrderStatus(status)) {
     return { error: STATUS_ERROR };
   }
-  if (paymentMethod && !PAYMENT_METHODS.includes(paymentMethod)) {
+  if (paymentMethod && !isPaymentMethod(paymentMethod)) {
     return { error: `Payment method must be one of: ${PAYMENT_METHODS.join(', ')}` };
   }
-  return { where: { ...(status && { status }), ...(paymentMethod && { paymentMethod }) } };
+  return {
+    where: {
+      ...(isOrderStatus(status) ? { status } : {}),
+      ...(isPaymentMethod(paymentMethod) ? { paymentMethod } : {})
+    }
+  };
 }
 
 // Orders from before customer names were saved show whether a logged in user placed them
-async function toAdminOrders(orders) {
+async function toAdminOrders(orders: OrderModel[]) {
   const productIds = [...new Set(orders.flatMap((order) => order.products.map(({ productId }) => productId)))];
   const products = await Product.findAll({ where: { id: productIds }, attributes: ['id', 'name'], paranoid: false });
   const productNames = new Map(products.map(({ id, name }) => [id, name]));
@@ -50,7 +57,7 @@ async function toAdminOrders(orders) {
 
 router.get('/', asyncHandler(async (req, res) => {
   const { error, where } = readFilters(req.query);
-  if (error) {
+  if (!where) {
     return res.status(400).json({ error });
   }
 
@@ -69,7 +76,7 @@ router.patch('/:orderId', asyncHandler(async (req, res) => {
   }
 
   const { status } = req.body;
-  if (!ORDER_STATUSES.includes(status)) {
+  if (!isOrderStatus(status)) {
     return res.status(400).json({ error: STATUS_ERROR });
   }
 

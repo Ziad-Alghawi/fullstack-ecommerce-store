@@ -6,16 +6,14 @@ const router = express.Router();
 
 router.get('/', asyncHandler(async (req, res) => {
   const expand = req.query.expand;
-  let deliveryOptions = await DeliveryOption.findAll();
+  const deliveryOptions = await DeliveryOption.findAll();
 
-  if (expand === 'estimatedDeliveryTime') {
-    deliveryOptions = deliveryOptions.map((option) => ({
+  res.json(expand === 'estimatedDeliveryTime'
+    ? deliveryOptions.map((option) => ({
       ...option.toJSON(),
       estimatedDeliveryTimeMs: estimateDeliveryTimeMs(option)
-    }));
-  }
-
-  res.json(deliveryOptions);
+    }))
+    : deliveryOptions);
 }));
 
 export default router;

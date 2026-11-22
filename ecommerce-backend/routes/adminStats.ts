@@ -17,23 +17,23 @@ async function getTopProducts() {
     where: { status: { [Op.ne]: 'cancelled' } },
     attributes: ['products']
   });
-  const unitsSold = new Map();
+  const unitsSold = new Map<string, number>();
   for (const { productId, quantity } of orders.flatMap((order) => order.products)) {
     unitsSold.set(productId, (unitsSold.get(productId) ?? 0) + quantity);
   }
 
   const top = [...unitsSold].sort(([, a], [, b]) => b - a).slice(0, TOP_PRODUCT_COUNT);
   const products = await Product.findAll({ where: { id: top.map(([id]) => id) }, paranoid: false });
-  return top.map(([id, units]) => {
-    const { name, image } = products.find((product) => product.id === id);
-    return { id, name, image, unitsSold: units };
+  return top.flatMap(([id, units]) => {
+    const product = products.find(({ id: productId }) => productId === id);
+    return product ? [{ id, name: product.name, image: product.image, unitsSold: units }] : [];
   });
 }
 
 // Rolling windows rather than calendar days, so the numbers don't depend on the server's time zone
 router.get('/', asyncHandler(async (req, res) => {
   const now = Date.now();
-  const placedSince = (ms) => ({ orderTimeMs: { [Op.gte]: now - ms } });
+  const placedSince = (ms: number) => ({ orderTimeMs: { [Op.gte]: now - ms } });
   const lastWeekSold = { ...placedSince(7 * DAY_MS), status: { [Op.ne]: 'cancelled' } };
 
   res.json({

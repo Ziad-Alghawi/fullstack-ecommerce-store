@@ -1,7 +1,8 @@
 import express from 'express';
 import { Op } from 'sequelize';
 import { asyncHandler } from '../middleware/asyncHandler.ts';
-import { PRODUCT_CATEGORIES, Product } from '../models/Product.ts';
+import type { WhereAttributeHash } from 'sequelize';
+import { PRODUCT_CATEGORIES, Product, type ProductCategory, type ProductModel } from '../models/Product.ts';
 import { rejectInvalidId } from '../utils/isUuid.ts';
 import { restockIfDue } from '../utils/demoRestock.ts';
 import { matchesSearch } from '../utils/productSearch.ts';
@@ -16,17 +17,23 @@ router.use(asyncHandler(async (req, res, next) => {
 }));
 
 // Without a sort, products keep the store's own order. Ties in rating go to the most rated
-const SORTS = {
+type CompareProducts = (a: ProductModel, b: ProductModel) => number;
+
+const SORTS: Record<string, CompareProducts> = {
   'price-asc': (a, b) => a.priceCents - b.priceCents,
   'price-desc': (a, b) => b.priceCents - a.priceCents,
   rating: (a, b) => b.rating.stars - a.rating.stars || b.rating.count - a.rating.count,
-  newest: (a, b) => b.createdAt - a.createdAt
+  newest: (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
 };
 
 // The filters as a database query, or the reason they're refused
-function readFilters({ category = '', sort = '', minPriceCents = '', maxPriceCents = '' }) {
+type ReadFilters =
+  | { where: WhereAttributeHash<ProductModel>; compare: CompareProducts | undefined; error?: never }
+  | { error: string; where?: never; compare?: never };
+
+function readFilters({ category = '', sort = '', minPriceCents = '', maxPriceCents = '' }: Record<string, unknown>): ReadFilters {
   // A repeated parameter arrives as a list
-  if (![category, sort, minPriceCents, maxPriceCents].every((value) => typeof value === 'string')) {
+  if (typeof category !== 'string' || typeof sort !== 'string' || typeof minPriceCents !== 'string' || typeof maxPriceCents !== 'string') {
     return { error: 'Each filter can only be given once' };
   }
   if (sort && !Object.hasOwn(SORTS, sort)) {
@@ -36,14 +43,15 @@ function readFilters({ category = '', sort = '', minPriceCents = '', maxPriceCen
     return { error: 'Prices must be whole numbers of cents' };
   }
 
-  const where = {};
+  const where: WhereAttributeHash<ProductModel> = {};
   if (category) {
-    where.category = category;
+    // A category that doesn't exist simply matches nothing
+    where.category = category as ProductCategory;
   }
   if (minPriceCents || maxPriceCents) {
     where.priceCents = {
-      ...(minPriceCents && { [Op.gte]: Number(minPriceCents) }),
-      ...(maxPriceCents && { [Op.lte]: Number(maxPriceCents) })
+      ...(minPriceCents ? { [Op.gte]: Number(minPriceCents) } : {}),
+      ...(maxPriceCents ? { [Op.lte]: Number(maxPriceCents) } : {})
     };
   }
   return { where, compare: SORTS[sort] };
@@ -51,7 +59,7 @@ function readFilters({ category = '', sort = '', minPriceCents = '', maxPriceCen
 
 router.get('/', asyncHandler(async (req, res) => {
   const { error, where, compare } = readFilters(req.query);
-  if (error) {
+  if (!where) {
     return res.status(400).json({ error });
   }
 

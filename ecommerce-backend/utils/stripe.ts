@@ -21,6 +21,14 @@ export const stripe = isTestKey && secretKey
   } : {})
   : null;
 
+// For routes behind requireStripe, which answers 404 while card payment is off
+export function requireStripeClient(): Stripe {
+  if (!stripe) {
+    throw new Error('Card payment is off: STRIPE_SECRET_KEY is not a test key.');
+  }
+  return stripe;
+}
+
 // The Stripe sandbox is shared with another app, so this store tags its sessions and skips the rest
 export const APP_TAG = 'react-ecommerce';
 
